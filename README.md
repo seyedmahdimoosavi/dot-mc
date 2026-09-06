@@ -1,16 +1,30 @@
-# React + Vite
+# dotmarket
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A CoinMarketCap-style cryptocurrency market app built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Light/dark theme** using design tokens in [`src/theme/colors.ts`](src/theme/colors.ts), aligned with the dotscan.one brand palette.
+- **English / Persian (RTL)** localization via [`src/i18n`](src/i18n).
+- **Landing page** with header mega-menus, a global market stats bar, a market-cap hero chart, a trending/gainers/losers panel, a filterable and paginated coin table, and a CoinMarketCap-style footer — all backed by generated mock data ([`src/lib/mockCoins.ts`](src/lib/mockCoins.ts)).
+- **Coin detail page** at `/currencies/:slug` with a price chart, range tabs, key stats, and overview/markets/about tabs.
 
-## React Compiler
+## Getting started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev       # start the dev server
+npm run build      # type-check and produce a production build
+npm run lint        # run ESLint
+```
 
-## Expanding the ESLint configuration
+## Project structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/
+  theme/        # color tokens + ThemeProvider (light/dark)
+  i18n/         # translations + I18nProvider (en/fa, RTL)
+  lib/          # mock data, formatting, shared types, watchlist state
+  components/   # layout (header/footer/stats bar) and market UI
+  pages/        # MarketPage (landing) and CoinDetailPage
+```
