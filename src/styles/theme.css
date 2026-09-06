@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+/*
+  These variables mirror src/theme/colors.ts exactly - that file is the
+  single source of truth for the palette (aligned with the DotOne / dotscan.one
+  brand: gold accent #F5BC27, near-black dark surfaces, steel-blue light surfaces).
+*/
+:root {
+  --bg: #E8EEF1;
+  --surface: #F7F9FA;
+  --surface-strong: #FFFFFF;
+  --text: #263A48;
+  --muted: #6B7C88;
+  --line: #D6E0E4;
+  --line-strong: #AFC6D2;
+  --accent: #365C74;
+  --accent-soft: #DCE7EC;
+  --gold: #B58A35;
+  --gold-soft: #F1EAD9;
+  --green: #56857F;
+  --green-soft: #E1ECEA;
+  --red: #D26363;
+  --red-soft: #F6E3E3;
+  --shadow: 0 10px 30px rgba(38,58,72,.07);
+  --overlay: rgba(38,58,72,.45);
+}
+
+[data-theme='dark'] {
+  --bg: #101112;
+  --surface: #17191B;
+  --surface-strong: #1D2022;
+  --text: #F7FAFC;
+  --muted: #9BA7AE;
+  --line: #303538;
+  --line-strong: #414141;
+  --accent: #90CDF4;
+  --accent-soft: #262D31;
+  --gold: #F5BC27;
+  --gold-soft: rgba(245,188,39,.14);
+  --green: #76B9A8;
+  --green-soft: rgba(118,185,168,.14);
+  --red: #EF8989;
+  --red-soft: rgba(239,137,137,.14);
+  --shadow: 0 12px 32px rgba(0,0,0,.22);
+  --overlay: rgba(0,0,0,.6);
+}
+
+* { box-sizing: border-box; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { text-decoration: none; color: inherit; }
+
+.app-shell {
+  min-height: 100vh;
+  color: var(--text);
+  background: var(--bg);
+  transition: background .25s, color .25s;
+}
+
+.positive { color: var(--green) !important; }
+.negative { color: var(--red) !important; }
+
+.rotate-180 { transform: rotate(180deg); }
+
+.ghost-button, .solid-button, .outline-button {
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+}
+.ghost-button { background: transparent; color: var(--text); }
+.solid-button { background: var(--gold); color: #fff; border-color: var(--gold); }
+[data-theme='dark'] .solid-button { color: #16130a; }
+.outline-button { background: var(--surface-strong); color: var(--text); }
