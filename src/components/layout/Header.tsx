@@ -1,23 +1,35 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Icon } from '../icons/Icon'
-import { CoinIcon } from '../CoinIcon'
-import { CoinName } from '../CoinName'
-import { mockCoins } from '../../lib/mockCoins'
-import { useI18n } from '../../i18n/I18nContext'
-import { useTheme } from '../../theme/ThemeContext'
-import { slugify } from '../../lib/slug'
-import { Button } from '../ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu'
+} from "../ui/dropdown-menu";
+import { Link, useNavigate } from "react-router-dom";
 
-const NAV_KEYS = ['cryptocurrencies', 'exchanges', 'community', 'products'] as const
+import { Button } from "../ui/button";
+import { CoinIcon } from "../CoinIcon";
+import { CoinName } from "../CoinName";
+import { Icon } from "../icons/Icon";
+import { mockCoins } from "../../lib/mockCoins";
+import { slugify } from "../../lib/slug";
+import { useI18n } from "../../i18n/I18nContext";
+import { useState } from "react";
+import { useTheme } from "../../theme/ThemeContext";
 
-function NavDropdown({ label, links }: { label: string; links: readonly string[] }) {
+const NAV_KEYS = [
+  "cryptocurrencies",
+  "exchanges",
+  "community",
+  "products",
+] as const;
+
+function NavDropdown({
+  label,
+  links,
+}: {
+  label: string;
+  links: readonly string[];
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex h-full items-center gap-1 px-2.5 text-[13px] text-muted outline-none transition-colors hover:text-ink data-[state=open]:text-ink">
@@ -31,22 +43,35 @@ function NavDropdown({ label, links }: { label: string; links: readonly string[]
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 function MobileNavMenu() {
-  const { t } = useI18n()
+  const { t } = useI18n();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="icon" size="icon" aria-label="Menu" className="nav:hidden">
+        <Button
+          variant="icon"
+          size="icon"
+          aria-label="Menu"
+          className="nav:hidden"
+        >
           <Icon name="menu" size={19} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="max-h-[75vh] w-65 overflow-y-auto">
+      <DropdownMenuContent
+        align="end"
+        className="max-h-[75vh] w-65 overflow-y-auto"
+      >
         {NAV_KEYS.map((key) => (
-          <div key={key} className="mb-1 border-b border-line pb-1 last:mb-0 last:border-0 last:pb-0">
-            <div className="px-2.5 py-1.5 text-[11px] font-bold text-ink">{t.nav[key]}</div>
+          <div
+            key={key}
+            className="mb-1 border-b border-line pb-1 last:mb-0 last:border-0 last:pb-0"
+          >
+            <div className="px-2.5 py-1.5 text-[11px] font-bold text-ink">
+              {t.nav[key]}
+            </div>
             {t.navMenus[key].map((item) => (
               <DropdownMenuItem key={item} asChild>
                 <Link to={`/page/${slugify(item)}`}>{item}</Link>
@@ -62,44 +87,54 @@ function MobileNavMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 export function Header() {
-  const { theme, toggleTheme } = useTheme()
-  const { t, lang, toggleLang } = useI18n()
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [searchFocused, setSearchFocused] = useState(false)
+  const { theme, toggleTheme } = useTheme();
+  const { t, lang, toggleLang } = useI18n();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const results =
     query.trim().length > 0
-      ? mockCoins.filter((c) => `${c.name} ${c.symbol}`.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
-      : []
+      ? mockCoins
+          .filter((c) =>
+            `${c.name} ${c.symbol}`.toLowerCase().includes(query.toLowerCase()),
+          )
+          .slice(0, 6)
+      : [];
 
   function goToCoin(slug: string) {
-    setQuery('')
-    setSearchFocused(false)
-    navigate(`/currencies/${slug}`)
+    setQuery("");
+    setSearchFocused(false);
+    navigate(`/currencies/${slug}`);
   }
 
   return (
     <>
       <div className="flex h-8.5 items-center justify-center gap-2 bg-ink text-[11px] text-canvas [[data-theme=dark]_&]:border-b [[data-theme=dark]_&]:border-line [[data-theme=dark]_&]:bg-surface-2 [[data-theme=dark]_&]:text-ink">
         <span className="h-1.5 w-1.5 rounded-full bg-[#7ED5B0] shadow-[0_0_0_4px_rgba(126,213,176,.25)]" />
-        {t.announcement}{' '}
-        <Link to="/" className="inline-flex items-center gap-1 font-semibold text-gold">
+        {t.announcement}{" "}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 font-semibold text-gold"
+        >
           {t.viewAll} <Icon name="arrow" size={14} />
         </Link>
       </div>
 
       <header className="relative z-30 flex h-16 items-center gap-3 border-b border-line bg-surface-2 px-4 nav:h-19 nav:gap-8 nav:px-[max(28px,calc((100%-1240px)/2))]">
-        <Link className="flex shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink" to="/">
+        <Link
+          className="flex shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink"
+          to="/"
+        >
           <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
             D
           </span>
           <span>
-            dot<span className="text-gold">market</span>
+            Dot<span className="text-gold">Market</span>
           </span>
         </Link>
 
@@ -139,24 +174,44 @@ export function Header() {
             )}
           </div>
 
-          <Button variant="icon" size="icon" asChild className="hidden nav:inline-flex">
+          <Button
+            variant="icon"
+            size="icon"
+            asChild
+            className="hidden nav:inline-flex"
+          >
             <Link to="/watchlist" title={t.nav.watchlist}>
               <Icon name="star" size={17} />
             </Link>
           </Button>
-          <Button variant="icon" size="icon" asChild className="hidden nav:inline-flex">
+          <Button
+            variant="icon"
+            size="icon"
+            asChild
+            className="hidden nav:inline-flex"
+          >
             <Link to="/portfolio" title={t.nav.portfolio}>
               <Icon name="wallet" size={17} />
             </Link>
           </Button>
-          <Button variant="icon" size="icon" onClick={toggleTheme} title="Toggle theme">
-            <Icon name={theme === 'light' ? 'moon' : 'sun'} size={17} />
+          <Button
+            variant="icon"
+            size="icon"
+            onClick={toggleTheme}
+            title="Toggle theme"
+          >
+            <Icon name={theme === "light" ? "moon" : "sun"} size={17} />
           </Button>
-          <Button variant="icon" size="default" onClick={toggleLang} className="gap-1.5 px-2 text-[11px] font-bold">
-            <Icon name="globe" size={16} /> {lang === 'en' ? 'FA' : 'EN'}
+          <Button
+            variant="icon"
+            size="default"
+            onClick={toggleLang}
+            className="gap-1.5 px-2 text-[11px] font-bold"
+          >
+            <Icon name="globe" size={16} /> {lang === "en" ? "FA" : "EN"}
           </Button>
         </div>
       </header>
     </>
-  )
+  );
 }
