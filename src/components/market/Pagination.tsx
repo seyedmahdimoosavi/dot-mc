@@ -19,10 +19,14 @@ export function Pagination({ page, totalPages, onPage, rows, onRows }: Paginatio
   )
 
   return (
-    <div className="pagination">
-      <div className="rows-select">
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-[11px] text-muted">
         <span>{t.table.showingRows}</span>
-        <select value={rows} onChange={(e) => onRows(Number(e.target.value))}>
+        <select
+          className="rounded-md border border-line bg-surface px-2 py-1.5 text-ink"
+          value={rows}
+          onChange={(e) => onRows(Number(e.target.value))}
+        >
           {ROW_OPTIONS.map((n) => (
             <option key={n} value={n}>
               {n}
@@ -30,19 +34,34 @@ export function Pagination({ page, totalPages, onPage, rows, onRows }: Paginatio
           ))}
         </select>
       </div>
-      <div className="page-controls">
-        <button disabled={page === 1} onClick={() => onPage(page - 1)} aria-label={t.pagination.prev}>
+      <div className="flex items-center gap-1">
+        <button
+          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-xs text-muted disabled:opacity-35"
+          disabled={page === 1}
+          onClick={() => onPage(page - 1)}
+          aria-label={t.pagination.prev}
+        >
           <Icon name="arrow" size={14} className="rotate-180" />
         </button>
         {pageNumbers.map((n, i) => (
-          <span key={n} className="page-btn-group">
-            {i > 0 && pageNumbers[i - 1] !== n - 1 && <span className="page-ellipsis">…</span>}
-            <button className={n === page ? 'active' : ''} onClick={() => onPage(n)}>
+          <span key={n} className="flex items-center gap-1">
+            {i > 0 && pageNumbers[i - 1] !== n - 1 && <span className="px-0.5 text-muted">…</span>}
+            <button
+              className={`h-7.5 w-7.5 rounded-md border text-xs ${
+                n === page ? 'border-accent bg-accent text-white' : 'border-line text-muted'
+              }`}
+              onClick={() => onPage(n)}
+            >
               {n}
             </button>
           </span>
         ))}
-        <button disabled={page === totalPages} onClick={() => onPage(page + 1)} aria-label={t.pagination.next}>
+        <button
+          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-xs text-muted disabled:opacity-35"
+          disabled={page === totalPages}
+          onClick={() => onPage(page + 1)}
+          aria-label={t.pagination.next}
+        >
           <Icon name="arrow" size={14} />
         </button>
       </div>

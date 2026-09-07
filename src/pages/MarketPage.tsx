@@ -63,14 +63,14 @@ export function MarketPage() {
   const pageCoins = filtered.slice((page - 1) * rows, page * rows)
 
   return (
-    <main>
+    <main className="mx-auto max-w-310">
       <Hero />
       <TrendingPanel />
-      <section className="market-section">
-        <div className="section-heading">
+      <section className="px-5 pb-21 pt-2.5 nav:px-7.5">
+        <div className="mb-5.5 flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="eyebrow">{t.table.sectionEyebrow}</p>
-            <h2>{t.table.sectionTitle}</h2>
+            <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-[.14em] text-gold">{t.table.sectionEyebrow}</p>
+            <h2 className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">{t.table.sectionTitle}</h2>
           </div>
         </div>
         <FilterTabs

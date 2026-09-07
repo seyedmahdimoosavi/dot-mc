@@ -1,4 +1,5 @@
 import { coinBrandColors, defaultCoinColor } from '../theme/colors'
+import { slugify } from './slug'
 import type { Coin } from './types'
 
 /** Deterministic PRNG so charts/prices stay stable across re-renders (mulberry32). */
@@ -114,13 +115,6 @@ function generateFillerCoins(count: number): SeedCoin[] {
     })
   }
   return filler
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
 }
 
 function buildCoin(seed: SeedCoin, rank: number): Coin {

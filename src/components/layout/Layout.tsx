@@ -5,10 +5,12 @@ import { Footer } from './Footer'
 
 export function Layout() {
   return (
-    <div className="app-shell">
+    <div className="flex min-h-screen flex-col bg-canvas text-ink">
       <Header />
       <StatsBar />
-      <Outlet />
+      <div className="min-w-0 flex-1">
+        <Outlet />
+      </div>
       <Footer />
     </div>
   )

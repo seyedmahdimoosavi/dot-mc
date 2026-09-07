@@ -113,6 +113,11 @@ export interface Dictionary {
     disclaimer: string
   }
   theme: { light: string; dark: string }
+  placeholder: {
+    comingSoon: string
+    body: string
+    back: string
+  }
 }
 
 export const dictionaries: Record<Language, Dictionary> = {
@@ -231,6 +236,11 @@ export const dictionaries: Record<Language, Dictionary> = {
         'Cryptocurrencies are volatile and speculative assets. Prices shown are for informational purposes only and are not financial advice.',
     },
     theme: { light: 'Light', dark: 'Dark' },
+    placeholder: {
+      comingSoon: 'Coming soon',
+      body: "This page is on its way. We're still building it out.",
+      back: 'Back to home',
+    },
   },
   fa: {
     announcement: 'بازار کریپتو امروز ۲.۸٪ رشد کرده است',
@@ -347,5 +357,10 @@ export const dictionaries: Record<Language, Dictionary> = {
         'رمزارزها دارایی‌هایی نوسانی و پرریسک هستند. قیمت‌های نمایش داده شده صرفاً جنبه اطلاع‌رسانی دارند و توصیه مالی محسوب نمی‌شوند.',
     },
     theme: { light: 'روشن', dark: 'تیره' },
+    placeholder: {
+      comingSoon: 'به‌زودی',
+      body: 'این صفحه در حال ساخت است، به‌زودی تکمیل می‌شود.',
+      back: 'بازگشت به صفحه اصلی',
+    },
   },
 }

@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+@plugin 'tailwindcss-animate';
+
+/*
+  Maps our runtime theme variables (src/styles/theme.css, sourced from
+  src/theme/colors.ts) onto Tailwind color utilities - e.g. `bg-surface`,
+  `text-muted`, `border-line`. Because these reference CSS custom
+  properties via var(), switching [data-theme] on <html> re-themes every
+  utility automatically, with no Tailwind "dark:" variant needed.
+*/
+@theme {
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-strong);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-2: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --color-red: var(--red);
+  --color-red-soft: var(--red-soft);
+
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  /* Header collapses to the dropdown nav below this width (nav: / max-nav:). */
+  --breakpoint-nav: 1300px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html,
+  body,
+  #root {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans;
+    transition: background-color 0.25s, color 0.25s;
+  }
+  button,
+  input,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}

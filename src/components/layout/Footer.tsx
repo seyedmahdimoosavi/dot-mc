@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom'
 import { useI18n } from '../../i18n/I18nContext'
 import { Icon } from '../icons/Icon'
+import { slugify } from '../../lib/slug'
 
 export function Footer() {
   const { t, lang, toggleLang } = useI18n()
@@ -12,44 +14,63 @@ export function Footer() {
   ]
 
   return (
-    <footer>
-      <div className="footer-top">
-        <div className="footer-brand">
-          <div className="brand">
-            <span className="brand-mark">D</span>
+    <footer className="border-t border-line bg-surface-2 px-6 pb-6 pt-14 nav:px-[max(30px,calc((100%-1180px)/2))]">
+      <div className="grid grid-cols-2 gap-7 pb-10 nav:grid-cols-[2.1fr_repeat(4,1fr)] nav:gap-9">
+        <div className="col-span-2 nav:col-span-1">
+          <div className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink">
+            <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
+              D
+            </span>
             <span>
-              dot<span>market</span>
+              dot<span className="text-gold">market</span>
             </span>
           </div>
-          <p>{t.footer.tagline}</p>
-          <div className="socials">
-            <a href="#" aria-label="X">
+          <p className="my-4 max-w-55 text-xs leading-7 text-muted">{t.footer.tagline}</p>
+          <div className="flex items-center gap-3">
+            <a
+              href="#"
+              aria-label="X"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-ink"
+            >
               <Icon name="x" size={16} />
             </a>
-            <a href="#" aria-label="Telegram">
+            <a
+              href="#"
+              aria-label="Telegram"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-ink"
+            >
               <Icon name="telegram" size={16} />
             </a>
-            <a href="#" aria-label="Community">
+            <a
+              href="#"
+              aria-label="Community"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-ink"
+            >
               <Icon name="bell" size={16} />
             </a>
           </div>
-          <button className="lang-pill" onClick={toggleLang}>
+          <button
+            className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-[11px] text-ink"
+            onClick={toggleLang}
+          >
             <Icon name="globe" size={14} /> {t.footer.language}: {lang === 'en' ? 'English' : 'فارسی'}
           </button>
         </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <h3>{col.title}</h3>
+            <h3 className="mb-4 mt-1 font-display text-xs font-semibold">{col.title}</h3>
             {col.links.map((link) => (
-              <a key={link} href="#">
+              <Link key={link} to={`/page/${slugify(link)}`} className="my-2.5 block text-[11px] text-muted hover:text-ink">
                 {link}
-              </a>
+              </Link>
             ))}
           </div>
         ))}
       </div>
-      <div className="footer-disclaimer">{t.footer.disclaimer}</div>
-      <div className="footer-bottom">
+      <div className="max-w-225 border-t border-line pt-4 text-[10.5px] leading-7 text-muted">
+        {t.footer.disclaimer}
+      </div>
+      <div className="flex flex-col justify-between gap-2 pt-3.5 text-[10px] text-muted nav:flex-row">
         <span>{t.footer.copyright}</span>
         <span>{t.footer.download}: iOS · Android</span>
       </div>

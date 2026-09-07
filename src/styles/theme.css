@@ -4,6 +4,7 @@
   These variables mirror src/theme/colors.ts exactly - that file is the
   single source of truth for the palette (aligned with the DotOne / dotscan.one
   brand: gold accent #F5BC27, near-black dark surfaces, steel-blue light surfaces).
+  src/styles/tailwind.css maps these onto Tailwind color utilities.
 */
 :root {
   --bg: #E8EEF1;
@@ -44,32 +45,3 @@
   --shadow: 0 12px 32px rgba(0,0,0,.22);
   --overlay: rgba(0,0,0,.6);
 }
-
-* { box-sizing: border-box; }
-button, input, select { font: inherit; color: inherit; }
-button { cursor: pointer; }
-a { text-decoration: none; color: inherit; }
-
-.app-shell {
-  min-height: 100vh;
-  color: var(--text);
-  background: var(--bg);
-  transition: background .25s, color .25s;
-}
-
-.positive { color: var(--green) !important; }
-.negative { color: var(--red) !important; }
-
-.rotate-180 { transform: rotate(180deg); }
-
-.ghost-button, .solid-button, .outline-button {
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 9px 16px;
-  border: 1px solid var(--line);
-}
-.ghost-button { background: transparent; color: var(--text); }
-.solid-button { background: var(--gold); color: #fff; border-color: var(--gold); }
-[data-theme='dark'] .solid-button { color: #16130a; }
-.outline-button { background: var(--surface-strong); color: var(--text); }
