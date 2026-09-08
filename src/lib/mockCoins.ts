@@ -1,6 +1,11 @@
 import { coinBrandColors, defaultCoinColor } from '../theme/colors'
-import { slugify } from './slug'
+
 import type { Coin } from './types'
+import { slugify } from './slug'
+
+const cmcLogo = (id: number): string =>
+  `https://s2.coinmarketcap.com/static/img/coins/200x200/${id}.png`
+
 
 /** Deterministic PRNG so charts/prices stay stable across re-renders (mulberry32). */
 function seededRandom(seed: number) {
@@ -41,81 +46,77 @@ interface SeedCoin {
   symbol: string
   price: number
   categories: string[]
+  logo: string
 }
 
 const seedCoins: SeedCoin[] = [
-  { name: 'Bitcoin', symbol: 'BTC', price: 67842.29, categories: ['layer1', 'store-of-value'] },
-  { name: 'Ethereum', symbol: 'ETH', price: 3522.18, categories: ['layer1', 'smart-contracts'] },
-  { name: 'Tether', symbol: 'USDT', price: 1.0, categories: ['stablecoin'] },
-  { name: 'BNB', symbol: 'BNB', price: 604.73, categories: ['exchange-token', 'layer1'] },
-  { name: 'Solana', symbol: 'SOL', price: 178.92, categories: ['layer1', 'smart-contracts'] },
-  { name: 'USDC', symbol: 'USDC', price: 1.0, categories: ['stablecoin'] },
-  { name: 'XRP', symbol: 'XRP', price: 0.5274, categories: ['payments'] },
-  { name: 'Dogecoin', symbol: 'DOGE', price: 0.1422, categories: ['meme'] },
-  { name: 'Cardano', symbol: 'ADA', price: 0.452, categories: ['layer1', 'smart-contracts'] },
-  { name: 'TRON', symbol: 'TRX', price: 0.1213, categories: ['payments'] },
-  { name: 'Avalanche', symbol: 'AVAX', price: 34.87, categories: ['layer1', 'smart-contracts'] },
-  { name: 'Shiba Inu', symbol: 'SHIB', price: 0.00002187, categories: ['meme'] },
-  { name: 'Polkadot', symbol: 'DOT', price: 6.98, categories: ['layer1'] },
-  { name: 'Chainlink', symbol: 'LINK', price: 14.62, categories: ['defi'] },
-  { name: 'Bitcoin Cash', symbol: 'BCH', price: 452.11, categories: ['payments'] },
-  { name: 'NEAR Protocol', symbol: 'NEAR', price: 5.43, categories: ['layer1', 'smart-contracts'] },
-  { name: 'Litecoin', symbol: 'LTC', price: 84.55, categories: ['payments'] },
-  { name: 'Polygon', symbol: 'MATIC', price: 0.712, categories: ['layer2'] },
-  { name: 'Internet Computer', symbol: 'ICP', price: 12.34, categories: ['smart-contracts'] },
-  { name: 'Uniswap', symbol: 'UNI', price: 7.21, categories: ['defi'] },
-  { name: 'Ethereum Classic', symbol: 'ETC', price: 26.4, categories: ['layer1'] },
-  { name: 'Stellar', symbol: 'XLM', price: 0.1123, categories: ['payments'] },
-  { name: 'Monero', symbol: 'XMR', price: 168.72, categories: ['privacy'] },
-  { name: 'OKB', symbol: 'OKB', price: 51.02, categories: ['exchange-token'] },
-  { name: 'Filecoin', symbol: 'FIL', price: 5.87, categories: ['storage'] },
-  { name: 'Hedera', symbol: 'HBAR', price: 0.0812, categories: ['layer1'] },
-  { name: 'Cosmos', symbol: 'ATOM', price: 8.44, categories: ['layer1'] },
-  { name: 'VeChain', symbol: 'VET', price: 0.0389, categories: ['supply-chain'] },
-  { name: 'Aptos', symbol: 'APT', price: 9.56, categories: ['layer1', 'smart-contracts'] },
-  { name: 'Arbitrum', symbol: 'ARB', price: 1.12, categories: ['layer2'] },
-  { name: 'Optimism', symbol: 'OP', price: 2.34, categories: ['layer2'] },
-  { name: 'Immutable', symbol: 'IMX', price: 1.98, categories: ['nft'] },
-  { name: 'Render', symbol: 'RNDR', price: 7.65, categories: ['ai'] },
-  { name: 'Injective', symbol: 'INJ', price: 24.11, categories: ['defi'] },
-  { name: 'Fantom', symbol: 'FTM', price: 0.612, categories: ['layer1'] },
-  { name: 'Algorand', symbol: 'ALGO', price: 0.1654, categories: ['layer1'] },
-  { name: 'The Graph', symbol: 'GRT', price: 0.198, categories: ['defi'] },
-  { name: 'Tezos', symbol: 'XTZ', price: 0.912, categories: ['smart-contracts'] },
-  { name: 'EOS', symbol: 'EOS', price: 0.634, categories: ['smart-contracts'] },
-  { name: 'Theta Network', symbol: 'THETA', price: 1.42, categories: ['media'] },
-  { name: 'Flow', symbol: 'FLOW', price: 0.734, categories: ['nft'] },
-  { name: 'Axie Infinity', symbol: 'AXS', price: 6.32, categories: ['nft', 'gaming'] },
-  { name: 'The Sandbox', symbol: 'SAND', price: 0.412, categories: ['nft', 'gaming'] },
-  { name: 'Decentraland', symbol: 'MANA', price: 0.381, categories: ['nft', 'gaming'] },
-  { name: 'Chiliz', symbol: 'CHZ', price: 0.0876, categories: ['gaming'] },
-  { name: 'Kava', symbol: 'KAVA', price: 0.612, categories: ['defi'] },
-  { name: 'Zcash', symbol: 'ZEC', price: 28.44, categories: ['privacy'] },
-  { name: 'Dash', symbol: 'DASH', price: 24.83, categories: ['payments'] },
+  {
+    name: 'ChainLink Token (Bridged)',
+    symbol: 'WLINK',
+    price: 0,
+    categories: ['defi'],
+    logo: cmcLogo(1975),
+  },
+  {
+    name: 'BTC Token ',
+    symbol: 'BTC',
+    price: 0,
+    categories: ['layer1', 'store-of-value'],
+    logo: cmcLogo(1),
+  },
+  {
+    name: 'Ethereum Token',
+    symbol: 'ETH',
+    price: 0,
+    categories: ['layer1', 'smart-contracts'],
+    logo: cmcLogo(1027),
+  },
+  {
+    name: 'Tether USD ',
+    symbol: 'WUSDT',
+    price: 1,
+    categories: ['stablecoin'],
+    logo: cmcLogo(825),
+  },
+  {
+    name: 'USD Coin ',
+    symbol: 'WUSDC',
+    price: 1,
+    categories: ['stablecoin'],
+    logo: cmcLogo(3408),
+  },
+  {
+    name: 'Dai Token ',
+    symbol: 'WDAI',
+    price: 1,
+    categories: ['stablecoin'],
+    logo: cmcLogo(4943),
+  },
+  {
+    name: 'SHIBA INU ',
+    symbol: 'WSHIB',
+    price: 0,
+    categories: ['meme'],
+    logo: cmcLogo(5994),
+  },
+  {
+    name: 'PancakeSwap Token ',
+    symbol: 'WCake',
+    price: 0,
+    categories: ['defi'],
+    logo: cmcLogo(7186),
+  },
+  {
+    name: 'Wrapped BNB',
+    symbol: 'WBNB',
+    price: 0,
+    categories: ['exchange-token', 'layer1'],
+    logo: cmcLogo(1839),
+  },
 ]
 
 const syllables = ['Nova', 'Zen', 'Pulse', 'Vault', 'Orbit', 'Quanta', 'Nex', 'Flux', 'Ion', 'Cove', 'Aether', 'Byte', 'Drift', 'Ember', 'Halo']
 const suffixes = ['Chain', 'Swap', 'Net', 'Protocol', 'Finance', 'DAO', 'Verse', 'Link', 'X', 'Labs']
-
-function generateFillerCoins(count: number): SeedCoin[] {
-  const rand = seededRandom(hashSeed('dotmarket-filler-seed'))
-  const filler: SeedCoin[] = []
-  const cats = ['defi', 'layer1', 'layer2', 'gaming', 'nft', 'meme', 'ai', 'payments']
-  for (let i = 0; i < count; i++) {
-    const a = syllables[Math.floor(rand() * syllables.length)]
-    const b = suffixes[Math.floor(rand() * suffixes.length)]
-    const name = `${a}${b}`
-    const symbol = (a.slice(0, 2) + b.slice(0, 2)).toUpperCase()
-    const magnitude = rand() < 0.3 ? 0.001 + rand() * 0.5 : rand() < 0.7 ? 0.5 + rand() * 20 : 20 + rand() * 200
-    filler.push({
-      name,
-      symbol: `${symbol}${i}`,
-      price: magnitude,
-      categories: [cats[Math.floor(rand() * cats.length)]],
-    })
-  }
-  return filler
-}
 
 function buildCoin(seed: SeedCoin, rank: number): Coin {
   const rand = seededRandom(hashSeed(seed.symbol))
@@ -143,11 +144,12 @@ function buildCoin(seed: SeedCoin, rank: number): Coin {
     allTimeLow: seed.price * (0.02 + rand() * 0.3),
     sparkline: buildSparkline(rand, change7d),
     color: coinBrandColors[seed.symbol] ?? defaultCoinColor,
+    logo: seed.logo,
     categories: seed.categories,
   }
 }
 
-const allSeeds = [...seedCoins, ...generateFillerCoins(55)]
+const allSeeds = seedCoins;
 
 export const mockCoins: Coin[] = allSeeds
   .map((seed, i) => buildCoin(seed, i + 1))

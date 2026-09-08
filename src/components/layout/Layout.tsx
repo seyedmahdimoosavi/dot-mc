@@ -1,7 +1,7 @@
-import { Outlet } from 'react-router-dom'
-import { Header } from './Header'
-import { StatsBar } from './StatsBar'
-import { Footer } from './Footer'
+import { Footer } from "./Footer";
+import { Header } from "./Header";
+import { Outlet } from "react-router-dom";
+import { StatsBar } from "./StatsBar";
 
 export function Layout() {
   return (
@@ -13,5 +13,5 @@ export function Layout() {
       </div>
       <Footer />
     </div>
-  )
+  );
 }

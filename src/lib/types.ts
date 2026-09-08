@@ -16,5 +16,6 @@ export interface Coin {
   allTimeLow: number
   sparkline: number[]
   color: string
+  logo: string
   categories: string[]
 }
