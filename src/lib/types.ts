@@ -17,5 +17,6 @@ export interface Coin {
   sparkline: number[]
   color: string
   logo: string
+  address: string
   categories: string[]
 }

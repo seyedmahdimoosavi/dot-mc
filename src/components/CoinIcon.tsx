@@ -17,7 +17,6 @@ export function CoinIcon({
         className,
       )}
       style={{
-        background: coin.color,
         width: size,
         height: size,
         fontSize: size * 0.5,

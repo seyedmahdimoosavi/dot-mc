@@ -47,6 +47,7 @@ interface SeedCoin {
   price: number
   categories: string[]
   logo: string
+  address: string
 }
 
 const seedCoins: SeedCoin[] = [
@@ -56,13 +57,15 @@ const seedCoins: SeedCoin[] = [
     price: 0,
     categories: ['defi'],
     logo: cmcLogo(1975),
+    address: '0x7D4A965754f800EA08B792b00455B31ED1c31fcC',
   },
   {
-    name: 'BTC Token ',
+    name: 'BTC Token',
     symbol: 'BTC',
     price: 0,
     categories: ['layer1', 'store-of-value'],
     logo: cmcLogo(1),
+    address: '0xd68F57d9698088D5e0E6f49E60D1398A849098Fd',
   },
   {
     name: 'Ethereum Token',
@@ -70,41 +73,47 @@ const seedCoins: SeedCoin[] = [
     price: 0,
     categories: ['layer1', 'smart-contracts'],
     logo: cmcLogo(1027),
+    address: '0x711Dc0Dd81A4cCa64Bc8c3fad4E51D7EeB3082a7',
   },
   {
-    name: 'Tether USD ',
+    name: 'Tether USD',
     symbol: 'WUSDT',
     price: 1,
     categories: ['stablecoin'],
     logo: cmcLogo(825),
+    address: '0x9c4229D652f0D0D7CaDc11554aBFFA8C840798d8',
   },
   {
-    name: 'USD Coin ',
+    name: 'USD Coin',
     symbol: 'WUSDC',
     price: 1,
     categories: ['stablecoin'],
     logo: cmcLogo(3408),
+    address: '0xCc42fB0Cf8bc9426E3165eE59dD8c6c19edF13B7',
   },
   {
-    name: 'Dai Token ',
+    name: 'Dai Token',
     symbol: 'WDAI',
     price: 1,
     categories: ['stablecoin'],
     logo: cmcLogo(4943),
+    address: '0xB1e600BE9c665042eCAF99Eb57857E54dA4267d1',
   },
   {
-    name: 'SHIBA INU ',
+    name: 'SHIBA INU',
     symbol: 'WSHIB',
     price: 0,
     categories: ['meme'],
     logo: cmcLogo(5994),
+    address: '0xd674EC6d370b5b6418679dCbc6A01aaEDec93894',
   },
   {
-    name: 'PancakeSwap Token ',
+    name: 'PancakeSwap Token',
     symbol: 'WCake',
     price: 0,
     categories: ['defi'],
     logo: cmcLogo(7186),
+    address: '0x89e23f72D7Ea5D33D2B6d97Bd63b6c08be7DBc7A',
   },
   {
     name: 'Wrapped BNB',
@@ -112,11 +121,9 @@ const seedCoins: SeedCoin[] = [
     price: 0,
     categories: ['exchange-token', 'layer1'],
     logo: cmcLogo(1839),
+    address: '0xe415fAEd7f43e22c8Ef0159b33FADF577d94a5f0',
   },
 ]
-
-const syllables = ['Nova', 'Zen', 'Pulse', 'Vault', 'Orbit', 'Quanta', 'Nex', 'Flux', 'Ion', 'Cove', 'Aether', 'Byte', 'Drift', 'Ember', 'Halo']
-const suffixes = ['Chain', 'Swap', 'Net', 'Protocol', 'Finance', 'DAO', 'Verse', 'Link', 'X', 'Labs']
 
 function buildCoin(seed: SeedCoin, rank: number): Coin {
   const rand = seededRandom(hashSeed(seed.symbol))
@@ -145,6 +152,7 @@ function buildCoin(seed: SeedCoin, rank: number): Coin {
     sparkline: buildSparkline(rand, change7d),
     color: coinBrandColors[seed.symbol] ?? defaultCoinColor,
     logo: seed.logo,
+    address: seed.address,
     categories: seed.categories,
   }
 }
