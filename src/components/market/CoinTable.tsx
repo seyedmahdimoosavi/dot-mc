@@ -1,3 +1,4 @@
+import { Check, Copy } from "lucide-react";
 import {
   formatCompactNumber,
   formatCompactUsd,
@@ -13,6 +14,7 @@ import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
 import useChainlinkTokenPrice from "@/hooks/useChainlinkTokenPrice";
 import { useI18n } from "../../i18n/I18nContext";
+import { useState } from "react";
 import { useWatchlist } from "../../lib/WatchlistContext";
 
 function Change({ value, lang }: { value: number; lang: "en" | "fa" }) {
@@ -24,9 +26,9 @@ function Change({ value, lang }: { value: number; lang: "en" | "fa" }) {
 }
 
 const th =
-  "whitespace-nowrap px-2.5 py-4 text-left text-[10px] font-medium uppercase tracking-[.04em] text-muted";
+  "whitespace-nowrap px-2.5 py-4 text-left text-[12px] font-medium uppercase tracking-[.04em] text-muted";
 
-const td = "whitespace-nowrap border-t border-line px-2.5 py-3.5";
+const td = "whitespace-nowrap border-t border-line px-2.5 py-3.5 text-[12px]";
 
 type CoinRowProps = {
   coin: Coin;
@@ -39,7 +41,34 @@ type CoinRowProps = {
 function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
   const { data: chainlinkPrice, isLoading: isPriceLoading } =
     useChainlinkTokenPrice(coin.address);
+
   const price = chainlinkPrice?.price ?? coin.price;
+
+  /*
+   * Copy address state
+   */
+  const [copied, setCopied] = useState(false);
+
+  const shortAddress =
+    coin.address.length > 10
+      ? `${coin.address.slice(0, 6)}...${coin.address.slice(-4)}`
+      : coin.address;
+
+  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await navigator.clipboard.writeText(coin.address);
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to copy address:", error);
+    }
+  };
 
   /*
    * Mock data
@@ -50,7 +79,7 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
     <tr className="group hover:bg-surface">
       {/* Rank */}
       <td className={`${td} text-muted`}>
-        <div className="flex items-center gap-1.5">
+        <div className="flex en items-center gap-1.5">
           <button
             className={`grid place-items-center p-0 ${
               isWatched ? "text-gold" : "text-line-2 hover:text-gold"
@@ -58,7 +87,7 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
             onClick={() => toggle(coin.id)}
             aria-label="Toggle watchlist"
           >
-            <Icon name={isWatched ? "starFilled" : "star"} size={13} />
+            <Icon name={isWatched ? "starFilled" : "star"} size={16} />
           </button>
 
           {index + 1}
@@ -77,18 +106,38 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
             <CoinName
               name={coin.name}
               as="strong"
-              className="text-xs font-semibold"
+              className="text-md en font-semibold"
             />
 
-            <small className="truncate text-[10px] uppercase text-muted">
+            <small className="truncate en text-xs uppercase text-muted">
               {coin.symbol}
             </small>
 
-            <small className="truncate text-[10px] text-muted">
-              {coin.address}
-            </small>
+            {/* Address + Copy */}
+            <div className="flex min-w-0 items-center gap-1">
+              <small
+                className="truncate en text-xs text-muted"
+                title={coin.address}
+              >
+                {shortAddress}
+              </small>
 
-            <span className="text-[10px] text-muted">Token</span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="shrink-0 text-muted transition-colors hover:text-primary"
+                title={copied ? "Copied" : "Copy address"}
+                aria-label={copied ? "Address copied" : "Copy address"}
+              >
+                {copied ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </button>
+            </div>
+
+            {/* <span className="text-[10px] text-muted">Token</span> */}
           </span>
         </Link>
       </td>

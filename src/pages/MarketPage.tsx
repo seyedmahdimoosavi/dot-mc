@@ -78,9 +78,9 @@ export function MarketPage() {
       <section className="px-5 pb-21 pt-2.5 nav:px-7.5">
         <div className="mb-5.5 flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-[.14em] text-gold">
+            {/* <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-[.14em] text-gold">
               {t.table.sectionEyebrow}
-            </p>
+            </p> */}
             <h2 className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
               {t.table.sectionTitle}
             </h2>

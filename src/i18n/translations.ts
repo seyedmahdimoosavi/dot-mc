@@ -274,7 +274,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       gas: 'کارمزد گس',
     },
     hero: {
-      eyebrow: 'نبض زنده بازار',
+      eyebrow: 'بازار رمزارزها در لحظه',
       titleLine1: 'ارزش بازار جهانی',
       titleLine2Em: 'رمزارزها امروز',
       copy: 'قیمت‌ها، روندها و فرصت‌های بازار را در یک فضای هوشمند دنبال کنید.',
@@ -287,12 +287,12 @@ export const dictionaries: Record<Language, Dictionary> = {
     trending: {
       title: 'قیمت رمزارزها بر اساس ارزش بازار',
       subtitle: 'ارزش بازار جهانی رمزارز امروز توسط هزاران کوین و توکن شکل گرفته است.',
-      tabs: { trending: 'داغ', gainers: 'سودده', losers: 'زیان‌ده', recentlyAdded: 'تازه اضافه‌شده' },
+      tabs: { trending: 'ترندها', gainers: 'سودده', losers: 'زیان‌ده', recentlyAdded: 'تازه اضافه‌شده' },
     },
     filters: {
       all: 'همه',
       top: 'برتر',
-      trending: 'داغ',
+      trending: 'ترندها',
       gainersLosers: 'سود و زیان',
       recentlyAdded: 'تازه اضافه‌شده',
       mostVisited: 'پربازدیدترین',

@@ -13,7 +13,7 @@ export function CoinIcon({
   return (
     <span
       className={cn(
-        "grid shrink-0 place-items-center overflow-hidden rounded-full font-display font-bold text-white",
+        "grid shrink-0 en place-items-center overflow-hidden rounded-full font-display font-bold text-white",
         className,
       )}
       style={{

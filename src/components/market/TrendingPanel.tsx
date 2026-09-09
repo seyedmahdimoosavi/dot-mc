@@ -51,7 +51,7 @@ function TrendingCoinCard({
       to={`/currencies/${coin.slug}`}
     >
       <div className="flex min-w-0 items-center gap-2">
-        <span className="w-3.5 shrink-0 text-[11px] text-muted">
+        <span className="w-3.5 en shrink-0 text-[11px] text-muted">
           {index + 1}
         </span>
 
@@ -61,10 +61,10 @@ function TrendingCoinCard({
           <CoinName
             name={coin.name}
             as="strong"
-            className="text-xs font-semibold"
+            className="text-xs en font-semibold"
           />
 
-          <small className="truncate text-[10px] uppercase text-muted">
+          <small className="truncate en text-[10px] uppercase text-muted">
             {coin.symbol}
           </small>
         </span>
@@ -99,9 +99,9 @@ export function TrendingPanel() {
     <section className="px-5 pb-5 pt-1 nav:px-7.5">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-[.14em] text-gold">
+          {/* <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-[.14em] text-gold">
             {t.filters.trending}
-          </p>
+          </p> */}
 
           <h2 className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
             {t.trending.title}

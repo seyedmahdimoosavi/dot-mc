@@ -1,13 +1,6 @@
 @import 'tailwindcss';
 @plugin 'tailwindcss-animate';
 
-/*
-  Maps our runtime theme variables (src/styles/theme.css, sourced from
-  src/theme/colors.ts) onto Tailwind color utilities - e.g. `bg-surface`,
-  `text-muted`, `border-line`. Because these reference CSS custom
-  properties via var(), switching [data-theme] on <html> re-themes every
-  utility automatically, with no Tailwind "dark:" variant needed.
-*/
 @theme {
   --color-canvas: var(--bg);
   --color-surface: var(--surface);
@@ -28,14 +21,22 @@
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
 
-  /* Header collapses to the dropdown nav below this width (nav: / max-nav:). */
   --breakpoint-nav: 1300px;
+}
+
+@font-face {
+  font-family: "IRANYekan";
+  src: url("/fonts/IRANYekanXVF.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
 
 @layer base {
   * {
     box-sizing: border-box;
   }
+
   html,
   body,
   #root {
@@ -43,19 +44,31 @@
     min-width: 320px;
     min-height: 100%;
   }
+
   body {
     @apply bg-canvas text-ink font-sans;
     transition: background-color 0.25s, color 0.25s;
   }
+
+  html[lang="fa"] body {
+    font-family: "IRANYekan", sans-serif !important;
+  }
+
+  html[lang="fa"] body .en {
+    font-family: var(--font-sans);
+  }
+
   button,
   input,
   select {
     font: inherit;
     color: inherit;
   }
+
   button {
     cursor: pointer;
   }
+
   a {
     text-decoration: none;
     color: inherit;
