@@ -1,23 +1,41 @@
-import { Icon } from '../icons/Icon'
-import { useI18n } from '../../i18n/I18nContext'
+import { Icon } from "../icons/Icon";
+import { useI18n } from "../../i18n/I18nContext";
 
-export type SortMode = 'top' | 'trending' | 'gainersLosers' | 'recentlyAdded' | 'mostVisited'
-export type CategoryFilter = 'all' | 'defi' | 'nft' | 'layer1'
+export type SortMode =
+  | "top"
+  | "trending"
+  | "gainersLosers"
+  | "recentlyAdded"
+  | "mostVisited";
+export type CategoryFilter = "all" | "defi" | "nft" | "layer1";
 
 interface FilterTabsProps {
-  sortMode: SortMode
-  onSortMode: (mode: SortMode) => void
-  category: CategoryFilter
-  onCategory: (category: CategoryFilter) => void
-  query: string
-  onQuery: (query: string) => void
+  sortMode: SortMode;
+  onSortMode: (mode: SortMode) => void;
+  category: CategoryFilter;
+  onCategory: (category: CategoryFilter) => void;
+  query: string;
+  onQuery: (query: string) => void;
 }
 
-export function FilterTabs({ sortMode, onSortMode, category, onCategory, query, onQuery }: FilterTabsProps) {
-  const { t } = useI18n()
+export function FilterTabs({
+  sortMode,
+  onSortMode,
+  category,
+  onCategory,
+  query,
+  onQuery,
+}: FilterTabsProps) {
+  const { t } = useI18n();
 
-  const sortModes: SortMode[] = ['top', 'trending', 'gainersLosers', 'recentlyAdded', 'mostVisited']
-  const categories: CategoryFilter[] = ['all', 'defi', 'nft', 'layer1']
+  const sortModes: SortMode[] = [
+    "top",
+    "trending",
+    "gainersLosers",
+    "recentlyAdded",
+    "mostVisited",
+  ];
+  const categories: CategoryFilter[] = ["all", "defi", "nft", "layer1"];
 
   return (
     <>
@@ -26,7 +44,9 @@ export function FilterTabs({ sortMode, onSortMode, category, onCategory, query, 
           <button
             key={c}
             className={`rounded-md border px-3 py-2 text-[11px] ${
-              category === c ? 'border-accent bg-accent text-white' : 'border-line bg-transparent text-muted hover:text-ink'
+              category === c
+                ? "border-accent bg-accent text-white"
+                : "border-line bg-transparent text-muted hover:text-ink"
             }`}
             onClick={() => onCategory(c)}
           >
@@ -47,10 +67,10 @@ export function FilterTabs({ sortMode, onSortMode, category, onCategory, query, 
         {sortModes.map((mode) => (
           <button
             key={mode}
-            className={`relative py-3 text-[11px] ${
+            className={`relative py-3 text-[13px] ${
               sortMode === mode
                 ? "text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-gold after:content-['']"
-                : 'text-muted hover:text-ink'
+                : "text-muted hover:text-ink"
             }`}
             onClick={() => onSortMode(mode)}
           >
@@ -59,5 +79,5 @@ export function FilterTabs({ sortMode, onSortMode, category, onCategory, query, 
         ))}
       </div>
     </>
-  )
+  );
 }

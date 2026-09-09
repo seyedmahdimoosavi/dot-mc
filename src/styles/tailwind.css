@@ -50,7 +50,7 @@
     transition: background-color 0.25s, color 0.25s;
   }
 
-  html[lang="fa"] body {
+  html[lang="fa"] body * {
     font-family: "IRANYekan", sans-serif !important;
   }
 
