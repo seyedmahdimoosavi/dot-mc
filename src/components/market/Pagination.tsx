@@ -1,26 +1,33 @@
-import { useI18n } from '../../i18n/I18nContext'
-import { Icon } from '../icons/Icon'
+import { Icon } from "../icons/Icon";
+import { useI18n } from "../../i18n/I18nContext";
 
 interface PaginationProps {
-  page: number
-  totalPages: number
-  onPage: (page: number) => void
-  rows: number
-  onRows: (rows: number) => void
+  page: number;
+  totalPages: number;
+  onPage: (page: number) => void;
+  rows: number;
+  onRows: (rows: number) => void;
 }
 
-const ROW_OPTIONS = [10, 20, 50, 100]
+const ROW_OPTIONS = [10, 20, 50, 100];
 
-export function Pagination({ page, totalPages, onPage, rows, onRows }: PaginationProps) {
-  const { t } = useI18n()
+export function Pagination({
+  page,
+  totalPages,
+  onPage,
+  rows,
+  onRows,
+}: PaginationProps) {
+  const { t } = useI18n();
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1).filter(
-    (n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1,
-  )
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, i) => i + 1,
+  ).filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1);
 
   return (
     <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-[11px] text-muted">
+      <div className="flex items-center gap-2 text-[13px] text-muted">
         <span>{t.table.showingRows}</span>
         <select
           className="rounded-md border border-line bg-surface px-2 py-1.5 text-ink"
@@ -36,7 +43,7 @@ export function Pagination({ page, totalPages, onPage, rows, onRows }: Paginatio
       </div>
       <div className="flex items-center gap-1">
         <button
-          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-xs text-muted disabled:opacity-35"
+          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-md text-muted disabled:opacity-35"
           disabled={page === 1}
           onClick={() => onPage(page - 1)}
           aria-label={t.pagination.prev}
@@ -45,10 +52,14 @@ export function Pagination({ page, totalPages, onPage, rows, onRows }: Paginatio
         </button>
         {pageNumbers.map((n, i) => (
           <span key={n} className="flex items-center gap-1">
-            {i > 0 && pageNumbers[i - 1] !== n - 1 && <span className="px-0.5 text-muted">…</span>}
+            {i > 0 && pageNumbers[i - 1] !== n - 1 && (
+              <span className="px-0.5 text-muted">…</span>
+            )}
             <button
-              className={`h-7.5 w-7.5 rounded-md border text-xs ${
-                n === page ? 'border-accent bg-accent text-white' : 'border-line text-muted'
+              className={`h-7.5 w-7.5 rounded-md border text-md ${
+                n === page
+                  ? "border-accent bg-accent text-white"
+                  : "border-line text-muted"
               }`}
               onClick={() => onPage(n)}
             >
@@ -57,7 +68,7 @@ export function Pagination({ page, totalPages, onPage, rows, onRows }: Paginatio
           </span>
         ))}
         <button
-          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-xs text-muted disabled:opacity-35"
+          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-md text-muted disabled:opacity-35"
           disabled={page === totalPages}
           onClick={() => onPage(page + 1)}
           aria-label={t.pagination.next}
@@ -66,5 +77,5 @@ export function Pagination({ page, totalPages, onPage, rows, onRows }: Paginatio
         </button>
       </div>
     </div>
-  )
+  );
 }

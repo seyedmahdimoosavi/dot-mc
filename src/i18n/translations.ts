@@ -266,8 +266,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       learn: ['راهنمای مبتدیان', 'مقالات', 'ویدیوها', 'گزارش‌های پژوهشی'],
     },
     statsBar: {
-      cryptos: 'رمزارزها',
-      exchanges: 'صرافی‌ها',
+      cryptos: 'رمزارز',
+      exchanges: 'صرافی‌',
       marketCap: 'ارزش بازار',
       volume24h: 'حجم ۲۴ساعته',
       dominance: 'سهم بازار',

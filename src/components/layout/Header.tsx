@@ -69,7 +69,7 @@ function MobileNavMenu() {
             key={key}
             className="mb-1 border-b border-line pb-1 last:mb-0 last:border-0 last:pb-0"
           >
-            <div className="px-2.5 py-1.5 text-[11px] font-bold text-ink">
+            <div className="px-2.5 py-1.5 text-[13px] font-bold text-ink">
               {t.nav[key]}
             </div>
             {t.navMenus[key].map((item) => (
@@ -114,7 +114,7 @@ export function Header() {
 
   return (
     <>
-      <div className="flex h-8.5 items-center justify-center gap-2 bg-ink text-[11px] text-canvas [[data-theme=dark]_&]:border-b [[data-theme=dark]_&]:border-line [[data-theme=dark]_&]:bg-surface-2 [[data-theme=dark]_&]:text-ink">
+      <div className="flex h-8.5 items-center justify-center gap-2 bg-ink text-[13px] text-canvas [[data-theme=dark]_&]:border-b [[data-theme=dark]_&]:border-line [[data-theme=dark]_&]:bg-surface-2 [[data-theme=dark]_&]:text-ink">
         <span className="h-1.5 w-1.5 rounded-full bg-[#7ED5B0] shadow-[0_0_0_4px_rgba(126,213,176,.25)]" />
         {t.announcement}{" "}
         <Link
@@ -125,7 +125,7 @@ export function Header() {
         </Link>
       </div>
 
-      <header className="relative z-30 flex h-16 items-center gap-3 border-b border-line bg-surface-2 px-4 nav:h-19 nav:gap-8 nav:px-[max(28px,calc((100%-1240px)/2))]">
+      <header className="relative z-30 flex h-16 items-center gap-3 border-b border-line bg-surface-2 px-4 nav:h-19 nav:gap-8 nav:px-[max(30px,calc((100%-1180px)/2))]">
         <Link
           className="flex shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink"
           to="/"
@@ -150,7 +150,7 @@ export function Header() {
           <div className="relative flex h-8 items-center gap-2 rounded-md border border-line bg-surface px-2.5 text-muted nav:h-8.5 nav:px-2.5">
             <Icon name="search" size={16} className="shrink-0" />
             <input
-              className="w-0 bg-transparent text-xs text-ink outline-none placeholder:text-muted nav:w-37.5"
+              className="w-0 bg-transparent text-md text-ink outline-none placeholder:text-muted nav:w-37.5"
               placeholder={t.nav.searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -162,7 +162,7 @@ export function Header() {
                 {results.map((coin) => (
                   <button
                     key={coin.id}
-                    className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-xs hover:bg-accent-soft"
+                    className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-md hover:bg-accent-soft"
                     onMouseDown={() => goToCoin(coin.slug)}
                   >
                     <CoinIcon coin={coin} size={22} />
@@ -206,7 +206,7 @@ export function Header() {
             variant="icon"
             size="default"
             onClick={toggleLang}
-            className="gap-1.5 px-2 text-[11px] font-bold"
+            className="gap-1.5 px-2 text-[13px] font-bold"
           >
             <Icon name="globe" size={16} /> {lang === "en" ? "FA" : "EN"}
           </Button>

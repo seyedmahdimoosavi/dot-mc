@@ -51,7 +51,7 @@ function TrendingCoinCard({
       to={`/currencies/${coin.slug}`}
     >
       <div className="flex min-w-0 items-center gap-2">
-        <span className="w-3.5 en shrink-0 text-[11px] text-muted">
+        <span className="w-3.5 en shrink-0 text-[13px] text-muted">
           {index + 1}
         </span>
 
@@ -61,10 +61,10 @@ function TrendingCoinCard({
           <CoinName
             name={coin.name}
             as="strong"
-            className="text-xs en font-semibold"
+            className="text-md en font-semibold"
           />
 
-          <small className="truncate en text-[10px] uppercase text-muted">
+          <small className="truncate en text-[13px] uppercase text-muted">
             {coin.symbol}
           </small>
         </span>
@@ -76,7 +76,7 @@ function TrendingCoinCard({
         className="h-11"
       />
 
-      <div className="flex justify-between text-xs font-semibold">
+      <div className="flex justify-between text-md font-semibold">
         <span>{formatPrice(price, lang)}</span>
 
         <span className={coin.change24h >= 0 ? "text-green" : "text-red"}>
@@ -112,7 +112,7 @@ export function TrendingPanel() {
           {tabs.map((key) => (
             <button
               key={key}
-              className={`rounded-md px-2.75 py-1.75 text-[11px] ${
+              className={`rounded-md px-2.75 py-1.75 text-[13px] ${
                 tab === key
                   ? "bg-accent text-white"
                   : "bg-transparent text-muted hover:text-ink"
@@ -125,7 +125,7 @@ export function TrendingPanel() {
         </div>
       </div>
 
-      <p className="-mt-3.5 mb-5 max-w-160 text-xs text-muted">
+      <p className="-mt-3.5 mb-5 max-w-160 text-md text-muted">
         {t.trending.subtitle}
       </p>
 

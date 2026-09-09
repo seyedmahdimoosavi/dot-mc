@@ -26,9 +26,9 @@ function Change({ value, lang }: { value: number; lang: "en" | "fa" }) {
 }
 
 const th =
-  "whitespace-nowrap px-2.5 py-4 text-left text-[12px] font-medium uppercase tracking-[.04em] text-muted";
+  "whitespace-nowrap px-2.5 py-4 text-left text-[14px] font-medium uppercase tracking-[.04em] text-muted";
 
-const td = "whitespace-nowrap border-t border-line px-2.5 py-3.5 text-[12px]";
+const td = "whitespace-nowrap border-t border-line px-2.5 py-3.5 text-[14px]";
 
 type CoinRowProps = {
   coin: Coin;
@@ -109,18 +109,18 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
               className="text-md en font-semibold"
             />
 
-            <small className="truncate en text-xs uppercase text-muted">
+            <small className="truncate en text-md uppercase text-muted">
               {coin.symbol}
             </small>
 
             {/* Address + Copy */}
             <div className="flex min-w-0 items-center gap-1">
-              <small
-                className="truncate en text-xs text-muted"
+              <span
+                className="truncate en text-md text-muted"
                 title={coin.address}
               >
                 {shortAddress}
-              </small>
+              </span>
 
               <button
                 type="button"
@@ -206,7 +206,7 @@ export function CoinTable({ coins }: { coins: Coin[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-300 border-collapse text-xs">
+      <table className="w-full min-w-300 border-collapse text-md">
         <thead>
           <tr>
             <th className={th}>{t.table.rank}</th>
