@@ -7,7 +7,7 @@ import { CoinName } from "../CoinName";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
 import { mockCoins } from "../../lib/mockCoins";
-import useChainlinkTokenPrice from "@/hooks/useChainlinkTokenPrice";
+import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useI18n } from "../../i18n/I18nContext";
 
 type TabKey = "trending" | "gainers" | "losers" | "recentlyAdded";
@@ -31,7 +31,7 @@ function pickList(coins: Coin[], tab: TabKey): Coin[] {
 }
 
 function TrendingCoinCard({
-  coin,
+  coin: baseCoin,
   index,
   lang,
 }: {
@@ -39,11 +39,7 @@ function TrendingCoinCard({
   index: number;
   lang: "en" | "fa";
 }) {
-  const { data: chainlinkPrice } = useChainlinkTokenPrice(coin.address);
-
-  // Chainlink price اگر موجود باشد،
-  // در غیر این صورت قیمت mock استفاده می‌شود.
-  const price = chainlinkPrice?.price ?? coin.price;
+  const { coin } = useLiveCoin(baseCoin);
 
   return (
     <Link
@@ -77,7 +73,7 @@ function TrendingCoinCard({
       />
 
       <div className="flex justify-between text-md font-semibold">
-        <span>{formatPrice(price, lang)}</span>
+        <span>{formatPrice(coin.price, lang)}</span>
 
         <span className={coin.change24h >= 0 ? "text-green" : "text-red"}>
           {formatPercent(coin.change24h, lang)}

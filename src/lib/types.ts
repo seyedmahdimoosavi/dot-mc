@@ -12,6 +12,7 @@ export interface Coin {
   volume24h: number
   circulatingSupply: number
   maxSupply: number | null
+  fully_diluted_valuation: number | null
   allTimeHigh: number
   allTimeLow: number
   sparkline: number[]

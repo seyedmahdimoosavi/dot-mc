@@ -95,6 +95,8 @@ export interface Dictionary {
     watchlistAdd: string
     buy: string
     verified: string
+    address: string
+    category: string
   }
   footer: {
     tagline: string
@@ -217,6 +219,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       watchlistAdd: 'Add to watchlist',
       buy: 'Buy',
       verified: 'Verified asset',
+      address: 'Contract address',
+      category: 'Category',
     },
     footer: {
       tagline: 'The easiest way to track the crypto market, built for the next generation of traders.',
@@ -338,6 +342,8 @@ export const dictionaries: Record<Language, Dictionary> = {
       watchlistAdd: 'افزودن به لیست پیگیری',
       buy: 'خرید',
       verified: 'دارایی تأییدشده',
+      address: 'آدرس قرارداد',
+      category: 'دسته‌بندی',
     },
     footer: {
       tagline: 'ساده‌ترین راه برای دنبال کردن بازار رمزارز، ساخته شده برای نسل بعدی معامله‌گران.',

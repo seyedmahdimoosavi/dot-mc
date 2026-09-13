@@ -12,7 +12,7 @@ import { CoinName } from "../CoinName";
 import { Icon } from "../icons/Icon";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
-import useChainlinkTokenPrice from "@/hooks/useChainlinkTokenPrice";
+import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useI18n } from "../../i18n/I18nContext";
 import { useState } from "react";
 import { useWatchlist } from "../../lib/WatchlistContext";
@@ -38,11 +38,8 @@ type CoinRowProps = {
   index: number;
 };
 
-function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
-  const { data: chainlinkPrice, isLoading: isPriceLoading } =
-    useChainlinkTokenPrice(coin.address);
-
-  const price = chainlinkPrice?.price ?? coin.price;
+function CoinRow({ coin: baseCoin, isWatched, toggle, lang, index }: CoinRowProps) {
+  const { coin, isLoading: isPriceLoading } = useLiveCoin(baseCoin);
 
   /*
    * Copy address state
@@ -69,11 +66,6 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
       console.error("Failed to copy address:", error);
     }
   };
-
-  /*
-   * Mock data
-   */
-  const holdersCount = Math.floor(1000 + index * 1378);
 
   return (
     <tr className="group hover:bg-surface">
@@ -147,7 +139,7 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
         {isPriceLoading ? (
           <span className="text-muted">...</span>
         ) : (
-          formatPrice(price, lang)
+          formatPrice(coin.price, lang)
         )}
       </td>
 
@@ -166,21 +158,18 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
         <Change value={coin.change7d} lang={lang} />
       </td>
 
-      {/* Market Cap - mock */}
+      {/* Market Cap */}
       <td className={td}>{formatCompactUsd(coin.marketCap, lang)}</td>
 
-      {/* Volume 24h - mock */}
+      {/* Volume 24h */}
       <td className={td}>{formatCompactUsd(coin.volume24h, lang)}</td>
 
-      {/* Circulating Supply - mock */}
+      {/* Circulating Supply */}
       <td className={td}>
         {formatCompactNumber(coin.circulatingSupply, lang)} {coin.symbol}
       </td>
 
-      {/* Holders - mock */}
-      <td className={`${td} text-right`}>{holdersCount.toLocaleString()}</td>
-
-      {/* Sparkline */}
+      {/* Sparkline (7d) */}
       <td className={`${td} w-25`}>
         <Sparkline
           data={coin.sparkline}
@@ -226,8 +215,6 @@ export function CoinTable({ coins }: { coins: Coin[] }) {
             <th className={th}>{t.table.volume24h}</th>
 
             <th className={th}>{t.table.circulatingSupply}</th>
-
-            <th className={`${th} text-right`}>Holders</th>
 
             <th className={th}>{t.table.last7d}</th>
           </tr>

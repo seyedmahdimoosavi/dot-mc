@@ -70,7 +70,6 @@ export function MarketPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rows));
   const pageCoins = filtered.slice((page - 1) * rows, page * rows);
-  console.log(pageCoins);
 
   return (
     <main className="mx-auto w-full ">

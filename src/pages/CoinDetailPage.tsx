@@ -1,3 +1,4 @@
+import { Check, Copy } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import {
   formatCompactNumber,
@@ -13,11 +14,11 @@ import { CoinName } from "../components/CoinName";
 import { Icon } from "../components/icons/Icon";
 import { Sparkline } from "../components/Sparkline";
 import { mockCoins } from "../lib/mockCoins";
+import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useI18n } from "../i18n/I18nContext";
 import { useWatchlist } from "../lib/WatchlistContext";
 
 const RANGES = ["1H", "1D", "1W", "1M", "1Y", "ALL"] as const;
-const EXCHANGES = ["DotSwap", "Binox", "Krakenio", "CoinBridge", "GateOne"];
 
 const th =
   "whitespace-nowrap px-2.5 py-4 text-left text-[12px] font-medium uppercase tracking-[.04em] text-muted";
@@ -29,16 +30,35 @@ export function CoinDetailPage() {
   const { isWatched, toggle } = useWatchlist();
   const [range, setRange] = useState<(typeof RANGES)[number]>("1D");
   const [tab, setTab] = useState<"overview" | "markets" | "about">("overview");
+  const [copied, setCopied] = useState(false);
 
-  const coin = useMemo(() => mockCoins.find((c) => c.slug === slug), [slug]);
+  const baseCoin = useMemo(
+    () => mockCoins.find((c) => c.slug === slug),
+    [slug],
+  );
+  const { coin, isLoading: isPriceLoading } = useLiveCoin(baseCoin);
 
   if (!coin) return <Navigate to="/" replace />;
+
+  const shortAddress =
+    coin.address.length > 10
+      ? `${coin.address.slice(0, 6)}...${coin.address.slice(-4)}`
+      : coin.address;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(coin.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (error) {
+      console.error("Failed to copy address:", error);
+    }
+  };
 
   const lastPoint = coin.sparkline[coin.sparkline.length - 1];
   const priceAtPoint = (value: number) => coin.price * (value / lastPoint);
   const yMax = priceAtPoint(Math.max(...coin.sparkline));
   const yMin = priceAtPoint(Math.min(...coin.sparkline));
-
   return (
     <main className="mx-auto max-w-310 px-5 pb-20 pt-6.5 nav:px-7.5">
       <Link
@@ -60,11 +80,38 @@ export function CoinDetailPage() {
                 {coin.symbol}
               </span>
             </h1>
-            <div className="mt-2 flex items-center gap-2.5 text-[12px]">
+            <div className="mt-2 flex flex-wrap items-center gap-2.5 text-[12px]">
               <span className="rounded-sm bg-accent-soft px-1.5 py-1">
                 #{coin.rank} {t.detail.rank}
               </span>
               <span className="text-green">● {t.detail.verified}</span>
+              {coin.categories.map((category) => (
+                <span
+                  key={category}
+                  className="rounded-sm bg-accent-soft px-1.5 py-1 capitalize"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-1 text-[12px] text-muted">
+              <span>{t.detail.address}:</span>
+              <span className="en" title={coin.address}>
+                {shortAddress}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="shrink-0 text-muted transition-colors hover:text-primary"
+                title={copied ? "Copied" : "Copy address"}
+                aria-label={copied ? "Address copied" : "Copy address"}
+              >
+                {copied ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -91,7 +138,11 @@ export function CoinDetailPage() {
             {t.detail.priceOf(coin.name)}
           </span>
           <strong className="font-display text-2xl font-bold">
-            {formatPrice(coin.price, lang)}
+            {isPriceLoading ? (
+              <span className="text-muted">...</span>
+            ) : (
+              formatPrice(coin.price, lang)
+            )}
           </strong>
           <span className={coin.change24h >= 0 ? "text-green" : "text-red"}>
             {formatPercent(coin.change24h, lang)} (24h)
@@ -196,7 +247,9 @@ export function CoinDetailPage() {
               <span className="text-muted">{t.detail.fdv}</span>
               <strong className="font-semibold">
                 {formatCompactUsd(
-                  coin.maxSupply ? coin.maxSupply * coin.price : coin.marketCap,
+                  coin.maxSupply
+                    ? coin.maxSupply * coin.price
+                    : coin.marketCap,
                   lang,
                 )}
               </strong>
@@ -243,27 +296,34 @@ export function CoinDetailPage() {
             <table className="w-full border-collapse text-md">
               <thead>
                 <tr>
-                  <th className={th}>#</th>
-                  <th className={th}>Exchange</th>
-                  <th className={th}>Pair</th>
+                  <th className={th}>{t.table.name}</th>
+                  <th className={th}>{t.detail.address}</th>
                   <th className={th}>{t.table.price}</th>
                   <th className={th}>{t.table.volume24h}</th>
                 </tr>
               </thead>
               <tbody>
-                {EXCHANGES.map((exchange, i) => (
-                  <tr key={exchange}>
-                    <td className={`${td} text-muted`}>{i + 1}</td>
-                    <td className={td}>{exchange}</td>
-                    <td className={td}>{coin.symbol}/USDT</td>
-                    <td className={`${td} font-semibold`}>
-                      {formatPrice(coin.price * (1 + (i - 2) * 0.0006), lang)}
-                    </td>
-                    <td className={td}>
-                      {formatCompactUsd(coin.volume24h / (i + 1.4), lang)}
-                    </td>
-                  </tr>
-                ))}
+                <tr>
+                  <td className={td}>
+                    <div className="flex items-center gap-2">
+                      <CoinIcon coin={coin} size={24} />
+                      <span className="en font-semibold">{coin.symbol}</span>
+                    </div>
+                  </td>
+                  <td className={`${td} en text-muted`} title={coin.address}>
+                    {shortAddress}
+                  </td>
+                  <td className={`${td} font-semibold`}>
+                    {isPriceLoading ? (
+                      <span className="text-muted">...</span>
+                    ) : (
+                      formatPrice(coin.price, lang)
+                    )}
+                  </td>
+                  <td className={td}>
+                    {formatCompactUsd(coin.volume24h, lang)}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
