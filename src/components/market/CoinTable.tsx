@@ -143,7 +143,7 @@ function CoinRow({ coin, isWatched, toggle, lang, index }: CoinRowProps) {
       </td>
 
       {/* Price */}
-      <td className={`${td} text-center font-semibold`}>
+      <td className={`${td} font-semibold`}>
         {isPriceLoading ? (
           <span className="text-muted">...</span>
         ) : (
