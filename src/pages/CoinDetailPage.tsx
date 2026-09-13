@@ -14,8 +14,8 @@ import { CoinName } from "../components/CoinName";
 import { Icon } from "../components/icons/Icon";
 import { Sparkline } from "../components/Sparkline";
 import { mockCoins } from "../lib/mockCoins";
-import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useI18n } from "../i18n/I18nContext";
+import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useWatchlist } from "../lib/WatchlistContext";
 
 const RANGES = ["1H", "1D", "1W", "1M", "1Y", "ALL"] as const;
@@ -247,9 +247,7 @@ export function CoinDetailPage() {
               <span className="text-muted">{t.detail.fdv}</span>
               <strong className="font-semibold">
                 {formatCompactUsd(
-                  coin.maxSupply
-                    ? coin.maxSupply * coin.price
-                    : coin.marketCap,
+                  coin.maxSupply ? coin.maxSupply * coin.price : coin.marketCap,
                   lang,
                 )}
               </strong>
