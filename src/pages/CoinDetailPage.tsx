@@ -30,6 +30,7 @@ export function CoinDetailPage() {
   const { isWatched, toggle } = useWatchlist();
   const [range, setRange] = useState<(typeof RANGES)[number]>("1D");
   const [tab, setTab] = useState<"overview" | "markets" | "about">("overview");
+
   const [copied, setCopied] = useState(false);
 
   const baseCoin = useMemo(
