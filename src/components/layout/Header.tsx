@@ -13,7 +13,7 @@ import { Icon } from "../icons/Icon";
 import { mockCoins } from "../../lib/mockCoins";
 import { slugify } from "../../lib/slug";
 import { useI18n } from "../../i18n/I18nContext";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../../theme/ThemeContext";
 
 const NAV_KEYS = [
@@ -30,12 +30,54 @@ function NavDropdown({
   label: string;
   links: readonly string[];
 }) {
+  const [open, setOpen] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function cancelClose() {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }
+
+  function scheduleClose() {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  }
+
+  useEffect(() => () => {
+    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+  }, []);
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-full items-center gap-1 px-2.5 text-[13px] text-muted outline-none transition-colors hover:text-ink data-[state=open]:text-ink">
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger
+        className="flex h-full items-center gap-1 px-2.5 text-[13px] text-muted outline-none transition-colors hover:text-ink data-[state=open]:text-ink"
+        onPointerEnter={(event) => {
+          if (event.pointerType === "mouse") {
+            cancelClose();
+            setOpen(true);
+          }
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType === "mouse") scheduleClose();
+        }}
+        onPointerDown={(event) => {
+          if (event.pointerType === "mouse") event.preventDefault();
+        }}
+      >
         {label} <Icon name="chevronDown" size={13} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-52.5">
+      <DropdownMenuContent
+        align="start"
+        className="min-w-52.5"
+        onPointerEnter={(event) => {
+          if (event.pointerType === "mouse") cancelClose();
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType === "mouse") scheduleClose();
+        }}
+      >
         {links.map((item) => (
           <DropdownMenuItem key={item} asChild>
             <Link to={`/page/${slugify(item)}`}>{item}</Link>
