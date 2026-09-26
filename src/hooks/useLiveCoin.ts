@@ -1,15 +1,15 @@
 import type { Coin } from '@/lib/types';
-import useCoinMarketData from './useCoinMarketData';
+import useCoinMarketData, { type CoinMarketData } from './useCoinMarketData';
 
-export function useLiveCoin(coin: Coin): { coin: Coin; isLoading: boolean };
+export function useLiveCoin(coin: Coin): { coin: Coin; isLoading: boolean; marketData: CoinMarketData | undefined };
 export function useLiveCoin(
   coin: Coin | undefined,
-): { coin: Coin | undefined; isLoading: boolean };
+): { coin: Coin | undefined; isLoading: boolean; marketData: CoinMarketData | undefined };
 export function useLiveCoin(coin: Coin | undefined) {
   const { data, isLoading } = useCoinMarketData(coin?.address);
 
   if (!coin || !data) {
-    return { coin, isLoading };
+    return { coin, isLoading, marketData: data };
   }
 
   const merged: Coin = {
@@ -29,5 +29,5 @@ export function useLiveCoin(coin: Coin | undefined) {
     allTimeLow: data.atl ?? coin.allTimeLow,
   };
 
-  return { coin: merged, isLoading };
+  return { coin: merged, isLoading, marketData: data };
 }

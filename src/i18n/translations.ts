@@ -97,6 +97,32 @@ export interface Dictionary {
     verified: string
     address: string
     category: string
+    unavailable: string
+    updated: string
+    dayHigh: string
+    dayLow: string
+    dayPriceChange: string
+    dayMarketCapChange: string
+    dayMarketCapChangePercent: string
+    totalSupply: string
+    athDate: string
+    atlDate: string
+    platform: string
+    genesisDate: string
+    blockTime: string
+    decimals: string
+    links: string
+    website: string
+    whitepaper: string
+    explorer: string
+    forum: string
+    community: string
+    announcements: string
+    snapshot: string
+    sourceCode: string
+    noMarkets: string
+    noDescription: string
+    noHistory: string
   }
   footer: {
     tagline: string
@@ -221,6 +247,32 @@ export const dictionaries: Record<Language, Dictionary> = {
       verified: 'Verified asset',
       address: 'Contract address',
       category: 'Category',
+      unavailable: 'Not available',
+      updated: 'Last updated',
+      dayHigh: '24h high',
+      dayLow: '24h low',
+      dayPriceChange: '24h price change',
+      dayMarketCapChange: '24h market cap change',
+      dayMarketCapChangePercent: '24h market cap change %',
+      totalSupply: 'Total supply',
+      athDate: 'All-time high date',
+      atlDate: 'All-time low date',
+      platform: 'Platform',
+      genesisDate: 'Genesis date',
+      blockTime: 'Block time (minutes)',
+      decimals: 'Token decimals',
+      links: 'Links',
+      website: 'Website',
+      whitepaper: 'Whitepaper',
+      explorer: 'Explorer',
+      forum: 'Forum',
+      community: 'Community',
+      announcements: 'Announcements',
+      snapshot: 'Snapshot',
+      sourceCode: 'Source code',
+      noMarkets: 'Trading pair data is not available for this asset.',
+      noDescription: 'No description is available for this asset.',
+      noHistory: 'Historical price data is not included in the available coin data.',
     },
     footer: {
       tagline: 'The easiest way to track the crypto market, built for the next generation of traders.',
@@ -344,6 +396,32 @@ export const dictionaries: Record<Language, Dictionary> = {
       verified: 'دارایی تأییدشده',
       address: 'آدرس قرارداد',
       category: 'دسته‌بندی',
+      unavailable: 'ناموجود',
+      updated: 'آخرین به‌روزرسانی',
+      dayHigh: 'بیشترین قیمت ۲۴ ساعت',
+      dayLow: 'کمترین قیمت ۲۴ ساعت',
+      dayPriceChange: 'تغییر قیمت ۲۴ ساعت',
+      dayMarketCapChange: 'تغییر ارزش بازار ۲۴ ساعت',
+      dayMarketCapChangePercent: 'درصد تغییر ارزش بازار ۲۴ ساعت',
+      totalSupply: 'عرضه کل',
+      athDate: 'تاریخ بالاترین قیمت',
+      atlDate: 'تاریخ پایین‌ترین قیمت',
+      platform: 'شبکه',
+      genesisDate: 'تاریخ آغاز',
+      blockTime: 'زمان بلاک (دقیقه)',
+      decimals: 'اعشار توکن',
+      links: 'پیوندها',
+      website: 'وب‌سایت',
+      whitepaper: 'وایت‌پیپر',
+      explorer: 'مرورگر بلاکچین',
+      forum: 'انجمن',
+      community: 'جامعه',
+      announcements: 'اطلاعیه‌ها',
+      snapshot: 'اسنپ‌شات',
+      sourceCode: 'کد منبع',
+      noMarkets: 'دادهٔ جفت‌ارزهای معاملاتی برای این دارایی موجود نیست.',
+      noDescription: 'توضیحی برای این دارایی موجود نیست.',
+      noHistory: 'دادهٔ تاریخی قیمت در اطلاعات موجود این دارایی ارائه نشده است.',
     },
     footer: {
       tagline: 'ساده‌ترین راه برای دنبال کردن بازار رمزارز، ساخته شده برای نسل بعدی معامله‌گران.',

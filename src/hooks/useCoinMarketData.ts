@@ -22,6 +22,33 @@ export interface CoinMarketData {
   price_change_percentage_24h: number | null;
   ath: number | null;
   atl: number | null;
+  asset_platform_id?: string | null;
+  genesis_date?: string | null;
+  last_updated?: string | null;
+  block_time_in_minutes?: number | null;
+  contract_address?: string | null;
+  decimal_place?: number | null;
+  market_cap_change_24h?: number | null;
+  market_cap_change_percentage_24h?: number | null;
+  price_change_24h_in_currency?: number | null;
+  market_cap_change_24h_in_currency?: number | null;
+  ath_date?: string | null;
+  atl_date?: string | null;
+  links?: {
+    homepage?: string[];
+    whitepaper?: string | null;
+    blockchain_site?: string[];
+    official_forum_url?: string[];
+    chat_url?: string[];
+    announcement_url?: string[];
+    snapshot_url?: string | null;
+    twitter_screen_name?: string | null;
+    facebook_username?: string | null;
+    bitcointalk_thread_identifier?: number | null;
+    telegram_channel_identifier?: string | null;
+    subreddit_url?: string | null;
+    repos_url?: { github?: string[]; bitbucket?: string[] };
+  };
 }
 
 const API_BASE = 'https://coin-prices-lyart.vercel.app/api/coins';
