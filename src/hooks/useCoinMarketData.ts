@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { COIN_API_BASE_URL } from '../lib/api';
 
 export interface CoinMarketData {
   name: string;
@@ -51,7 +52,6 @@ export interface CoinMarketData {
   };
 }
 
-const API_BASE = 'https://coin-prices-lyart.vercel.app/api/coins';
 const POLL_INTERVAL = 30_000;
 
 export default function useCoinMarketData(address: string | undefined) {
@@ -62,7 +62,7 @@ export default function useCoinMarketData(address: string | undefined) {
     staleTime: POLL_INTERVAL,
     retry: false,
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/${address}`);
+      const res = await fetch(`${COIN_API_BASE_URL}/coins/${address}`);
 
       if (!res.ok) {
         throw new Error(`Failed to fetch coin market data for ${address}`);

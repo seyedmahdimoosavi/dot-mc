@@ -3,15 +3,17 @@ import { cn } from '@/lib/utils'
 
 interface SparklineProps {
   data: number[]
+  timestamps?: number[]
   positive?: boolean
   showGrid?: boolean
   className?: string
+  label?: string
 }
 
 const WIDTH = 288
 const HEIGHT = 150
 
-export function Sparkline({ data, positive = true, showGrid = false, className }: SparklineProps) {
+export function Sparkline({ data, timestamps, positive = true, showGrid = false, className, label = 'Price movement chart' }: SparklineProps) {
   const gradientId = useId()
 
   const points = useMemo(() => {
@@ -20,14 +22,18 @@ export function Sparkline({ data, positive = true, showGrid = false, className }
     const max = Math.max(...data)
     const range = max - min || 1
     const step = WIDTH / (data.length - 1 || 1)
+    const firstTime = timestamps?.[0]
+    const timeSpan = timestamps && timestamps.length === data.length
+      ? timestamps[timestamps.length - 1] - firstTime!
+      : 0
     return data
       .map((value, i) => {
-        const x = i * step
+        const x = timeSpan > 0 ? ((timestamps![i] - firstTime!) / timeSpan) * WIDTH : i * step
         const y = HEIGHT - ((value - min) / range) * (HEIGHT - 10) - 5
         return `${x.toFixed(2)},${y.toFixed(2)}`
       })
       .join(' ')
-  }, [data])
+  }, [data, timestamps])
 
   const strokeColor = positive ? 'var(--green)' : 'var(--red)'
 
@@ -37,7 +43,7 @@ export function Sparkline({ data, positive = true, showGrid = false, className }
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       preserveAspectRatio="none"
       role="img"
-      aria-label="Price movement chart"
+      aria-label={label}
     >
       {showGrid && (
         <g>

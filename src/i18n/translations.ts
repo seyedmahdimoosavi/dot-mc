@@ -122,7 +122,12 @@ export interface Dictionary {
     sourceCode: string
     noMarkets: string
     noDescription: string
-    noHistory: string
+    chartPrices: string
+    chartVolumes: string
+    chartMarketCaps: string
+    chartLoading: string
+    chartEmpty: string
+    chartError: string
   }
   footer: {
     tagline: string
@@ -272,7 +277,12 @@ export const dictionaries: Record<Language, Dictionary> = {
       sourceCode: 'Source code',
       noMarkets: 'Trading pair data is not available for this asset.',
       noDescription: 'No description is available for this asset.',
-      noHistory: 'Historical price data is not included in the available coin data.',
+      chartPrices: 'Price',
+      chartVolumes: 'Volume',
+      chartMarketCaps: 'Market cap',
+      chartLoading: 'Loading chart…',
+      chartEmpty: 'No chart data is available for this range.',
+      chartError: 'Could not load chart data.',
     },
     footer: {
       tagline: 'The easiest way to track the crypto market, built for the next generation of traders.',
@@ -421,7 +431,12 @@ export const dictionaries: Record<Language, Dictionary> = {
       sourceCode: 'کد منبع',
       noMarkets: 'دادهٔ جفت‌ارزهای معاملاتی برای این دارایی موجود نیست.',
       noDescription: 'توضیحی برای این دارایی موجود نیست.',
-      noHistory: 'دادهٔ تاریخی قیمت در اطلاعات موجود این دارایی ارائه نشده است.',
+      chartPrices: 'قیمت',
+      chartVolumes: 'حجم معاملات',
+      chartMarketCaps: 'ارزش بازار',
+      chartLoading: 'در حال بارگذاری نمودار…',
+      chartEmpty: 'داده‌ای برای این بازه موجود نیست.',
+      chartError: 'دریافت دادهٔ نمودار ناموفق بود.',
     },
     footer: {
       tagline: 'ساده‌ترین راه برای دنبال کردن بازار رمزارز، ساخته شده برای نسل بعدی معامله‌گران.',
