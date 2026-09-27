@@ -38,7 +38,7 @@ export function useCoinChart(
   type: ChartType,
   days: ChartDays,
 ) {
-  return useQuery({
+  return useQuery<ChartPoint[]>({
     queryKey: ["coin-chart", COIN_API_BASE_URL, address?.toLowerCase(), type, days],
     enabled: Boolean(address),
     // Keep populated series for the session; an empty cache response can be retried.

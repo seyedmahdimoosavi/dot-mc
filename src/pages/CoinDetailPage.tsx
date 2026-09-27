@@ -58,6 +58,7 @@ export function CoinDetailPage() {
   const { isWatched, toggle } = useWatchlist();
   const [range, setRange] = useState<ChartDays>("1d");
   const [chartType, setChartType] = useState<ChartType>("prices");
+  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
   const [tab, setTab] = useState<"overview" | "markets" | "about">("overview");
 
   const [copied, setCopied] = useState(false);
@@ -76,6 +77,7 @@ export function CoinDetailPage() {
   // from the contract address returned in the coin details.
   const chart = useCoinChart(baseCoin?.address, chartType, range);
   const chartPoints = chart.data ?? [];
+  const hoveredPoint = hoveredPointIndex === null ? undefined : chartPoints[hoveredPointIndex];
   const chartValues = chartPoints.map((point) => point.value);
   const chartMin = chartValues.reduce(
     (min, value) => Math.min(min, value),
@@ -93,6 +95,13 @@ export function CoinDetailPage() {
       lang === "fa" ? "fa-IR" : "en-US",
       range === "1d"
         ? { dateStyle: "short", timeStyle: "short" }
+        : { dateStyle: "medium" },
+    ).format(new Date(timestamp));
+  const tooltipDate = (timestamp: number) =>
+    new Intl.DateTimeFormat(
+      lang === "fa" ? "fa-IR" : "en-US",
+      range === "1d"
+        ? { hour: "2-digit", minute: "2-digit" }
         : { dateStyle: "medium" },
     ).format(new Date(timestamp));
   if (!coin) return <Navigate to="/" replace />;
@@ -348,7 +357,10 @@ export function CoinDetailPage() {
                 <button
                   key={value}
                   className={`rounded px-2 py-1.25 text-[12px] ${range === value ? "bg-accent-soft text-ink" : "text-muted"}`}
-                  onClick={() => setRange(value)}
+                  onClick={() => {
+                    setHoveredPointIndex(null);
+                    setRange(value);
+                  }}
                 >
                   {label}
                 </button>
@@ -366,7 +378,10 @@ export function CoinDetailPage() {
               <button
                 key={type}
                 className={`rounded-md px-3 py-1.5 text-[13px] ${chartType === type ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
-                onClick={() => setChartType(type)}
+                onClick={() => {
+                  setHoveredPointIndex(null);
+                  setChartType(type);
+                }}
               >
                 {label}
               </button>
@@ -390,16 +405,43 @@ export function CoinDetailPage() {
             </p>
           ) : (
             <>
-              <div className="relative mt-5.5 pe-12.5">
-                <Sparkline
-                  data={chartValues}
-                  timestamps={chartPoints.map((point) => point.timestamp)}
-                  positive={chartPositive}
-                  showGrid
-                  label={`${coin.name} ${chartType === "prices" ? t.detail.chartPrices : chartType === "total_volumes" ? t.detail.chartVolumes : t.detail.chartMarketCaps}`}
-                  className="h-62.5"
-                />
-                <div className="absolute inset-y-0 inset-e-0 flex flex-col justify-between text-end text-[9px] text-muted">
+              <div className="mt-10 flex gap-3">
+                <div
+                  className="relative min-w-0 flex-1 cursor-crosshair"
+                  onPointerMove={(event) => {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const progress = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+                    const first = chartPoints[0].timestamp;
+                    const last = chartPoints[chartPoints.length - 1].timestamp;
+                    const target = first + progress * (last - first);
+                    let nearest = 0;
+                    for (let i = 1; i < chartPoints.length; i++) {
+                      if (Math.abs(chartPoints[i].timestamp - target) < Math.abs(chartPoints[nearest].timestamp - target)) nearest = i;
+                    }
+                    setHoveredPointIndex(nearest);
+                  }}
+                  onPointerLeave={() => setHoveredPointIndex(null)}
+                >
+                  <Sparkline
+                    data={chartValues}
+                    timestamps={chartPoints.map((point) => point.timestamp)}
+                    positive={chartPositive}
+                    label={`${coin.name} ${chartType === "prices" ? t.detail.chartPrices : chartType === "total_volumes" ? t.detail.chartVolumes : t.detail.chartMarketCaps}`}
+                    className="h-95"
+                  />
+                  {hoveredPoint && (
+                    <div
+                      className="pointer-events-none absolute top-3 z-10 flex -translate-x-1/2 flex-col items-center whitespace-nowrap rounded-md border border-line bg-surface-2 px-3 py-2 text-[12px] shadow-(--shadow)"
+                      style={{
+                        left: `${Math.max(16, Math.min(84, chartPoints.length < 2 ? 50 : ((hoveredPoint.timestamp - chartPoints[0].timestamp) / (chartPoints[chartPoints.length - 1].timestamp - chartPoints[0].timestamp || 1)) * 100))}%`,
+                      }}
+                    >
+                      <span className="text-muted">{tooltipDate(hoveredPoint.timestamp)}</span>
+                      <strong>{chartFormat(hoveredPoint.value, lang)}</strong>
+                    </div>
+                  )}
+                </div>
+                <div className="flex w-17 shrink-0 flex-col justify-between text-end text-[9px] text-muted">
                   <span>{chartFormat(chartMax, lang)}</span>
                   <span>{chartFormat((chartMax + chartMin) / 2, lang)}</span>
                   <span>{chartFormat(chartMin, lang)}</span>

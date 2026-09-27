@@ -133,6 +133,7 @@ function buildCoin(seed: SeedCoin, rank: number): Coin {
   const circulatingSupply = Math.round((1_000_000 + rand() * 900_000_000) / (seed.price > 100 ? 50 : 1))
   const marketCap = seed.price * circulatingSupply
   const hasMax = rand() > 0.4
+  const maxSupply = hasMax ? Math.round(circulatingSupply * (1.05 + rand() * 0.8)) : null
   return {
     id: seed.symbol.toLowerCase(),
     rank,
@@ -146,7 +147,8 @@ function buildCoin(seed: SeedCoin, rank: number): Coin {
     marketCap,
     volume24h: marketCap * (0.03 + rand() * 0.22),
     circulatingSupply,
-    maxSupply: hasMax ? Math.round(circulatingSupply * (1.05 + rand() * 0.8)) : null,
+    maxSupply,
+    fully_diluted_valuation: maxSupply === null ? null : maxSupply * seed.price,
     allTimeHigh: seed.price * (1.2 + rand() * 2.5),
     allTimeLow: seed.price * (0.02 + rand() * 0.3),
     sparkline: buildSparkline(rand, change7d),
