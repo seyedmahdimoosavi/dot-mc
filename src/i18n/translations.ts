@@ -59,6 +59,23 @@ export interface Dictionary {
     nft: string
     layer1: string
   }
+  marketTabs: {
+    cryptocurrencies: string
+    exchanges: string
+  }
+  exchanges: {
+    title: string
+    subtitle: string
+    currency: string
+    exchange: string
+    type: string
+    fee: string
+    buy: string
+    sell: string
+    loading: string
+    empty: string
+    error: string
+  }
   table: {
     sectionEyebrow: string
     sectionTitle: string
@@ -213,6 +230,23 @@ export const dictionaries: Record<Language, Dictionary> = {
       nft: 'NFT',
       layer1: 'Layer 1',
     },
+    marketTabs: {
+      cryptocurrencies: 'Cryptocurrencies',
+      exchanges: 'Exchanges',
+    },
+    exchanges: {
+      title: 'Exchange prices',
+      subtitle: 'Compare live buy and sell prices across exchanges.',
+      currency: 'Currency',
+      exchange: 'Exchange',
+      type: 'Type',
+      fee: 'USDT fee',
+      buy: 'Buy price',
+      sell: 'Sell price',
+      loading: 'Loading exchange prices…',
+      empty: 'No exchange prices are available for this currency.',
+      error: 'Exchange data could not be loaded. Please try again.',
+    },
     table: {
       sectionEyebrow: 'Cryptocurrencies',
       sectionTitle: 'All Cryptocurrencies',
@@ -366,6 +400,23 @@ export const dictionaries: Record<Language, Dictionary> = {
       defi: 'دیفای',
       nft: 'NFT',
       layer1: 'لایه ۱',
+    },
+    marketTabs: {
+      cryptocurrencies: 'رمزارزها',
+      exchanges: 'صرافی‌ها',
+    },
+    exchanges: {
+      title: 'قیمت صرافی‌ها',
+      subtitle: 'قیمت‌های خرید و فروش لحظه‌ای صرافی‌ها را مقایسه کنید.',
+      currency: 'ارز',
+      exchange: 'صرافی',
+      type: 'نوع',
+      fee: 'کارمزد تتر',
+      buy: 'قیمت خرید',
+      sell: 'قیمت فروش',
+      loading: 'در حال دریافت قیمت صرافی‌ها…',
+      empty: 'برای این ارز قیمتی از صرافی‌ها موجود نیست.',
+      error: 'دریافت اطلاعات صرافی‌ها ناموفق بود. دوباره تلاش کنید.',
     },
     table: {
       sectionEyebrow: 'رمزارزها',

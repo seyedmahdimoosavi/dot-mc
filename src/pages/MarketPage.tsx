@@ -11,6 +11,7 @@ import {
 } from "../components/market/FilterTabs";
 import { CoinTable } from "../components/market/CoinTable";
 import { Pagination } from "../components/market/Pagination";
+import { ExchangesTable } from "../components/market/ExchangesTable";
 
 function sortCoins(coins: Coin[], mode: SortMode): Coin[] {
   const list = [...coins];
@@ -37,6 +38,7 @@ export function MarketPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState(20);
+  const [mainTab, setMainTab] = useState<"cryptocurrencies" | "exchanges">("cryptocurrencies");
 
   function updateSortMode(mode: SortMode) {
     setSortMode(mode);
@@ -76,32 +78,49 @@ export function MarketPage() {
       <Hero />
       <TrendingPanel />
       <section className="px-5 pb-21 pt-2.5 nav:px-7.5">
-        <div className="mb-5.5 flex flex-wrap items-end justify-between gap-5">
-          <div>
-            {/* <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-[.14em] text-gold">
-              {t.table.sectionEyebrow}
-            </p> */}
-            <h2 className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
-              {t.table.sectionTitle}
-            </h2>
+        <div className="mb-5.5 border-b border-line">
+          <div className="flex items-center gap-6">
+            {(["cryptocurrencies", "exchanges"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setMainTab(tab)}
+                className={`relative py-3 text-lg font-semibold transition-colors ${
+                  mainTab === tab
+                    ? "text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-gold after:content-['']"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {t.marketTabs[tab]}
+              </button>
+            ))}
           </div>
         </div>
-        <FilterTabs
-          sortMode={sortMode}
-          onSortMode={updateSortMode}
-          category={category}
-          onCategory={updateCategory}
-          query={query}
-          onQuery={updateQuery}
-        />
-        <CoinTable coins={pageCoins} />
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPage={setPage}
-          rows={rows}
-          onRows={updateRows}
-        />
+        {mainTab === "exchanges" ? (
+          <ExchangesTable />
+        ) : (
+          <>
+            <h2 className="mb-5.5 font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
+              {t.table.sectionTitle}
+            </h2>
+            <FilterTabs
+              sortMode={sortMode}
+              onSortMode={updateSortMode}
+              category={category}
+              onCategory={updateCategory}
+              query={query}
+              onQuery={updateQuery}
+            />
+            <CoinTable coins={pageCoins} />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPage={setPage}
+              rows={rows}
+              onRows={updateRows}
+            />
+          </>
+        )}
       </section>
     </main>
   );
