@@ -60,6 +60,8 @@ export default function useCoinMarketData(address: string | undefined) {
     enabled: Boolean(address),
     refetchInterval: POLL_INTERVAL,
     staleTime: POLL_INTERVAL,
+    gcTime: Infinity,
+    placeholderData: (previousData) => previousData,
     retry: false,
     queryFn: async () => {
       const res = await fetch(`${COIN_API_BASE_URL}/coins/${address}`);

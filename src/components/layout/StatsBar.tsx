@@ -1,6 +1,9 @@
 import { formatCompactUsd, formatPercent } from "../../lib/format";
-
-import { globalStats } from "../../lib/mockCoins";
+import { useBitcoin } from "@/hooks/useBitcoin";
+import {
+  useOrderBooks,
+  usePricingSymbols,
+} from "@/hooks/useExchangeMarketData";
 import { useI18n } from "../../i18n/I18nContext";
 
 function Sep() {
@@ -9,19 +12,37 @@ function Sep() {
 
 export function StatsBar() {
   const { t, lang } = useI18n();
+  const { coin: bitcoin } = useBitcoin();
+  const symbolsQuery = usePricingSymbols();
+  const orderBooksQuery = useOrderBooks("BTC", "USDT");
+  const fees = (orderBooksQuery.data ?? [])
+    .flatMap((orderBook) => [
+      orderBook.exchangeDetails.minMarketFeeForUSDT,
+      orderBook.exchangeDetails.maxMarketFeeForUSDT,
+    ])
+    .filter((fee): fee is number => fee !== null && Number.isFinite(fee));
+  const minFee = fees.length ? Math.min(...fees) : null;
+  const maxFee = fees.length ? Math.max(...fees) : null;
+  const formatFee = (fee: number | null) =>
+    fee === null
+      ? "—"
+      : `${new Intl.NumberFormat(lang === "fa" ? "fa-IR" : "en-US", {
+          maximumFractionDigits: 2,
+        }).format(fee)}%`;
+
   return (
     <div className="overflow-x-auto border-b border-line bg-surface">
-      <div className="mx-auto flex max-w-310 items-center gap-3.5 whitespace-nowrap px-6 py-2.5 text-[13px] text-muted justify-center">
+      <div className="mx-auto flex max-w-310 items-center justify-center gap-3.5 whitespace-nowrap px-6 py-2.5 text-[13px] text-muted">
         <span>
           <strong className="font-bold text-ink">
-            {globalStats.cryptoCount.toLocaleString()}
+            {symbolsQuery.data?.length?.toLocaleString() ?? "—"}
           </strong>{" "}
           {t.statsBar.cryptos}
         </span>
         <Sep />
         <span>
           <strong className="font-bold text-ink">
-            {globalStats.exchangeCount.toLocaleString()}
+            {orderBooksQuery.data?.length?.toLocaleString() ?? "—"}
           </strong>{" "}
           {t.statsBar.exchanges}
         </span>
@@ -29,34 +50,24 @@ export function StatsBar() {
         <span>
           {t.statsBar.marketCap}:{" "}
           <strong className="font-bold text-ink">
-            {formatCompactUsd(globalStats.totalMarketCap, lang)}
+            {bitcoin ? formatCompactUsd(bitcoin.marketCap, lang) : "—"}
           </strong>{" "}
           <em className="text-green not-italic">
-            {formatPercent(globalStats.marketCapChange24h, lang)}
+            {bitcoin ? formatPercent(bitcoin.change24h, lang) : "—"}
           </em>
         </span>
         <Sep />
         <span>
           {t.statsBar.volume24h}:{" "}
           <strong className="font-bold text-ink">
-            {formatCompactUsd(globalStats.totalVolume24h, lang)}
+            {bitcoin ? formatCompactUsd(bitcoin.volume24h, lang) : "—"}
           </strong>
         </span>
         <Sep />
         <span>
-          {t.statsBar.dominance}:{" "}
+          {t.statsBar.gas}:{" "}
           <strong className="font-bold text-ink">
-            BTC {globalStats.btcDominance.toFixed(1)}%
-          </strong>{" "}
-          <strong className="font-bold text-ink">
-            ETH {globalStats.ethDominance.toFixed(1)}%
-          </strong>
-        </span>
-        <Sep />
-        <span>
-          ⛽ {t.statsBar.gas}:{" "}
-          <strong className="font-bold text-ink">
-            {globalStats.gasGwei} Gwei
+            {formatFee(minFee)} – {formatFee(maxFee)}
           </strong>
         </span>
       </div>

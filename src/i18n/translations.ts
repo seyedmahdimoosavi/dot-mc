@@ -204,7 +204,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       marketCap: 'Market Cap',
       volume24h: '24h Vol',
       dominance: 'Dominance',
-      gas: 'Gas',
+      gas: 'BTC fee',
     },
     hero: {
       eyebrow: 'Live market pulse',
@@ -379,7 +379,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       marketCap: 'ارزش بازار',
       volume24h: 'حجم ۲۴ساعته',
       dominance: 'سهم بازار',
-      gas: 'کارمزد گس',
+      gas: 'کارمزد بیت‌کوین',
     },
     hero: {
       eyebrow: 'بازار رمزارزها در لحظه',

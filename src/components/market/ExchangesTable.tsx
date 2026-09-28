@@ -8,27 +8,11 @@ import {
 
 import { ShoppingCart } from "lucide-react";
 import { useI18n } from "../../i18n/I18nContext";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useOrderBooks, usePricingSymbols } from "@/hooks/useExchangeMarketData";
 
-const PRICING_API_BASE_URL = "https://pricing.dotone.online/api";
 const COIN_API_IMAGE_URL =
   import.meta.env.VITE_COIN_API_IMAGE_URL || "https://pricing.dotone.online";
-
-interface ExchangeDetails {
-  title: string;
-  logo: string | null;
-  type: string | null;
-  minMarketFeeForUSDT: number | null;
-  maxMarketFeeForUSDT: number | null;
-}
-
-interface OrderBook {
-  exchange: string;
-  buy: number | null;
-  sell: number | null;
-  exchangeDetails: ExchangeDetails;
-}
 
 function formatFee(value: number | null, lang: "en" | "fa") {
   if (value === null || !Number.isFinite(value)) return "—";
@@ -59,33 +43,8 @@ export function ExchangesTable() {
   const [symbol, setSymbol] = useState("BTC");
   const [pair, setPair] = useState<"USDT" | "TMN">("USDT");
 
-  const symbolsQuery = useQuery<string[]>({
-    queryKey: ["pricing-symbols"],
-    staleTime: 5 * 60_000,
-    retry: false,
-    queryFn: async () => {
-      const response = await fetch(`${PRICING_API_BASE_URL}/symbols`);
-      if (!response.ok) throw new Error("Could not load symbols.");
-      return response.json() as Promise<string[]>;
-    },
-  });
-
-  const orderBooksQuery = useQuery<OrderBook[]>({
-    queryKey: ["pricing-orderbooks", symbol, pair],
-    enabled: Boolean(symbol),
-    staleTime: 30_000,
-    refetchInterval: 120_000,
-    refetchIntervalInBackground: true,
-    retry: false,
-    queryFn: async () => {
-      const params = new URLSearchParams({ symbol, pair });
-      const response = await fetch(
-        `${PRICING_API_BASE_URL}/orderbooks?${params}`,
-      );
-      if (!response.ok) throw new Error("Could not load exchange prices.");
-      return response.json() as Promise<OrderBook[]>;
-    },
-  });
+  const symbolsQuery = usePricingSymbols();
+  const orderBooksQuery = useOrderBooks(symbol, pair);
 
   const symbols = (
     symbolsQuery.data?.length ? symbolsQuery.data : [symbol]

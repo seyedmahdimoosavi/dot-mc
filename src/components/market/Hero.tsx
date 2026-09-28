@@ -1,13 +1,17 @@
 import { formatCompactUsd, formatPercent } from "../../lib/format";
-import { globalStats, marketCapSeries } from "../../lib/mockCoins";
 
 import { Sparkline } from "../Sparkline";
 import { getOneMonthDateRange } from "@/hooks/lastMonthDate";
 import { useI18n } from "../../i18n/I18nContext";
+import { useBitcoin } from "@/hooks/useBitcoin";
+import { useCoinChart } from "@/hooks/useCoinChart";
 
 export function Hero() {
   const { t, lang } = useI18n();
+  const { coin: bitcoin } = useBitcoin();
+  const bitcoinChart = useCoinChart(bitcoin?.address, "market_caps", "30d");
   const { from, to } = getOneMonthDateRange();
+  const chartData = bitcoinChart.data?.map((point) => point.value) ?? [];
   return (
     <section className="grid gap-10 px-5 py-11 nav:grid-cols-[1fr_1.1fr] nav:items-center nav:gap-15 nav:px-7.5 nav:py-14">
       <div>
@@ -25,7 +29,7 @@ export function Hero() {
         <div className="flex flex-wrap gap-7.5">
           <div className="flex flex-col gap-0.5">
             <strong className="font-display text-lg font-bold">
-              {formatCompactUsd(globalStats.totalMarketCap, lang)}
+              {bitcoin ? formatCompactUsd(bitcoin.marketCap, lang) : "—"}
             </strong>
             <span className="text-[14px] text-muted">
               {t.hero.marketCapLabel}
@@ -33,13 +37,13 @@ export function Hero() {
           </div>
           <div className="flex flex-col gap-0.5">
             <strong className="font-display text-lg font-bold text-green">
-              {formatPercent(globalStats.marketCapChange24h, lang)}
+              {bitcoin ? formatPercent(bitcoin.change24h, lang) : "—"}
             </strong>
             <span className="text-[14px] text-muted">{t.hero.changeLabel}</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <strong className="font-display text-lg font-bold">
-              {formatCompactUsd(globalStats.totalVolume24h, lang)}
+              {bitcoin ? formatCompactUsd(bitcoin.volume24h, lang) : "—"}
             </strong>
             <span className="text-[14px] text-muted">{t.hero.volumeLabel}</span>
           </div>
@@ -50,7 +54,11 @@ export function Hero() {
           <span>{t.hero.chartTitle}</span>
           <strong className="font-medium">{t.hero.chartSubtitle}</strong>
         </div>
-        <Sparkline data={marketCapSeries} positive className="mt-5.5 h-55" />
+        <Sparkline
+          data={chartData}
+          positive={(bitcoin?.change24h ?? 0) >= 0}
+          className="mt-5.5 h-55"
+        />
         <div className="mt-0.5 flex justify-between text-[13px] text-muted">
           <span>{from}</span>
           <span>{to}</span>
