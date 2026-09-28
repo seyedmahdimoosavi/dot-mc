@@ -1,97 +1,650 @@
-## 1. Coverage and asset identity
+# DotMarket API Contract
 
-We need broad coverage of native coins and tokens, including assets on multiple networks and wrapped or bridged versions. For each asset, we need a persistent unique identifier, a stable page identifier, name, ticker symbol, logo, global market-cap rank, category memberships, and the date it was first listed or tracked. Ticker symbols alone are not unique identifiers. Please define what your listing date means.
+## 1. StatsBar
 
-We also need the supported network or networks and, for tokens, each network's contract address. Native coins may have no contract address. Please explain how you distinguish native, wrapped, bridged, and chain-specific assets and how you avoid duplicates. An English description is needed for the coin detail page; a Persian description, official website, and verified official links are useful if available. The current UI displays a verified badge, so we need an authenticity indicator only if it has a defensible source.
+Method: GET  
+Path: /market/stats
 
-Asset identity must remain consistent across lists, search, detail pages, and users' locally saved watchlists. Please describe how you handle asset renames, removals, network deployments, and changes to page identifiers.
+This endpoint provides the compact global market summary at the top of the page. The reference asset in this section is DOTO.
 
-## 2. Global market data: header and landing page
+Request parameters:
 
-The header statistics bar and landing-page hero need:
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| referenceSymbol | query | string | No | DOTO | DOTO |
+| quote | query | string | No | USD | USD |
+| feePair | query | string | No | USDT, TMN | USDT |
 
-- Total number of tracked cryptocurrencies and exchanges.
-- Total crypto market capitalization, its change over the previous 24 hours, and total 24-hour trading volume.
-- Bitcoin and Ethereum shares of total crypto market capitalization.
-- A historical total-market-capitalization series for the most recent **30 days**.
-- A network-specific gas-price estimate for the header, including the relevant network, if you cover network gas data.
+Response:
 
-The landing announcement also refers to the daily market movement. We need to select the display currency (USD initially), the chart period, and the network for a gas estimate. Please state how these aggregate figures are calculated, what markets they cover, and when they are updated.
+~~~json
+{
+  "data": {
+    "cryptoCount": 12548,
+    "exchangeCount": 178,
+    "marketCap": 145200000,
+    "marketCapChange24h": 3.81,
+    "volume24h": 8240000,
+    "fee": {
+      "min": 0.03,
+      "max": 0.35,
+      "pair": "USDT"
+    },
+    "referenceAsset": {
+      "id": "doto",
+      "slug": "dotone",
+      "name": "DotOne",
+      "symbol": "DOTO",
+      "price": 0.1452
+    },
+    "updatedAt": "2026-09-28T10:15:30.000Z",
+    "dataStatus": "live",
+    "staleAfterSeconds": 120
+  }
+}
+~~~
 
-## 3. Landing-page discovery tabs
+Field requirements:
 
-The landing page shows **six assets per tab** under Trending, Gainers, Losers, and Recently Added. Each card needs the asset's name, symbol, logo, current USD price, 24-hour percentage change, and recent price trend chart. We need an ordered selection for each tab:
+| Field | Unit | Type | Precision | Notes |
+| --- | --- | --- | --- | --- |
+| cryptoCount | count | integer | 0 | Total tracked assets. |
+| exchangeCount | count | integer | 0 | Total supported active exchanges. |
+| marketCap | USD | number or null | 2 decimal places | DOTO market capitalization. |
+| marketCapChange24h | percent | number or null | 4 decimal places | DOTO 24-hour market-cap or price change. |
+| volume24h | USD | number or null | 2 decimal places | DOTO 24-hour trading volume. |
+| fee.min, fee.max | percent | number or null | 4 decimal places | Minimum and maximum DOTO trading fee for the requested pair. |
+| updatedAt | UTC timestamp | string | milliseconds | Time at which the data was last updated. |
 
-| Tab | Data or selection rule needed |
+If any numeric value is unavailable, return null. If the last available value is older than staleAfterSeconds, return it with dataStatus set to stale.
+
+## 2. Hero
+
+Method: GET  
+Path: /market/hero
+
+This endpoint provides the DOTO information and historical market-cap chart displayed in the Hero section.
+
+Request parameters:
+
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| symbol | query | string | No | DOTO | DOTO |
+| quote | query | string | No | USD | USD |
+| range | query | string | No | 30d | 30d |
+
+Response:
+
+~~~json
+{
+  "data": {
+    "asset": {
+      "id": "doto",
+      "slug": "dotone",
+      "name": "DotOne",
+      "symbol": "DOTO",
+      "logo": "/assets/doto.png",
+      "price": 0.1452,
+      "change24h": 3.81,
+      "marketCap": 145200000,
+      "volume24h": 8240000,
+      "updatedAt": "2026-09-28T10:15:30.000Z",
+      "dataStatus": "live",
+      "staleAfterSeconds": 120
+    },
+    "chart": {
+      "type": "prices",
+      "range": "30d",
+      "quote": "USD",
+      "points": [
+        {
+          "timestamp": 1756512000000,
+          "value": 129700000
+        },
+        {
+          "timestamp": 1759017600000,
+          "value": 145200000
+        }
+      ],
+      "updatedAt": "2026-09-28T10:15:30.000Z",
+      "dataStatus": "live",
+      "staleAfterSeconds": 3600
+    }
+  }
+}
+~~~
+
+Hero chart rules:
+
+| Field | Requirement |
 | --- | --- |
-| Trending | A genuine, documented measure of interest or activity and its observation period. Please distinguish searches/views from trading-based popularity. |
-| Gainers | Largest positive 24-hour price changes among eligible, sufficiently liquid assets. |
-| Losers | Largest negative 24-hour price changes among eligible, sufficiently liquid assets. |
-| Recently Added | Most recently listed or tracked assets, ordered by actual listing date. |
+| type | prices |
+| range | 30d |
+| quote | USD |
+| timestamp | Unix time in milliseconds, ascending order |
+| value | DOTO market-cap value in USD |
+| minimum points | At least 2 when data is available |
 
-We need to select the tab, result count, observation period where relevant, and display currency. Please explain liquidity thresholds, exclusions, stale-price handling, and whether stable coins are eligible. Trending currently uses a volume-to-market-cap approximation in the demo, and Recently Added uses rank as a placeholder; neither represents the intended final data.
+If historical data is unavailable, return an empty points array and chart.dataStatus as unavailable. Do not return synthetic or zero-valued points.
 
-## 4. All Cryptocurrencies: categories, search, sorting, and pages
+## 3. TrendingPanel
 
-The landing page has an **All Cryptocurrencies** table. Its visible data for each asset is:
+Method: GET  
+Path: /market/discovery
 
-- Global rank; name, ticker symbol, logo, and contract address when applicable.
-- Current USD price and percentage price changes over **1 hour, 24 hours, and 7 days**.
-- Market capitalization, 24-hour trading volume, and circulating supply.
-- A **7-day price trend** for the small chart in each row.
+This endpoint provides the six cards (minimum) shown in each discovery tab: Trending, Gainers, Losers, and Recently Added.
 
-The table allows **10, 20, 50, or 100 rows per page**. We need the total matching asset count and access to the complete matching list. Filtering and sorting must work across all matching assets, not only the currently visible page.
+Request parameters:
 
-Users filter by **All, DeFi, NFT, and Layer 1**. An asset may belong to multiple categories. Please supply maintained category definitions and membership; other available categories, such as stablecoin, meme, exchange token, and smart contracts, are useful. Here NFT means cryptocurrency tokens associated with the NFT sector; individual NFT collections are outside the current table.
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| tab | query | string | Yes | trending, gainers, losers, recentlyAdded | — |
+| quote | query | string | No | USD | USD |
+| limit | query | integer | No | 1 to 100 | 6 |
 
-Users search by coin name or symbol. The header shows up to **six matches**, each needing a name, symbol, logo, and linkable asset identifier. Searching by network and contract address would be useful. Category, search phrase, sorting, and page size should be usable together.
+Response:
 
-| Table view | Selection or ordering needed |
+~~~json
+{
+  "data": [
+    {
+      "id": "doto",
+      "rank": 1,
+      "name": "DotOne",
+      "symbol": "DOTO",
+      "slug": "dotone",
+      "price": 0.1452,
+      "change24h": 3.81,
+      "marketCap": 145200000,
+      "volume24h": 8240000,
+      "sparkline": [0.121, 0.124, 0.119, 0.131, 0.138, 0.1452],
+      "color": "#365C74",
+      "logo": "/assets/doto.png",
+      "address": "0x0000000000000000000000000000000000000000",
+      "categories": ["defi", "layer1"],
+      "updatedAt": "2026-09-28T10:15:30.000Z",
+      "dataStatus": "live",
+      "staleAfterSeconds": 120
+    }
+  ]
+}
+~~~
+
+The returned array must be ordered according to the requested tab:
+
+| tab | Required order |
 | --- | --- |
-| Top | Market-cap ranking. |
-| Trending | The same documented popularity/activity definition used in discovery, if possible. |
-| Gainers & Losers | Largest absolute 24-hour percentage moves, in either direction. |
-| Recently Added | Most recent actual listing/tracking dates. |
-| Most Visited | Real view or interest ranking with an observation period. If unavailable, we will rename this view to a metric you do provide. |
+| trending | Provider trending/activity ranking, highest first. |
+| gainers | Highest positive 24-hour percentage change first. |
+| losers | Lowest negative 24-hour percentage change first. |
+| recentlyAdded | Most recent listing/tracking date first. |
 
-For the coin list, we therefore need to specify the category, search phrase, desired ordering, page and page size, and display currency. Please confirm which combinations you support. A dataset limited to a few leading coins would not provide accurate filtering, rankings, or pagination.
+The same category filter used on the cryptocurrency page must be accepted for this endpoint.
 
-## 5. Coin detail: identity, price, statistics, and content
+## 4. All Cryptocurrencies
 
-Users reach a coin detail page using the asset's page identifier. It needs the same identity and current market data as the table, plus:
+Method: GET  
+Path: /assets
 
-- Market-cap rank, categories, supported networks, and the appropriate contract address or addresses for tokens. Each address must be attributable to its network; native coins must be distinguishable from tokens.
-- Current USD price and 24-hour percentage change, market capitalization, and 24-hour trading volume.
-- Circulating supply, total supply if available, maximum supply or a distinction between unknown and uncapped supply, and fully diluted valuation.
-- All-time-high and all-time-low prices, preferably with their dates. The 24-hour high and low are useful additional statistics.
-- An accurate coin description or about text, preferably with a source, and any supported authenticity/verification status.
-- The time at which prices and statistics were last updated.
+This is the complete data source for the cryptocurrency table. Each returned item must contain all data needed for one table row. No per-row API request is required after this response.
 
-To select an asset, we need its stable identifier or page identifier. If your service identifies tokens by contract, the network must also be selectable. We initially need USD prices. Please explain the treatment and calculation of missing supply, valuation, and historical-high/low figures.
+Request parameters:
 
-### Price chart
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| category | query | string | No | all, defi, nft, layer1 | all |
+| search | query | string | No | Coin name or symbol | null |
+| sort | query | string | No | top, trending, gainersLosers, recentlyAdded, mostVisited | top |
+| page | query | integer | No | 1 or greater | 1 |
+| pageSize | query | integer | No | 10, 20, 50, 100 | 20 |
+| quote | query | string | No | USD/TMN | USD |
 
-The detail page offers **1 hour, 1 day, 1 week, 1 month, 1 year, and all available history**. Each period needs a real historical USD price series with enough observations for a useful chart. We need to select the coin, period, and display currency. Please describe historical coverage, sampling frequency, earliest available date, and limits. The demo currently shows the same generated trend regardless of the selected period.
+Response:
 
-### Markets tab
+~~~json
+{
+  "data": [
+    {
+      "id": "doto",
+      "rank": 125,
+      "name": "DotOne",
+      "symbol": "DOTO",
+      "slug": "dotone",
+      "price": 0.1452,
+      "change1h": 0.42,
+      "change24h": 3.81,
+      "change7d": 12.64,
+      "marketCap": 145200000,
+      "volume24h": 8240000,
+      "circulatingSupply": 1000000000,
+      "maxSupply": 2000000000,
+      "fully_diluted_valuation": 290400000,
+      "allTimeHigh": 0.64,
+      "allTimeLow": 0.031,
+      "sparkline": [0.121, 0.124, 0.119, 0.131, 0.138, 0.1452],
+      "color": "#365C74",
+      "logo": "/assets/doto.png",
+      "address": "0x0000000000000000000000000000000000000000",
+      "categories": ["defi", "layer1"],
+      "listedAt": "2026-01-15T00:00:00.000Z",
+      "updatedAt": "2026-09-28T10:15:30.000Z",
+      "dataStatus": "live",
+      "staleAfterSeconds": 120
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 12548,
+    "totalPages": 628
+  }
+}
+~~~
 
-For each coin, we need genuine trading markets: **one entry per exchange and trading pair**, rather than the coin's aggregate market statistics. Useful information for each entry includes:
+Each asset item has the following role in the table:
 
-- Exchange or venue name and identity; centralized exchange or DEX classification; venue logo or market link if available.
-- Base and quote assets and the trading pair; relevant network and pool for DEX markets.
-- Pair price with a USD equivalent, pair-level 24-hour trading volume, and last update time.
-- Whether the market is active; liquidity or trust/quality information if available.
+| Field | Table use | Unit / precision |
+| --- | --- | --- |
+| rank | Rank column | Integer |
+| name, symbol, logo, address | Coin identity column | Symbol is uppercase; address may be null only for native coins |
+| slug | Link to coin-detail page | Stable URL-safe identifier |
+| price | Price column | USD, up to 12 fractional digits |
+| change1h, change24h, change7d | Percentage change columns | Percent, up to 4 fractional digits |
+| marketCap | Market Cap column | USD, up to 2 fractional digits |
+| volume24h | Volume 24h column | USD, up to 2 fractional digits |
+| circulatingSupply | Circulating Supply column | Token units, up to 8 fractional digits |
+| sparkline | Last 7 Days chart | Numeric price values, oldest to newest |
+| categories | Category filters | Lowercase canonical values |
+| listedAt | Recently Added ordering | ISO 8601 UTC timestamp |
 
-We need to select the coin, market type (spot initially, derivatives if offered later), and page/page size when there are many pairs. Please describe exchange and DEX coverage, inactive or duplicate pair treatment, and how pair volume differs from an asset's total volume. The current Markets tab contains only a placeholder row.
+List behavior:
 
-## 6. Data quality and provider information requested
+- category, search, and sort are applied before pagination.
+- search matches name and symbol case-insensitively.
+- top is market-cap order, highest first.
+- trending uses the provider trending/activity ranking.
+- gainersLosers orders by absolute change24h, highest first.
+- recentlyAdded orders by listedAt, newest first.
+- mostVisited uses a provider visit/interest ranking.
+- Numeric values that are not available must be null. A valid zero stays zero.
+- sparkline must be an empty array when history is unavailable, never an array of zero placeholders.
 
-Please indicate which requirements you can supply now, which are planned, and which are unavailable. For our assessment, please provide:
+## 4.1 Header asset search
 
-- Coverage by asset, network, exchange, and market type; methods for price aggregation, market cap, volume, category assignment, and discovery rankings.
-- Typical update intervals and delays for prices, changes, global figures, rankings, markets, and historical charts. A partial live-data integration currently refreshes some coin quotes every **30 seconds**; please indicate whether this cadence is feasible.
-- Historical retention, accuracy, availability, and how unavailable or stale data is distinguished from genuine zero values.
-- Capacity and usage limits for lists of up to **100 coins with 7-day trends** and coin detail pages, plus pricing.
-- Rights to display and cache quotes, charts, descriptions, and logos on a public English/Persian website, including attribution requirements.
+Method: GET  
+Path: /assets/search
 
-Today much of the site uses generated sample data, while a separate address-based service updates some per-coin fields. We seek coherent real data across the sections above. Watchlist membership is saved locally in the user's browser and does not require a provider write service. The exchange directory, spot/derivatives/DEX discovery pages, portfolio, NFT collections, and trading actions are placeholder or future features; please describe and price any related data separately if available.
+This endpoint provides compact asset results for the global search field.
+
+Request parameters:
+
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| q | query | string | Yes | Minimum 1 character | — |
+| limit | query | integer | No | 1 to 20 | 6 |
+
+Response:
+
+~~~json
+{
+  "data": [
+    {
+      "id": "doto",
+      "slug": "dotone",
+      "name": "DotOne",
+      "symbol": "DOTO",
+      "logo": "/assets/doto.png",
+      "rank": 125
+    }
+  ]
+}
+~~~
+
+Search matches asset name and symbol case-insensitively. Results are ordered by the provider relevance score, then by market-cap rank.
+
+## 5. Exchanges
+
+## 5.1 Supported symbols
+
+Method: GET  
+Path: /symbols
+
+This endpoint provides the asset selector in the Exchanges section.
+
+Request parameters: none.
+
+Response:
+
+~~~json
+{
+  "data": ["ETH", "BTC", "DOTO", "USDT", "BNB", "USDC", "DOGE"],
+  "updatedAt": "2026-09-28T10:15:30.000Z",
+  "dataStatus": "live",
+  "staleAfterSeconds": 300
+}
+~~~
+
+Each symbol must be uppercase, canonical, and unique. The selected market base is excluded by the client from this list.
+
+## 5.2 Exchange price comparison
+
+Method: GET  
+Path: /orderbooks
+
+This endpoint provides every row of the exchange comparison table for the selected symbol and market base.
+
+Request parameters:
+
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| symbol | query | string | Yes | Any symbol returned by /symbols | — |
+| pair | query | string | Yes | USDT, TMN | — |
+
+Response:
+
+~~~json
+{
+  "data": [
+    {
+      "exchange": "example-exchange",
+      "buy": 84882.03,
+      "sell": 84865,
+      "updatedAt": "2026-09-28T10:15:30.000Z",
+      "isBestSell": true,
+      "isOld": false,
+      "exchangeDetails": {
+        "id": 36,
+        "title": "نام صرافی",
+        "logo": "/assets/example-exchange.png",
+        "type": "P2P and OTC",
+        "minMarketFeeForUSDT": 0.03,
+        "maxMarketFeeForUSDT": 0.35,
+        "minMarketFeeForTMN": 0.03,
+        "maxMarketFeeForTMN": 0.35,
+        "isActive": true
+      },
+      "dataStatus": "live",
+      "staleAfterSeconds": 120
+    }
+  ]
+}
+~~~
+
+Field requirements:
+
+| Field | Table use | Unit / precision |
+| --- | --- | --- |
+| exchange | English exchange name | String |
+| exchangeDetails.title | Persian exchange name | String |
+| exchangeDetails.logo | Exchange logo | Relative image path |
+| exchangeDetails.type | Exchange type | String |
+| minMarketFeeForUSDT, maxMarketFeeForUSDT | USDT fee columns | Percent, up to 4 fractional digits |
+| minMarketFeeForTMN, maxMarketFeeForTMN | TMN fee columns | Percent, up to 4 fractional digits |
+| buy, sell | Buy and sell columns | Selected pair currency; up to 12 fractional digits |
+| updatedAt, isOld | Freshness display | UTC timestamp and boolean |
+| exchangeDetails.isActive | Exchange availability | Boolean |
+
+Rules:
+
+- buy and sell are null when an active price cannot be provided.
+- Fee fields for the selected pair must be populated when available; otherwise return null.
+- isOld is true when updatedAt is older than staleAfterSeconds.
+- An unsupported symbol or pair returns 422 UNSUPPORTED_MARKET.
+- A supported market with no exchange results returns an empty data array.
+
+## 6. Coin Detail
+
+## 6.1 Coin information and live market data
+
+Method: GET  
+Path: /coins/{address}
+
+This endpoint provides all identity, pricing, statistics, supply, network, and link data shown on the coin-detail page.
+
+Request parameters:
+
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| address | path | string | Yes | Asset lookup address | — |
+| quote | query | string | No | USD | USD |
+| language | query | string | No | en, fa | en |
+
+Response:
+
+~~~json
+{
+  "name": "DotOne",
+  "symbol": "DOTO",
+  "image": {
+    "thumb": "/assets/doto-thumb.png",
+    "small": "/assets/doto-small.png",
+    "large": "/assets/doto.png"
+  },
+  "market_cap_rank": 125,
+  "total_supply": 1500000000,
+  "max_supply": 2000000000,
+  "circulating_supply": 1000000000,
+  "market_cap": 145200000,
+  "current_price": 0.1452,
+  "fully_diluted_valuation": 290400000,
+  "total_volume": 8240000,
+  "high_24h": 0.1481,
+  "low_24h": 0.1374,
+  "price_change_24h": 0.0053,
+  "price_change_percentage_24h": 3.81,
+  "price_change_24h_in_currency": 0.0053,
+  "market_cap_change_24h": 5320000,
+  "market_cap_change_24h_in_currency": 5320000,
+  "market_cap_change_percentage_24h": 3.81,
+  "ath": 0.64,
+  "ath_date": "2026-05-09T08:00:00.000Z",
+  "atl": 0.031,
+  "atl_date": "2026-01-16T10:00:00.000Z",
+  "asset_platform_id": "ethereum",
+  "contract_address": "0x0000000000000000000000000000000000000000",
+  "decimal_place": 18,
+  "genesis_date": null,
+  "block_time_in_minutes": null,
+  "last_updated": "2026-09-28T10:15:30.000Z",
+  "verified": true,
+  "categories": ["defi", "layer1"],
+  "description": {
+    "en": "DotOne is a digital asset used in the DotOne ecosystem.",
+    "fa": "دات‌وان یک دارایی دیجیتال در اکوسیستم دات‌وان است."
+  },
+  "links": {
+    "homepage": ["https://dotone.example"],
+    "whitepaper": "https://dotone.example/whitepaper",
+    "blockchain_site": ["https://etherscan.io"],
+    "official_forum_url": [],
+    "chat_url": ["https://t.me/dotone"],
+    "announcement_url": [],
+    "snapshot_url": null,
+    "twitter_screen_name": "dotone",
+    "facebook_username": null,
+    "telegram_channel_identifier": "dotone",
+    "subreddit_url": null,
+    "bitcointalk_thread_identifier": null,
+    "repos_url": {
+      "github": ["https://github.com/dotone"],
+      "bitbucket": []
+    }
+  },
+  "dataStatus": "live",
+  "staleAfterSeconds": 120
+}
+~~~
+
+Detail data requirements:
+
+| Group | Required fields |
+| --- | --- |
+| Identity | name, symbol, image, verified, categories |
+| Current market data | current_price, price_change_24h, price_change_percentage_24h, market_cap_rank, market_cap, total_volume |
+| 24-hour statistics | high_24h, low_24h, market_cap_change_24h, market_cap_change_percentage_24h |
+| Supply and valuation | circulating_supply, total_supply, max_supply, fully_diluted_valuation |
+| Historical extremes | ath, ath_date, atl, atl_date |
+| Technical data | asset_platform_id, contract_address, decimal_place, genesis_date, block_time_in_minutes |
+| Descriptions and links | description and links |
+| Freshness | last_updated, dataStatus, staleAfterSeconds |
+
+All unavailable scalar values must be null. Unavailable link groups must be empty arrays or null, according to the example shape.
+
+## 6.2 Coin charts
+
+Method: GET  
+Path: /charts/{address}/{type}/{days}
+
+This endpoint provides the selected historical chart for a coin.
+
+Request parameters:
+
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| address | path | string | Yes | Asset lookup address | — |
+| type | path | string | Yes | prices, market_caps, total_volumes | — |
+| days | path | integer | Yes | 1, 7, 30, 90, 365 | — |
+| quote | query | string | No | USD | USD |
+
+Response:
+
+~~~json
+[
+  [1759017600000, 0.121],
+  [1759021200000, 0.123],
+  [1759024800000, 0.1452]
+]
+~~~
+
+Chart requirements:
+
+| days | Maximum point interval | Required use |
+| --- | --- | --- |
+| 1 | 5 minutes | One-day chart |
+| 7 | 1 hour | Seven-day chart |
+| 30 | 4 hours | Thirty-day chart |
+| 90 | 12 hours | Ninety-day chart |
+| 365 | 1 day | One-year chart |
+
+| Array item | Meaning |
+| --- | --- |
+| First item | Unix timestamp in milliseconds |
+| Second item | Numeric value for the requested type and quote |
+
+Rules:
+
+- Values are ordered from oldest to newest.
+- prices values use USD price precision of up to 12 fractional digits.
+- market_caps and total_volumes values use USD precision of up to 2 fractional digits.
+- If there is no history for the selected type/range, return an empty array.
+- Never use zero as a replacement for a missing chart point.
+
+## 6.3 Coin Markets
+
+Method: GET  
+Path: /coins/{address}/markets
+
+This endpoint provides exchange and pair data for the Markets tab on the coin-detail page.
+
+Request parameters:
+
+| Parameter | Location | Type | Required | Allowed values | Default |
+| --- | --- | --- | --- | --- | --- |
+| address | path | string | Yes | Asset lookup address | — |
+| marketType | query | string | No | spot, derivatives, dex | spot |
+| quote | query | string | No | Any supported quote symbol | null |
+| search | query | string | No | Exchange name or pair | null |
+| page | query | integer | No | 1 or greater | 1 |
+| pageSize | query | integer | No | 10, 20, 50, 100 | 20 |
+
+Response:
+
+~~~json
+{
+  "data": [
+    {
+      "exchange": {
+        "id": "example-exchange",
+        "name": "Example Exchange",
+        "localizedName": "نام صرافی",
+        "logo": "/assets/example-exchange.png",
+        "type": "spot",
+        "marketUrl": "https://example-exchange.com",
+        "isActive": true
+      },
+      "base": {
+        "id": "doto",
+        "symbol": "DOTO"
+      },
+      "quote": {
+        "symbol": "USDT"
+      },
+      "pair": "DOTO/USDT",
+      "marketType": "spot",
+      "price": 0.1452,
+      "priceUsd": 0.1452,
+      "volume24h": 127500,
+      "liquidityScore": 82.4,
+      "updatedAt": "2026-09-28T10:15:30.000Z",
+      "dataStatus": "live",
+      "staleAfterSeconds": 120
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 18,
+    "totalPages": 1
+  }
+}
+~~~
+
+Rules:
+
+- One item represents one exchange and one trading pair.
+- Pair price is in the quote currency. priceUsd is always USD.
+- DEX markets must include network and pool identifiers when applicable.
+- Inactive markets have exchange.isActive set to false and unavailable numeric values set to null.
+- search matches exchange name, localized name, and pair.
+
+## 7. Error response
+
+All non-success responses use this format:
+
+~~~json
+{
+  "error": {
+    "code": "ASSET_NOT_FOUND",
+    "message": "No asset was found for the requested address.",
+    "details": {
+      "address": "0x0000000000000000000000000000000000000000"
+    },
+    "requestId": "req_01J8M6H2X4"
+  }
+}
+~~~
+
+| HTTP status | Error code | Usage |
+| --- | --- | --- |
+| 400 | INVALID_REQUEST | Missing or invalid request parameter. |
+| 404 | ASSET_NOT_FOUND | Asset, address, or slug does not exist. |
+| 404 | MARKET_NOT_FOUND | Requested market or chart does not exist. |
+| 422 | UNSUPPORTED_MARKET | Symbol, pair, quote, chart type, or range is not supported. |
+| 429 | RATE_LIMITED | Request limit exceeded. |
+| 500 | INTERNAL_ERROR | Unexpected server error. |
+| 503 | DATA_PROVIDER_UNAVAILABLE | Upstream data source is unavailable. |
+
+## 8. Endpoint summary
+
+| Page or feature | Method | Path |
+| --- | --- | --- |
+| StatsBar | GET | /market/stats |
+| Hero | GET | /market/hero |
+| Trending, Gainers, Losers, Recently Added | GET | /market/discovery |
+| All Cryptocurrencies table | GET | /assets |
+| Header asset search | GET | /assets/search |
+| Exchange currency selector | GET | /symbols |
+| Exchange comparison table | GET | /orderbooks |
+| Coin detail | GET | /coins/{address} |
+| Coin price, market-cap, and volume charts | GET | /charts/{address}/{type}/{days} |
+| Coin Markets tab | GET | /coins/{address}/markets |
