@@ -12,8 +12,8 @@ import { CoinName } from "../CoinName";
 import { Icon } from "../icons/Icon";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
-import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useI18n } from "../../i18n/I18nContext";
+import { useLiveCoin } from "@/hooks/useLiveCoin";
 import { useState } from "react";
 import { useWatchlist } from "../../lib/WatchlistContext";
 
@@ -26,9 +26,12 @@ function Change({ value, lang }: { value: number; lang: "en" | "fa" }) {
 }
 
 const th =
-  "whitespace-nowrap px-2.5 py-4 text-left text-[14px] font-medium uppercase tracking-[.04em] text-muted";
+  "whitespace-nowrap px-2.5 py-4 text-[14px] font-medium uppercase tracking-[.04em] text-muted";
 
 const td = "whitespace-nowrap border-t border-line px-2.5 py-3.5 text-[14px]";
+const start = "text-start";
+const middle = "text-center";
+const end = "text-end";
 
 type CoinRowProps = {
   coin: Coin;
@@ -38,7 +41,13 @@ type CoinRowProps = {
   index: number;
 };
 
-function CoinRow({ coin: baseCoin, isWatched, toggle, lang, index }: CoinRowProps) {
+function CoinRow({
+  coin: baseCoin,
+  isWatched,
+  toggle,
+  lang,
+  index,
+}: CoinRowProps) {
   const { coin, isLoading: isPriceLoading } = useLiveCoin(baseCoin);
 
   /*
@@ -70,7 +79,7 @@ function CoinRow({ coin: baseCoin, isWatched, toggle, lang, index }: CoinRowProp
   return (
     <tr className="group hover:bg-surface">
       {/* Rank */}
-      <td className={`${td} text-muted`}>
+      <td className={`${td} ${start} text-muted`}>
         <div className="flex en items-center gap-1.5">
           <button
             className={`grid place-items-center p-0 ${
@@ -87,9 +96,9 @@ function CoinRow({ coin: baseCoin, isWatched, toggle, lang, index }: CoinRowProp
       </td>
 
       {/* Token */}
-      <td className={td}>
+      <td className={`${td} ${middle}`}>
         <Link
-          className="flex min-w-0 items-start gap-2.75"
+          className="flex min-w-0 items-start gap-1.5"
           to={`/currencies/${coin.slug}`}
         >
           <CoinIcon coin={coin} />
@@ -135,7 +144,7 @@ function CoinRow({ coin: baseCoin, isWatched, toggle, lang, index }: CoinRowProp
       </td>
 
       {/* Price */}
-      <td className={`${td} font-semibold`}>
+      <td className={`${td} ${middle} font-semibold`}>
         {isPriceLoading ? (
           <span className="text-muted">...</span>
         ) : (
@@ -144,33 +153,37 @@ function CoinRow({ coin: baseCoin, isWatched, toggle, lang, index }: CoinRowProp
       </td>
 
       {/* 1h */}
-      <td className={td}>
+      <td className={`${td} ${middle}`}>
         <Change value={coin.change1h} lang={lang} />
       </td>
 
       {/* 24h */}
-      <td className={td}>
+      <td className={`${td} ${middle}`}>
         <Change value={coin.change24h} lang={lang} />
       </td>
 
       {/* 7d */}
-      <td className={td}>
+      <td className={`${td} ${middle}`}>
         <Change value={coin.change7d} lang={lang} />
       </td>
 
       {/* Market Cap */}
-      <td className={td}>{formatCompactUsd(coin.marketCap, lang)}</td>
+      <td className={`${td} ${middle}`}>
+        {formatCompactUsd(coin.marketCap, lang)}
+      </td>
 
       {/* Volume 24h */}
-      <td className={td}>{formatCompactUsd(coin.volume24h, lang)}</td>
+      <td className={`${td} ${middle}`}>
+        {formatCompactUsd(coin.volume24h, lang)}
+      </td>
 
       {/* Circulating Supply */}
-      <td className={td}>
+      <td className={`${td} ${middle}`}>
         {formatCompactNumber(coin.circulatingSupply, lang)} {coin.symbol}
       </td>
 
       {/* Sparkline (7d) */}
-      <td className={`${td} w-25`}>
+      <td className={`${td} ${end} w-25`}>
         <Sparkline
           data={coin.sparkline}
           positive={coin.change7d >= 0}
@@ -198,25 +211,25 @@ export function CoinTable({ coins }: { coins: Coin[] }) {
       <table className="w-full min-w-300 border-collapse text-md">
         <thead>
           <tr>
-            <th className={th}>{t.table.rank}</th>
+            <th className={`${th} ${start}`}>{t.table.rank}</th>
 
-            <th className={th}>{t.table.name}</th>
+            <th className={`${th} ${middle}`}>{t.table.name}</th>
 
-            <th className={`${th} text-center`}>{t.table.price}</th>
+            <th className={`${th} ${middle}`}>{t.table.price}</th>
 
-            <th className={th}>{t.table.change1h}</th>
+            <th className={`${th} ${middle}`}>{t.table.change1h}</th>
 
-            <th className={th}>{t.table.change24h}</th>
+            <th className={`${th} ${middle}`}>{t.table.change24h}</th>
 
-            <th className={th}>{t.table.change7d}</th>
+            <th className={`${th} ${middle}`}>{t.table.change7d}</th>
 
-            <th className={th}>{t.table.marketCap}</th>
+            <th className={`${th} ${middle}`}>{t.table.marketCap}</th>
 
-            <th className={th}>{t.table.volume24h}</th>
+            <th className={`${th} ${middle}`}>{t.table.volume24h}</th>
 
-            <th className={th}>{t.table.circulatingSupply}</th>
+            <th className={`${th} ${middle}`}>{t.table.circulatingSupply}</th>
 
-            <th className={th}>{t.table.last7d}</th>
+            <th className={`${th} ${end}`}>{t.table.last7d}</th>
           </tr>
         </thead>
 

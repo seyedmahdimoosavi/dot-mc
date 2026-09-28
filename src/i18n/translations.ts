@@ -67,11 +67,15 @@ export interface Dictionary {
     title: string
     subtitle: string
     currency: string
+    marketBase: string
     exchange: string
     type: string
     fee: string
+    minFee: string
+    maxFee: string
     buy: string
     sell: string
+    actions: string
     loading: string
     empty: string
     error: string
@@ -238,11 +242,15 @@ export const dictionaries: Record<Language, Dictionary> = {
       title: 'Exchange prices',
       subtitle: 'Compare live buy and sell prices across exchanges.',
       currency: 'Currency',
+      marketBase: 'Market base',
       exchange: 'Exchange',
       type: 'Type',
       fee: 'USDT fee',
+      minFee: 'Min fee',
+      maxFee: 'Max fee',
       buy: 'Buy price',
       sell: 'Sell price',
+      actions: 'Actions',
       loading: 'Loading exchange prices…',
       empty: 'No exchange prices are available for this currency.',
       error: 'Exchange data could not be loaded. Please try again.',
@@ -409,11 +417,15 @@ export const dictionaries: Record<Language, Dictionary> = {
       title: 'قیمت صرافی‌ها',
       subtitle: 'قیمت‌های خرید و فروش لحظه‌ای صرافی‌ها را مقایسه کنید.',
       currency: 'ارز',
+      marketBase: 'پایه بازار',
       exchange: 'صرافی',
       type: 'نوع',
       fee: 'کارمزد تتر',
+      minFee: 'کمترین کارمزد ',
+      maxFee: 'بیشترین کارمزد ',
       buy: 'قیمت خرید',
       sell: 'قیمت فروش',
+      actions: 'عملیات',
       loading: 'در حال دریافت قیمت صرافی‌ها…',
       empty: 'برای این ارز قیمتی از صرافی‌ها موجود نیست.',
       error: 'دریافت اطلاعات صرافی‌ها ناموفق بود. دوباره تلاش کنید.',
