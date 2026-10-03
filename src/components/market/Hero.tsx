@@ -2,16 +2,14 @@ import { formatCompactUsd, formatPercent } from "../../lib/format";
 
 import { Sparkline } from "../Sparkline";
 import { getOneMonthDateRange } from "@/hooks/lastMonthDate";
-import { useI18n } from "../../i18n/I18nContext";
 import { useBitcoin } from "@/hooks/useBitcoin";
-import { useCoinChart } from "@/hooks/useCoinChart";
+import { useI18n } from "../../i18n/I18nContext";
 
 export function Hero() {
   const { t, lang } = useI18n();
   const { coin: bitcoin } = useBitcoin();
-  const bitcoinChart = useCoinChart(bitcoin?.address, "market_caps", "30d");
   const { from, to } = getOneMonthDateRange();
-  const chartData = bitcoinChart.data?.map((point) => point.value) ?? [];
+  const chartData = bitcoin?.sparkline ?? [];
   return (
     <section className="grid gap-10 px-5 py-11 nav:grid-cols-[1fr_1.1fr] nav:items-center nav:gap-15 nav:px-7.5 nav:py-14">
       <div>
