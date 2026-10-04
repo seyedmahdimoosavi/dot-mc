@@ -23,12 +23,43 @@ const NAV_KEYS = [
   "products",
 ] as const;
 
+type NavigationLink = {
+  label: string;
+  href: string;
+  external?: boolean;
+};
+
+function externalNavigationLinks(lang: "en" | "fa"): Partial<
+  Record<(typeof NAV_KEYS)[number], NavigationLink[]>
+> {
+  const fa = lang === "fa";
+  return {
+  exchanges: [
+    { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online", external: true },
+    { label: fa ? "وضعیت شبکه" : "Network Status", href: "https://dotscan.one/stats", external: true },
+  ],
+  community: [
+    { label: fa ? "یوتیوب" : "YouTube", href: "https://m.youtube.com/@DOTO_coin", external: true },
+    { label: fa ? "مدیوم" : "Medium", href: "https://medium.com/@dotone.online", external: true },
+    { label: fa ? "ایکس" : "X", href: "https://x.com/dotonenetwork", external: true },
+    { label: fa ? "اینستاگرام" : "Instagram", href: "https://www.instagram.com/dotone_blockchain", external: true },
+  ],
+  products: [
+    { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online", external: true },
+    { label: fa ? "ویزارد" : "Wizard", href: "https://wizard.dotone.online", external: true },
+    { label: fa ? "مستندات API" : "API Documents", href: "https://docs.dotone.online/developers/api-reference", external: true },
+  ],
+  };
+}
+
 function NavDropdown({
   label,
   links,
+  isRtl,
 }: {
   label: string;
-  links: readonly string[];
+  links: readonly NavigationLink[];
+  isRtl: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,8 +110,18 @@ function NavDropdown({
         }}
       >
         {links.map((item) => (
-          <DropdownMenuItem key={item} asChild>
-            <Link to={`/page/${slugify(item)}`}>{item}</Link>
+          <DropdownMenuItem
+            key={item.href}
+            className={isRtl ? "justify-end text-right" : "justify-start text-left"}
+            asChild
+          >
+            {item.external ? (
+              <a href={item.href} target="_blank" rel="noopener noreferrer">
+                {item.label}
+              </a>
+            ) : (
+              <Link to={item.href}>{item.label}</Link>
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -89,7 +130,8 @@ function NavDropdown({
 }
 
 function MobileNavMenu() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const navigationLinks = externalNavigationLinks(lang);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -114,9 +156,19 @@ function MobileNavMenu() {
             <div className="px-2.5 py-1.5 text-[13px] font-bold text-ink">
               {t.nav[key]}
             </div>
-            {t.navMenus[key].map((item) => (
-              <DropdownMenuItem key={item} asChild>
-                <Link to={`/page/${slugify(item)}`}>{item}</Link>
+            {(navigationLinks[key] ??
+              t.navMenus[key].map((item) => ({
+                label: item,
+                href: `/page/${slugify(item)}`,
+              }))).map((item) => (
+              <DropdownMenuItem key={item.href} asChild>
+                {item.external ? (
+                  <a href={item.href} target="_blank" rel="noopener noreferrer">
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link to={item.href}>{item.label}</Link>
+                )}
               </DropdownMenuItem>
             ))}
           </div>
@@ -138,6 +190,7 @@ export function Header() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const navigationLinks = externalNavigationLinks(lang);
 
   const results =
     query.trim().length > 0
@@ -182,7 +235,18 @@ export function Header() {
 
         <nav className="hidden h-full flex-1 nav:flex">
           {NAV_KEYS.map((key) => (
-            <NavDropdown key={key} label={t.nav[key]} links={t.navMenus[key]} />
+            <NavDropdown
+              key={key}
+              label={t.nav[key]}
+              isRtl={lang === "fa"}
+              links={
+                navigationLinks[key] ??
+                t.navMenus[key].map((item) => ({
+                  label: item,
+                  href: `/page/${slugify(item)}`,
+                }))
+              }
+            />
           ))}
         </nav>
 
