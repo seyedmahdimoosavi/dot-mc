@@ -81,7 +81,7 @@ export function Footer() {
       </div>
       <div className="flex flex-col justify-between gap-2 pt-3.5 text-[12px] text-muted nav:flex-row">
         <span>{t.footer.copyright}</span>
-        <span>{t.footer.download}: iOS · Android</span>
+        {/* <span>{t.footer.download}: iOS · Android</span> */}
       </div>
     </footer>
   );
