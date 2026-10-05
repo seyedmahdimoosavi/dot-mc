@@ -6,36 +6,68 @@ type FooterLink = {
   href: string;
 };
 
-function getFooterColumns(lang: "en" | "fa"): { title: string; links: FooterLink[] }[] {
+function getFooterColumns(
+  lang: "en" | "fa",
+): { title: string; links: FooterLink[] }[] {
   const fa = lang === "fa";
   return [
-  {
-    title: fa ? "شرکت" : "Company",
-    links: [
-      { label: fa ? "وب‌سایت رسمی" : "Official Website", href: "https://dotone.online" },
-      { label: fa ? "تماس با ما" : "Contact Us", href: "https://docs.dotone.online/resources/contact-us" },
-      { label: fa ? "قوانین و حریم خصوصی" : "Terms & Privacy", href: "https://docs.dotone.online/terms-and-policy" },
-    ],
-  },
-  {
-    title: fa ? "محصولات" : "Products",
-    links: [
-      { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online" },
-      { label: fa ? "ویزارد" : "Wizard", href: "https://wizard.dotone.online" },
-    ],
-  },
-  {
-    title: fa ? "مستندات" : "Documents",
-    links: [
-      { label: fa ? "مستندات" : "Documents", href: "https://docs.dotone.online" },
-      { label: fa ? "اکوسیستم" : "Ecosystem", href: "https://docs.dotone.online/getting-started/ecosystem" },
-      { label: fa ? "اعتبارسنج‌ها" : "Validators", href: "https://docs.dotone.online/validator/overview" },
-      { label: fa ? "مستندات API" : "API Documents", href: "https://docs.dotone.online/developers/api-reference" },
-      { label: fa ? "وایت‌پیپر" : "Whitepaper", href: "https://docs.dotone.online/resources/whitepaper" },
-      { label: fa ? "وضعیت شبکه" : "Network Status", href: "https://dotscan.one/stats" },
-      { label: "GitHub", href: "https://github.com/dotOneSmartChain" },
-    ],
-  },
+    {
+      title: fa ? "شرکت" : "Company",
+      links: [
+        {
+          label: fa ? "وب‌سایت رسمی" : "Official Website",
+          href: "https://dotone.online",
+        },
+        {
+          label: fa ? "تماس با ما" : "Contact Us",
+          href: "https://docs.dotone.online/resources/contact-us",
+        },
+        {
+          label: fa ? "قوانین و حریم خصوصی" : "Terms & Privacy",
+          href: "https://docs.dotone.online/terms-and-policy",
+        },
+      ],
+    },
+    {
+      title: fa ? "محصولات" : "Products",
+      links: [
+        { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online" },
+        {
+          label: fa ? "ویزارد" : "Wizard",
+          href: "https://wizard.dotone.online",
+        },
+      ],
+    },
+    {
+      title: fa ? "مستندات" : "Documents",
+      links: [
+        {
+          label: fa ? "مستندات" : "Documents",
+          href: "https://docs.dotone.online",
+        },
+        {
+          label: fa ? "اکوسیستم" : "Ecosystem",
+          href: "https://docs.dotone.online/getting-started/ecosystem",
+        },
+        {
+          label: fa ? "ولیدیتورها" : "Validators",
+          href: "https://docs.dotone.online/validator/overview",
+        },
+        {
+          label: fa ? "مستندات API" : "API Documents",
+          href: "https://docs.dotone.online/developers/api-reference",
+        },
+        {
+          label: fa ? "وایت‌پیپر" : "Whitepaper",
+          href: "https://docs.dotone.online/resources/whitepaper",
+        },
+        {
+          label: fa ? "وضعیت شبکه" : "Network Status",
+          href: "https://dotscan.one/stats",
+        },
+        { label: "GitHub", href: "https://github.com/dotOneSmartChain" },
+      ],
+    },
   ];
 }
 
@@ -119,7 +151,13 @@ export function Footer() {
               >
                 <rect x="3" y="3" width="18" height="18" rx="5" />
                 <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+                <circle
+                  cx="17.5"
+                  cy="6.5"
+                  r="0.8"
+                  fill="currentColor"
+                  stroke="none"
+                />
               </svg>
             </a>
           </div>

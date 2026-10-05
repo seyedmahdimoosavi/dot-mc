@@ -33,7 +33,7 @@ export function FilterTabs({
     "trending",
     "gainersLosers",
     "recentlyAdded",
-    "mostVisited",
+    // "mostVisited",
   ];
   const categories: CategoryFilter[] = ["all", "defi", "nft", "layer1"];
 

@@ -402,7 +402,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       top: 'برتر',
       trending: 'ترندها',
       gainersLosers: 'سود و زیان',
-      recentlyAdded: 'تازه اضافه‌شده',
+      recentlyAdded: 'جدیدترین‌ها',
       mostVisited: 'پربازدیدترین',
       categories: 'دسته‌بندی‌ها',
       defi: 'دیفای',

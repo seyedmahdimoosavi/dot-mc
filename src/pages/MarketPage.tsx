@@ -38,7 +38,9 @@ export function MarketPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState(20);
-  const [mainTab, setMainTab] = useState<"cryptocurrencies" | "exchanges">("cryptocurrencies");
+  const [mainTab, setMainTab] = useState<"cryptocurrencies" | "exchanges">(
+    "cryptocurrencies",
+  );
 
   function updateSortMode(mode: SortMode) {
     setSortMode(mode);

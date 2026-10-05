@@ -179,7 +179,7 @@ function CoinRow({
 
       {/* Circulating Supply */}
       <td className={`${td} ${middle}`}>
-        {formatCompactNumber(coin.circulatingSupply, lang)} {coin.symbol}
+        {formatCompactNumber(coin.circulatingSupply, lang)}
       </td>
 
       {/* Sparkline (7d) */}
