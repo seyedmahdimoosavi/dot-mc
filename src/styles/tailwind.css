@@ -18,16 +18,26 @@
   --color-red: var(--red);
   --color-red-soft: var(--red-soft);
 
-  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 
   --breakpoint-nav: 1300px;
 }
 
 @font-face {
   font-family: "IRANYekan";
-  src: url("/fonts/IRANYekanXVF.ttf") format("truetype");
+  src: url("../assets/fonts/IRANYekanXVF.ttf") format("truetype");
   font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200D,
+    U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../assets/fonts/SpaceGrotesk.ttf") format("truetype");
+  font-weight: 300 700;
   font-style: normal;
   font-display: swap;
 }
@@ -50,12 +60,14 @@
     transition: background-color 0.25s, color 0.25s;
   }
 
+  html[lang="fa"] body,
   html[lang="fa"] body * {
-    font-family: "IRANYekan", sans-serif !important;
+    font-family: "IRANYekan", "Space Grotesk", ui-sans-serif, system-ui,
+      sans-serif !important;
   }
 
   html[lang="fa"] body .en {
-    font-family: var(--font-sans);
+    font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif !important;
   }
 
   button,
