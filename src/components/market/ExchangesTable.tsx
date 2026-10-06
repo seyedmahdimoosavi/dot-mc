@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/select";
 
 import { ShoppingCart } from "lucide-react";
+import bitbankLogo from "@/assets/bitbank-logo.png";
 import { useI18n } from "../../i18n/I18nContext";
 import { useState } from "react";
 import { useOrderBooks, usePricingSymbols } from "@/hooks/useExchangeMarketData";
@@ -17,7 +18,7 @@ const COIN_API_IMAGE_URL =
 function formatFee(value: number | null, lang: "en" | "fa") {
   if (value === null || !Number.isFinite(value)) return "—";
   return `${new Intl.NumberFormat(lang === "fa" ? "fa-IR" : "en-US", {
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 4,
   }).format(value)}%`;
 }
 
@@ -45,6 +46,25 @@ export function ExchangesTable() {
 
   const symbolsQuery = usePricingSymbols();
   const orderBooksQuery = useOrderBooks(symbol, pair);
+  const orderBooks = orderBooksQuery.data ?? [];
+  const nobitex = orderBooks.find((item) => item.exchange === "nobitex");
+  const displayedOrderBooks = nobitex
+    ? [
+        ...orderBooks.filter((item) => item.exchange !== "bitbank"),
+        {
+          exchange: "bitbank",
+          buy: nobitex.buy,
+          sell: nobitex.sell,
+          exchangeDetails: {
+            title: "بیت بانک",
+            logo: bitbankLogo,
+            type: nobitex.exchangeDetails.type,
+            minMarketFeeForUSDT: 0.0035,
+            maxMarketFeeForUSDT: 0.004,
+          },
+        },
+      ]
+    : orderBooks;
 
   const symbols = (
     symbolsQuery.data?.length ? symbolsQuery.data : [symbol]
@@ -173,7 +193,7 @@ export function ExchangesTable() {
               </tr>
             </thead>
             <tbody>
-              {orderBooksQuery.data.map((orderBook) => {
+              {displayedOrderBooks.map((orderBook) => {
                 const details = orderBook.exchangeDetails;
                 return (
                   <tr
@@ -184,7 +204,9 @@ export function ExchangesTable() {
                       <div className="flex items-center gap-3">
                         <img
                           src={
-                            COIN_API_IMAGE_URL + orderBook.exchangeDetails.logo
+                            orderBook.exchange === "bitbank"
+                              ? bitbankLogo
+                              : COIN_API_IMAGE_URL + orderBook.exchangeDetails.logo
                           }
                           alt=""
                           className="size-9 rounded-full border border-line bg-surface-2 object-contain p-1"
