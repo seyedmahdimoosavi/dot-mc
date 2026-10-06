@@ -5,12 +5,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  useOrderBooks,
+  usePricingSymbols,
+} from "@/hooks/useExchangeMarketData";
 
 import { ShoppingCart } from "lucide-react";
 import bitbankLogo from "@/assets/bitbank-logo.png";
 import { useI18n } from "../../i18n/I18nContext";
 import { useState } from "react";
-import { useOrderBooks, usePricingSymbols } from "@/hooks/useExchangeMarketData";
 
 const COIN_API_IMAGE_URL =
   import.meta.env.VITE_COIN_API_IMAGE_URL || "https://pricing.dotone.online";
@@ -21,6 +24,8 @@ function formatFee(value: number | null, lang: "en" | "fa") {
     maximumFractionDigits: 4,
   }).format(value)}%`;
 }
+
+// I want to refresh project on vercel
 
 function formatMarketPrice(value: number, lang: "en" | "fa") {
   const digits =
@@ -206,7 +211,8 @@ export function ExchangesTable() {
                           src={
                             orderBook.exchange === "bitbank"
                               ? bitbankLogo
-                              : COIN_API_IMAGE_URL + orderBook.exchangeDetails.logo
+                              : COIN_API_IMAGE_URL +
+                                orderBook.exchangeDetails.logo
                           }
                           alt=""
                           className="size-9 rounded-full border border-line bg-surface-2 object-contain p-1"
