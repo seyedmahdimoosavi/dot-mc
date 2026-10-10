@@ -10,8 +10,9 @@ export function Hero() {
   const { coin: bitcoin, error, isLoading, data } = useBitcoin();
   const timestamps = bitcoin?.sparklineTimestamps ?? [];
   const date = (timestamp?: number) => timestamp == null ? "—" : new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", { dateStyle: "medium" }).format(timestamp);
-  const from = date(timestamps[0]);
-  const to = date(timestamps.at(-1));
+  const availableTimestamps = timestamps.filter((_, index) => bitcoin?.sparkline[index] != null && Number.isFinite(bitcoin.sparkline[index]));
+  const from = date(availableTimestamps[0]);
+  const to = date(availableTimestamps.at(-1));
   const chartData = bitcoin?.sparkline ?? [];
   return (
     <section className="grid gap-10 px-5 py-11 nav:grid-cols-[1fr_1.1fr] nav:items-center nav:gap-15 nav:px-7.5 nav:py-14">
@@ -58,6 +59,7 @@ export function Hero() {
         <Sparkline
           data={chartData}
           timestamps={timestamps}
+          trimEmptyEdges
           positive={(bitcoin?.change24h ?? 0) >= 0}
           className="mt-5.5 h-55"
         />

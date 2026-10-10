@@ -173,12 +173,13 @@ function CoinRow({
       </td>
 
       {/* Sparkline (7d) */}
-      <td className={`${td} ${end} w-25`}>
+      <td className={`${td} ${end} min-w-[120px]`}>
         <Sparkline
           data={coin.sparkline}
           timestamps={coin.sparklineTimestamps}
+          trimEmptyEdges
           positive={coin.change7d >= 0}
-          className="h-8"
+          className="h-8 min-w-[100px]"
         />
       </td>
     </tr>

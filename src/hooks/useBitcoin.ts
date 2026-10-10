@@ -2,6 +2,6 @@ import { useCoinPrice } from "./usePricingApi";
 import { priceToCoin } from "@/lib/pricecatcher";
 
 export function useBitcoin() {
-  const query = useCoinPrice("bitcoin");
+  const query = useCoinPrice("1");
   return { ...query, coin: query.data ? priceToCoin(query.data) : undefined };
 }

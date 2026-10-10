@@ -8,34 +8,42 @@ interface SparklineProps {
   showGrid?: boolean;
   className?: string;
   label?: string;
+  trimEmptyEdges?: boolean;
 }
 const WIDTH = 288;
 const HEIGHT = 150;
 
-export function Sparkline({ data, timestamps, positive = true, showGrid = false, className, label = "Price movement chart" }: SparklineProps) {
+export function Sparkline({ data, timestamps, positive = true, showGrid = false, className, label = "Price movement chart", trimEmptyEdges = false }: SparklineProps) {
   const gradientId = useId();
   const segments = useMemo(() => {
     const values = data.filter((value): value is number => value !== null && Number.isFinite(value));
     if (!values.length) return [];
     const min = Math.min(...values), max = Math.max(...values);
     const range = max - min || 1;
-    const firstTime = timestamps?.[0] ?? 0;
-    const timeSpan = timestamps?.length === data.length ? timestamps[timestamps.length - 1] - firstTime : 0;
+    const valid = (value: number | null) => value !== null && Number.isFinite(value);
+    const firstIndex = trimEmptyEdges ? data.findIndex(valid) : 0;
+    let lastIndex = data.length - 1;
+    if (trimEmptyEdges) {
+      while (lastIndex > firstIndex && !valid(data[lastIndex])) lastIndex--;
+    }
+    const firstTime = timestamps?.[firstIndex] ?? 0;
+    const timeSpan = timestamps?.length === data.length ? timestamps[lastIndex] - firstTime : 0;
     const groups: string[][] = [];
     let current: string[] = [];
     data.forEach((value, index) => {
+      if (index < firstIndex || index > lastIndex) return;
       if (value === null || !Number.isFinite(value)) {
         if (current.length) groups.push(current);
         current = [];
         return;
       }
-      const x = timeSpan > 0 ? ((timestamps![index] - firstTime) / timeSpan) * WIDTH : index * WIDTH / Math.max(1, data.length - 1);
+      const x = firstIndex === lastIndex ? WIDTH / 2 : timeSpan > 0 ? ((timestamps![index] - firstTime) / timeSpan) * WIDTH : (index - firstIndex) * WIDTH / Math.max(1, lastIndex - firstIndex);
       const y = HEIGHT - ((value - min) / range) * (HEIGHT - 10) - 5;
       current.push(`${x.toFixed(2)},${y.toFixed(2)}`);
     });
     if (current.length) groups.push(current);
     return groups;
-  }, [data, timestamps]);
+  }, [data, timestamps, trimEmptyEdges]);
   const stroke = positive ? "var(--green)" : "var(--red)";
   return (
     <svg className={cn("block w-full", className)} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" role="img" aria-label={label}>
