@@ -55,24 +55,35 @@ function safeUrl(value: string | null | undefined): string | null {
 }
 
 export function CoinDetailPage() {
-  const { slug } = useParams();
+  const { id } = useParams<{ id: string; symbol: string }>();
   const { t, lang } = useI18n();
   const { isWatched, toggle } = useWatchlist();
   const [range, setRange] = useState<ChartDays>("1d");
   const [chartType, setChartType] = useState<ChartType>("prices");
-  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
-  const [tab, setTab] = useState<"overview" | "markets" | "about">("overview");
+  const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(
+    null,
+  );
+  const [tab, setTab] = useState<"overview" | "markets" | "about">("markets");
 
   const [copied, setCopied] = useState(false);
 
-  const { data: marketData, priceData, metadata, error, isLoading: isPriceLoading } = useCoinMarketData(slug);
+  const {
+    data: marketData,
+    priceData,
+    metadata,
+    error,
+    isLoading: isPriceLoading,
+  } = useCoinMarketData(id);
   const coin = priceData ? priceToCoin(priceData, metadata) : undefined;
   const address = marketData?.contract_address;
-  const chart = useCoinChart(slug, chartType, range);
+  const chart = useCoinChart(id, chartType, range);
   const chartPoints = chart.data ?? [];
-  const hoveredPoint = hoveredPointIndex === null ? undefined : chartPoints[hoveredPointIndex];
+  const hoveredPoint =
+    hoveredPointIndex === null ? undefined : chartPoints[hoveredPointIndex];
   const chartValues = chartPoints.map((point) => point.value);
-  const validChartValues = chartValues.filter((value): value is number => value !== null && Number.isFinite(value));
+  const validChartValues = chartValues.filter(
+    (value): value is number => value !== null && Number.isFinite(value),
+  );
   const chartMin = validChartValues.reduce(
     (min, value) => Math.min(min, value),
     Infinity,
@@ -83,7 +94,8 @@ export function CoinDetailPage() {
   );
   const chartFormat = chartType === "prices" ? formatPrice : formatCompactUsd;
   const chartPositive =
-    validChartValues.length < 2 || validChartValues.at(-1)! >= validChartValues[0];
+    validChartValues.length < 2 ||
+    validChartValues.at(-1)! >= validChartValues[0];
   const chartDate = (timestamp: number) =>
     new Intl.DateTimeFormat(
       lang === "fa" ? "fa-IR" : "en-US",
@@ -98,12 +110,19 @@ export function CoinDetailPage() {
         ? { hour: "2-digit", minute: "2-digit" }
         : { dateStyle: "medium" },
     ).format(new Date(timestamp));
-  if (!coin) return <main className="mx-auto max-w-310 px-5 py-10">
-    <Link to="/" className="text-muted">{t.detail.back}</Link>
-    {error instanceof PricingApiError && error.status === 404
-      ? <p className="mt-4">{lang === "fa" ? "این رمزارز پیدا نشد." : "Coin not found."}</p>
-      : null}
-  </main>;
+  if (!coin)
+    return (
+      <main className="mx-auto max-w-310 px-5 py-10">
+        <Link to="/" className="text-muted">
+          {t.detail.back}
+        </Link>
+        {error instanceof PricingApiError && error.status === 404 ? (
+          <p className="mt-4">
+            {lang === "fa" ? "این رمزارز پیدا نشد." : "Coin not found."}
+          </p>
+        ) : null}
+      </main>
+    );
 
   const shortAddress = address
     ? address.length > 10
@@ -230,9 +249,9 @@ export function CoinDetailPage() {
         <div className="flex items-center gap-3.5">
           <CoinIcon coin={coin} size={52} className="text-2xl" />
           <div className="min-w-0">
-            <div className="mb-1.5 text-[13px] text-muted">
+            {/* <div className="mb-1.5 text-[13px] text-muted">
               {t.nav.cryptocurrencies} / {coin.name}
-            </div>
+            </div> */}
             <h1 className="flex items-baseline gap-1.75 font-display text-[26px] font-bold tracking-[-0.04em] nav:text-[30px]">
               <CoinName name={coin.name} as="span" className="max-w-70" />
               <span className="text-sm font-medium text-muted">
@@ -291,7 +310,7 @@ export function CoinDetailPage() {
             />
             {t.detail.watchlistAdd}
           </Button>
-          <Button variant="solid">{t.detail.buy}</Button>
+          {/* <Button variant="solid">{t.detail.buy}</Button> */}
         </div>
       </div>
 
@@ -388,7 +407,7 @@ export function CoinDetailPage() {
               </button>
             ))}
           </div>
-          {!slug ? (
+          {!id ? (
             <p className="grid h-62.5 place-items-center text-center text-md text-muted">
               {t.detail.chartEmpty}
             </p>
@@ -411,13 +430,20 @@ export function CoinDetailPage() {
                   className="relative min-w-0 flex-1 cursor-crosshair"
                   onPointerMove={(event) => {
                     const rect = event.currentTarget.getBoundingClientRect();
-                    const progress = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+                    const progress = Math.max(
+                      0,
+                      Math.min(1, (event.clientX - rect.left) / rect.width),
+                    );
                     const first = chartPoints[0].timestamp;
                     const last = chartPoints[chartPoints.length - 1].timestamp;
                     const target = first + progress * (last - first);
                     let nearest = 0;
                     for (let i = 1; i < chartPoints.length; i++) {
-                      if (Math.abs(chartPoints[i].timestamp - target) < Math.abs(chartPoints[nearest].timestamp - target)) nearest = i;
+                      if (
+                        Math.abs(chartPoints[i].timestamp - target) <
+                        Math.abs(chartPoints[nearest].timestamp - target)
+                      )
+                        nearest = i;
                     }
                     setHoveredPointIndex(nearest);
                   }}
@@ -437,7 +463,9 @@ export function CoinDetailPage() {
                         left: `${Math.max(16, Math.min(84, chartPoints.length < 2 ? 50 : ((hoveredPoint.timestamp - chartPoints[0].timestamp) / (chartPoints[chartPoints.length - 1].timestamp - chartPoints[0].timestamp || 1)) * 100))}%`,
                       }}
                     >
-                      <span className="text-muted">{tooltipDate(hoveredPoint.timestamp)}</span>
+                      <span className="text-muted">
+                        {tooltipDate(hoveredPoint.timestamp)}
+                      </span>
                       <strong>{chartFormat(hoveredPoint.value, lang)}</strong>
                     </div>
                   )}
@@ -467,13 +495,13 @@ export function CoinDetailPage() {
           </h2>
           <div className="my-5">
             <StatRow label={t.detail.high}>{price(ath)}</StatRow>
-            <StatRow label={t.detail.athDate}>
+            {/* <StatRow label={t.detail.athDate}>
               {date(marketData?.ath_date)}
-            </StatRow>
+            </StatRow> */}
             <StatRow label={t.detail.low}>{price(atl)}</StatRow>
-            <StatRow label={t.detail.atlDate}>
+            {/* <StatRow label={t.detail.atlDate}>
               {date(marketData?.atl_date)}
-            </StatRow>
+            </StatRow> */}
             <StatRow label={t.detail.dayHigh}>
               {marketData?.high_24h ? price(marketData.high_24h) : unavailable}
             </StatRow>
@@ -488,19 +516,32 @@ export function CoinDetailPage() {
             </StatRow>
             <StatRow label={t.detail.max}>{supply(maxSupply)}</StatRow>
             <StatRow label={t.detail.fdv}>{money(fdv)}</StatRow>
-            <StatRow label={lang === "fa" ? "سلطهٔ بازار" : "Market dominance"}>{percent(metadata?.dominance)}</StatRow>
-            <StatRow label={lang === "fa" ? "نسبت حجم به ارزش بازار" : "Volume / market cap"}>{metadata?.turnover == null ? unavailable : metadata.turnover.toLocaleString(lang === "fa" ? "fa-IR" : "en-US", { maximumFractionDigits: 6 })}</StatRow>
+            <StatRow label={lang === "fa" ? "سلطهٔ بازار" : "Market dominance"}>
+              {percent(metadata?.dominance)}
+            </StatRow>
+            <StatRow
+              label={
+                lang === "fa" ? "نسبت حجم به ارزش بازار" : "Volume / market cap"
+              }
+            >
+              {metadata?.turnover == null
+                ? unavailable
+                : metadata.turnover.toLocaleString(
+                    lang === "fa" ? "fa-IR" : "en-US",
+                    { maximumFractionDigits: 6 },
+                  )}
+            </StatRow>
           </div>
         </aside>
       </div>
 
       <section className="mt-10 flex gap-6 overflow-x-auto border-b border-line">
-        <button
+        {/* <button
           className={`whitespace-nowrap py-3.25 text-md ${tab === "overview" ? "border-b-2 border-gold text-ink" : "text-muted"}`}
           onClick={() => setTab("overview")}
         >
           {t.detail.overview}
-        </button>
+        </button> */}
         <button
           className={`whitespace-nowrap py-3.25 text-md ${tab === "markets" ? "border-b-2 border-gold text-ink" : "text-muted"}`}
           onClick={() => setTab("markets")}
@@ -553,9 +594,7 @@ export function CoinDetailPage() {
         </div>
       )}
 
-      {tab === "markets" && (
-        <CoinPairs coinId={coin.id} />
-      )}
+      {tab === "markets" && <CoinPairs coinId={coin.id} />}
 
       {tab === "about" && (
         <div className="grid gap-8 py-7 nav:grid-cols-2">

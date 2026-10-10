@@ -4,7 +4,7 @@ import {
   useOrderBooks,
 } from "@/hooks/useExchangeMarketData";
 import { useI18n } from "../../i18n/I18nContext";
-import { useCoins } from "@/hooks/usePricingApi";
+import { useMarkets } from "@/hooks/usePricingApi";
 
 function Sep() {
   return <span className="h-3 w-px shrink-0 bg-line" />;
@@ -13,7 +13,14 @@ function Sep() {
 export function StatsBar() {
   const { t, lang } = useI18n();
   const { coin: bitcoin } = useBitcoin();
-  const symbolsQuery = useCoins();
+  // Share the default market-list query; its pagination metadata includes the coin count.
+  const symbolsQuery = useMarkets({
+    sort: "rank",
+    order: "asc",
+    quote: "USD",
+    page: 1,
+    page_size: 20,
+  });
   const orderBooksQuery = useOrderBooks("BTC", "USDT");
   const fees = (orderBooksQuery.data ?? [])
     .flatMap((orderBook) => [

@@ -37,6 +37,8 @@ export function useCoins(search = "", page = 1, pageSize = 1, enabled = true) {
 export function usePairs(pairs: string[], enabled = true) {
   return useQuery({ ...options,
     queryKey: ["pricecatcher-pairs", COIN_API_BASE_URL, pairs], enabled: enabled && pairs.length > 0,
-    queryFn: ({ signal }) => pricingRequest<PriceListResponse>("/v1/pairs", { pairs: pairs.join(","), sparkline: false }, signal),
+    // Keep the shared request alive across temporary observer unmounts (including StrictMode).
+    // Its result remains cached under these exact pairs and cannot replace another coin's data.
+    queryFn: () => pricingRequest<PriceListResponse>("/v1/pairs", { pairs: pairs.join(","), sparkline: false }),
   });
 }

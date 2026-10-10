@@ -11,11 +11,13 @@ export function useCoinChart(coin: string | null | undefined, type: ChartType, d
     queryKey: ["pricecatcher-history", COIN_API_BASE_URL, coin, type, days],
     enabled: Boolean(coin) && type === "prices",
     staleTime: 60_000, gcTime: 30 * 60_000, refetchInterval: 120_000, retry: false,
-    queryFn: async ({ signal }) => {
+    // Let an in-flight request populate its own cache even if its observer briefly unmounts.
+    // This avoids StrictMode aborting and restarting the same request in development.
+    queryFn: async () => {
       const to = Math.floor(Date.now() / 1000);
       const from = to - Number(days.slice(0, -1)) * 86400;
       const interval = days === "1d" ? "5m" : days === "7d" || days === "30d" ? "1h" : "1d";
-      const response = await pricingRequest<HistoryResponse>(`/v1/history/${encodeURIComponent(coin!)}`, { from, to, interval, quote: "USD" }, signal);
+      const response = await pricingRequest<HistoryResponse>(`/v1/history/${encodeURIComponent(coin!)}`, { from, to, interval, quote: "USD" });
       return historyToPoints(response);
     },
   });

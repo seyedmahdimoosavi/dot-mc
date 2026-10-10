@@ -24,7 +24,7 @@ function TrendingCoinCard({
   return (
     <Link
       className="flex flex-col gap-2 rounded-lg border border-line bg-surface-2 p-3.5 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-(--shadow)"
-      to={`/currencies/${coin.slug}`}
+      to={`/currencies/${coin.id}/${encodeURIComponent(coin.symbol)}`}
     >
       <div className="flex min-w-0 items-center gap-2">
         <span className="w-3.5 en shrink-0 text-[13px] text-muted">

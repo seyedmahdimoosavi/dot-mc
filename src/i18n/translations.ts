@@ -464,7 +464,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       aboutBody: (name: string) =>
         `${name} یک دارایی دیجیتال غیرمتمرکز است که امکان تراکنش‌های سریع، امن و شفاف را فراهم می‌کند. داده‌های لحظه‌ای قیمت، آمار بازار و عملکرد تاریخی را در dotmarket دنبال کنید.`,
       converter: 'مبدل',
-      watchlistAdd: 'افزودن به لیست پیگیری',
+      watchlistAdd: 'افزودن به لیست علاقمندی ',
       buy: 'خرید',
       verified: 'دارایی تأییدشده',
       address: 'آدرس قرارداد',

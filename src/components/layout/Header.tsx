@@ -5,16 +5,16 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
+import { useCoins, useDebouncedValue } from "@/hooks/usePricingApi";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "../ui/button";
 import { CoinIcon } from "../CoinIcon";
 import { CoinName } from "../CoinName";
 import { Icon } from "../icons/Icon";
-import { useCoins, useDebouncedValue } from "@/hooks/usePricingApi";
 import { priceToCoin } from "@/lib/pricecatcher";
 import { slugify } from "../../lib/slug";
 import { useI18n } from "../../i18n/I18nContext";
-import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../../theme/ThemeContext";
 
 const NAV_KEYS = [
@@ -30,26 +30,62 @@ type NavigationLink = {
   external?: boolean;
 };
 
-function externalNavigationLinks(lang: "en" | "fa"): Partial<
-  Record<(typeof NAV_KEYS)[number], NavigationLink[]>
-> {
+function externalNavigationLinks(
+  lang: "en" | "fa",
+): Partial<Record<(typeof NAV_KEYS)[number], NavigationLink[]>> {
   const fa = lang === "fa";
   return {
-  exchanges: [
-    { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online", external: true },
-    { label: fa ? "وضعیت شبکه" : "Network Status", href: "https://dotscan.one/stats", external: true },
-  ],
-  community: [
-    { label: fa ? "یوتیوب" : "YouTube", href: "https://m.youtube.com/@DOTO_coin", external: true },
-    { label: fa ? "مدیوم" : "Medium", href: "https://medium.com/@dotone.online", external: true },
-    { label: fa ? "ایکس" : "X", href: "https://x.com/dotonenetwork", external: true },
-    { label: fa ? "اینستاگرام" : "Instagram", href: "https://www.instagram.com/dotone_blockchain", external: true },
-  ],
-  products: [
-    { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online", external: true },
-    { label: fa ? "ویزارد" : "Wizard", href: "https://wizard.dotone.online", external: true },
-    { label: fa ? "مستندات API" : "API Documents", href: "https://docs.dotone.online/developers/api-reference", external: true },
-  ],
+    exchanges: [
+      {
+        label: fa ? "سواپ" : "Swap",
+        href: "https://swap.dotone.online",
+        external: true,
+      },
+      {
+        label: fa ? "وضعیت شبکه" : "Network Status",
+        href: "https://dotscan.one/stats",
+        external: true,
+      },
+    ],
+    community: [
+      {
+        label: fa ? "یوتیوب" : "YouTube",
+        href: "https://m.youtube.com/@DOTO_coin",
+        external: true,
+      },
+      {
+        label: fa ? "مدیوم" : "Medium",
+        href: "https://medium.com/@dotone.online",
+        external: true,
+      },
+      {
+        label: fa ? "ایکس" : "X",
+        href: "https://x.com/dotonenetwork",
+        external: true,
+      },
+      {
+        label: fa ? "اینستاگرام" : "Instagram",
+        href: "https://www.instagram.com/dotone_blockchain",
+        external: true,
+      },
+    ],
+    products: [
+      {
+        label: fa ? "سواپ" : "Swap",
+        href: "https://swap.dotone.online",
+        external: true,
+      },
+      {
+        label: fa ? "ویزارد" : "Wizard",
+        href: "https://wizard.dotone.online",
+        external: true,
+      },
+      {
+        label: fa ? "مستندات API" : "API Documents",
+        href: "https://docs.dotone.online/developers/api-reference",
+        external: true,
+      },
+    ],
   };
 }
 
@@ -77,9 +113,12 @@ function NavDropdown({
     closeTimer.current = setTimeout(() => setOpen(false), 150);
   }
 
-  useEffect(() => () => {
-    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
@@ -113,7 +152,9 @@ function NavDropdown({
         {links.map((item) => (
           <DropdownMenuItem
             key={item.href}
-            className={isRtl ? "justify-end text-right" : "justify-start text-left"}
+            className={
+              isRtl ? "justify-end text-right" : "justify-start text-left"
+            }
             asChild
           >
             {item.external ? (
@@ -157,11 +198,15 @@ function MobileNavMenu() {
             <div className="px-2.5 py-1.5 text-[13px] font-bold text-ink">
               {t.nav[key]}
             </div>
-            {(navigationLinks[key] ??
-              t.navMenus[key].map((item): NavigationLink => ({
-                label: item,
-                href: `/page/${slugify(item)}`,
-              }))).map((item) => (
+            {(
+              navigationLinks[key] ??
+              t.navMenus[key].map(
+                (item): NavigationLink => ({
+                  label: item,
+                  href: `/page/${slugify(item)}`,
+                }),
+              )
+            ).map((item) => (
               <DropdownMenuItem key={item.href} asChild>
                 {item.external ? (
                   <a href={item.href} target="_blank" rel="noopener noreferrer">
@@ -195,20 +240,35 @@ export function Header() {
 
   const search = useDebouncedValue(query.trim());
   const searchQuery = useCoins(search, 1, 6, Boolean(search));
-  const results = search && query.trim() === search ? (searchQuery.data?.data ?? []).map(metadata => priceToCoin({
-    base: metadata, pair: `${metadata.symbol}/USD`, quote: "USD", derived: false,
-    price: "", percent_change: {}, fetched_at: "", age_seconds: 0, stale: false,
-  }, metadata)) : [];
+  const results =
+    search && query.trim() === search
+      ? (searchQuery.data?.data ?? []).map((metadata) =>
+          priceToCoin(
+            {
+              base: metadata,
+              pair: `${metadata.symbol}/USD`,
+              quote: "USD",
+              derived: false,
+              price: "",
+              percent_change: {},
+              fetched_at: "",
+              age_seconds: 0,
+              stale: false,
+            },
+            metadata,
+          ),
+        )
+      : [];
 
-  function goToCoin(slug: string) {
+  function goToCoin(id: string, symbol: string) {
     setQuery("");
     setSearchFocused(false);
-    navigate(`/currencies/${slug}`);
+    navigate(`/currencies/${id}/${encodeURIComponent(symbol)}`);
   }
 
   return (
     <>
-      <div className="flex h-8.5 items-center justify-center gap-2 bg-ink text-[13px] text-canvas [[data-theme=dark]_&]:border-b [[data-theme=dark]_&]:border-line [[data-theme=dark]_&]:bg-surface-2 [[data-theme=dark]_&]:text-ink">
+      {/* <div className="flex h-8.5 items-center justify-center gap-2 bg-ink text-[13px] text-canvas [[data-theme=dark]_&]:border-b [[data-theme=dark]_&]:border-line [[data-theme=dark]_&]:bg-surface-2 [[data-theme=dark]_&]:text-ink">
         <span className="h-1.5 w-1.5 rounded-full bg-[#7ED5B0] shadow-[0_0_0_4px_rgba(126,213,176,.25)]" />
         {t.announcement}{" "}
         <Link
@@ -217,7 +277,7 @@ export function Header() {
         >
           {t.viewAll} <Icon name="arrow" size={14} />
         </Link>
-      </div>
+      </div> */}
 
       <header className="relative z-30 flex h-16 items-center gap-3 border-b border-line bg-surface-2 px-4 nav:h-19 nav:gap-8 nav:px-[max(30px,calc((100%-1180px)/2))]">
         <Link
@@ -268,7 +328,7 @@ export function Header() {
                   <button
                     key={coin.id}
                     className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-md hover:bg-accent-soft"
-                    onMouseDown={() => goToCoin(coin.slug)}
+                    onMouseDown={() => goToCoin(coin.id, coin.symbol)}
                   >
                     <CoinIcon coin={coin} size={22} />
                     <CoinName name={coin.name} className="min-w-0 flex-1" />
