@@ -13,25 +13,26 @@ export function CoinIcon({
   return (
     <span
       className={cn(
-        "grid shrink-0 en place-items-center overflow-hidden rounded-full font-display font-bold text-white",
+        "relative grid shrink-0 en place-items-center overflow-hidden rounded-full font-display font-bold text-white",
         className,
       )}
       style={{
         width: size,
         height: size,
         fontSize: size * 0.5,
+        backgroundColor: coin.color,
       }}
     >
-      {coin.logo ? (
+      {coin.symbol.slice(0, 1)}
+      {coin.logo && (
         <img
           src={coin.logo}
           alt={coin.name}
           width={size}
           height={size}
-          className="h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={event => { event.currentTarget.style.visibility = "hidden"; }}
         />
-      ) : (
-        coin.symbol.slice(0, 1)
       )}
     </span>
   );

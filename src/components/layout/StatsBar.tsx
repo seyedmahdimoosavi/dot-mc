@@ -2,9 +2,9 @@ import { formatCompactUsd, formatPercent } from "../../lib/format";
 import { useBitcoin } from "@/hooks/useBitcoin";
 import {
   useOrderBooks,
-  usePricingSymbols,
 } from "@/hooks/useExchangeMarketData";
 import { useI18n } from "../../i18n/I18nContext";
+import { useCoins } from "@/hooks/usePricingApi";
 
 function Sep() {
   return <span className="h-3 w-px shrink-0 bg-line" />;
@@ -13,7 +13,7 @@ function Sep() {
 export function StatsBar() {
   const { t, lang } = useI18n();
   const { coin: bitcoin } = useBitcoin();
-  const symbolsQuery = usePricingSymbols();
+  const symbolsQuery = useCoins();
   const orderBooksQuery = useOrderBooks("BTC", "USDT");
   const fees = (orderBooksQuery.data ?? [])
     .flatMap((orderBook) => [
@@ -35,7 +35,7 @@ export function StatsBar() {
       <div className="mx-auto flex max-w-310 items-center justify-center gap-3.5 whitespace-nowrap px-6 py-2.5 text-[13px] text-muted">
         <span>
           <strong className="font-bold text-ink">
-            {symbolsQuery.data?.length?.toLocaleString() ?? "—"}
+            {symbolsQuery.data?.meta.total.toLocaleString(lang === "fa" ? "fa-IR" : "en-US") ?? "—"}
           </strong>{" "}
           {t.statsBar.cryptos}
         </span>

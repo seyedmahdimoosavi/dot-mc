@@ -10,7 +10,8 @@ import { Button } from "../ui/button";
 import { CoinIcon } from "../CoinIcon";
 import { CoinName } from "../CoinName";
 import { Icon } from "../icons/Icon";
-import { mockCoins } from "../../lib/mockCoins";
+import { useCoins, useDebouncedValue } from "@/hooks/usePricingApi";
+import { priceToCoin } from "@/lib/pricecatcher";
 import { slugify } from "../../lib/slug";
 import { useI18n } from "../../i18n/I18nContext";
 import { useEffect, useRef, useState } from "react";
@@ -157,7 +158,7 @@ function MobileNavMenu() {
               {t.nav[key]}
             </div>
             {(navigationLinks[key] ??
-              t.navMenus[key].map((item) => ({
+              t.navMenus[key].map((item): NavigationLink => ({
                 label: item,
                 href: `/page/${slugify(item)}`,
               }))).map((item) => (
@@ -192,14 +193,12 @@ export function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
   const navigationLinks = externalNavigationLinks(lang);
 
-  const results =
-    query.trim().length > 0
-      ? mockCoins
-          .filter((c) =>
-            `${c.name} ${c.symbol}`.toLowerCase().includes(query.toLowerCase()),
-          )
-          .slice(0, 6)
-      : [];
+  const search = useDebouncedValue(query.trim());
+  const searchQuery = useCoins(search, 1, 6, Boolean(search));
+  const results = search && query.trim() === search ? (searchQuery.data?.data ?? []).map(metadata => priceToCoin({
+    base: metadata, pair: `${metadata.symbol}/USD`, quote: "USD", derived: false,
+    price: "", percent_change: {}, fetched_at: "", age_seconds: 0, stale: false,
+  }, metadata)) : [];
 
   function goToCoin(slug: string) {
     setQuery("");

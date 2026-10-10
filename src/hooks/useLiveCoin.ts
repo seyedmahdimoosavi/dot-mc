@@ -6,7 +6,7 @@ export function useLiveCoin(
   coin: Coin | undefined,
 ): { coin: Coin | undefined; isLoading: boolean; marketData: CoinMarketData | undefined };
 export function useLiveCoin(coin: Coin | undefined) {
-  const { data, isLoading } = useCoinMarketData(coin?.address);
+  const { data, isLoading } = useCoinMarketData(coin?.id);
 
   if (!coin || !data) {
     return { coin, isLoading, marketData: data };

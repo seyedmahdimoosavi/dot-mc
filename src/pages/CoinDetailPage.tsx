@@ -1,21 +1,24 @@
 import { Check, Copy, ExternalLink } from "lucide-react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   formatCompactNumber,
   formatCompactUsd,
   formatPercent,
   formatPrice,
 } from "../lib/format";
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "../components/ui/button";
 import { CoinIcon } from "../components/CoinIcon";
 import { CoinName } from "../components/CoinName";
 import { Icon } from "../components/icons/Icon";
 import { Sparkline } from "../components/Sparkline";
-import { mockCoins } from "../lib/mockCoins";
 import { useI18n } from "../i18n/I18nContext";
-import { useLiveCoin } from "@/hooks/useLiveCoin";
+import useCoinMarketData from "@/hooks/useCoinMarketData";
+import { priceToCoin } from "@/lib/pricecatcher";
+import { ApiNotice } from "@/components/ApiNotice";
+import { CoinPairs } from "@/components/market/CoinPairs";
+import { PricingApiError } from "@/lib/api";
 import {
   useCoinChart,
   type ChartDays,
@@ -63,33 +66,25 @@ export function CoinDetailPage() {
 
   const [copied, setCopied] = useState(false);
 
-  const baseCoin = useMemo(
-    () => mockCoins.find((c) => c.slug === slug),
-    [slug],
-  );
-  const { coin, marketData, isLoading: isPriceLoading } = useLiveCoin(baseCoin);
-
-  const address =
-    marketData && "contract_address" in marketData
-      ? marketData.contract_address
-      : coin?.address;
-  // The chart service indexes the address used to load the coin, which may differ
-  // from the contract address returned in the coin details.
-  const chart = useCoinChart(baseCoin?.address, chartType, range);
+  const { data: marketData, priceData, metadata, error, isLoading: isPriceLoading } = useCoinMarketData(slug);
+  const coin = priceData ? priceToCoin(priceData, metadata) : undefined;
+  const address = marketData?.contract_address;
+  const chart = useCoinChart(slug, chartType, range);
   const chartPoints = chart.data ?? [];
   const hoveredPoint = hoveredPointIndex === null ? undefined : chartPoints[hoveredPointIndex];
   const chartValues = chartPoints.map((point) => point.value);
-  const chartMin = chartValues.reduce(
+  const validChartValues = chartValues.filter((value): value is number => value !== null && Number.isFinite(value));
+  const chartMin = validChartValues.reduce(
     (min, value) => Math.min(min, value),
     Infinity,
   );
-  const chartMax = chartValues.reduce(
+  const chartMax = validChartValues.reduce(
     (max, value) => Math.max(max, value),
     -Infinity,
   );
   const chartFormat = chartType === "prices" ? formatPrice : formatCompactUsd;
   const chartPositive =
-    chartValues.length < 2 || chartValues.at(-1)! >= chartValues[0];
+    validChartValues.length < 2 || validChartValues.at(-1)! >= validChartValues[0];
   const chartDate = (timestamp: number) =>
     new Intl.DateTimeFormat(
       lang === "fa" ? "fa-IR" : "en-US",
@@ -104,7 +99,12 @@ export function CoinDetailPage() {
         ? { hour: "2-digit", minute: "2-digit" }
         : { dateStyle: "medium" },
     ).format(new Date(timestamp));
-  if (!coin) return <Navigate to="/" replace />;
+  if (!coin) return <main className="mx-auto max-w-310 px-5 py-10">
+    <Link to="/" className="text-muted">{t.detail.back}</Link>
+    {error instanceof PricingApiError && error.status === 404
+      ? <p className="mt-4">{lang === "fa" ? "این رمزارز پیدا نشد." : "Coin not found."}</p>
+      : <ApiNotice error={error} loading={isPriceLoading} />}
+  </main>;
 
   const shortAddress = address
     ? address.length > 10
@@ -221,6 +221,7 @@ export function CoinDetailPage() {
 
   return (
     <main className="mx-auto max-w-310 px-5 pb-20 pt-6.5 nav:px-7.5">
+      <ApiNotice error={error} stale={priceData?.stale} />
       <Link
         className="mb-8 inline-block text-md text-muted hover:text-ink"
         to="/"
@@ -377,7 +378,9 @@ export function CoinDetailPage() {
             ).map(([type, label]) => (
               <button
                 key={type}
-                className={`rounded-md px-3 py-1.5 text-[13px] ${chartType === type ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
+                disabled={type !== "prices"}
+                title={type !== "prices" ? t.detail.unavailable : undefined}
+                className={`rounded-md px-3 py-1.5 text-[13px] disabled:opacity-35 ${chartType === type ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
                 onClick={() => {
                   setHoveredPointIndex(null);
                   setChartType(type);
@@ -387,19 +390,19 @@ export function CoinDetailPage() {
               </button>
             ))}
           </div>
-          {!baseCoin?.address ? (
+          {!slug ? (
             <p className="grid h-62.5 place-items-center text-center text-md text-muted">
               {t.detail.chartEmpty}
             </p>
-          ) : chart.isPending ? (
+          ) : chart.isPending && !chart.data ? (
             <p className="grid h-62.5 place-items-center text-center text-md text-muted">
               {t.detail.chartLoading}
             </p>
-          ) : chart.isError ? (
+          ) : chart.isError && !chart.data ? (
             <p className="grid h-62.5 place-items-center text-center text-md text-muted">
               {t.detail.chartError}
             </p>
-          ) : chartValues.length === 0 ? (
+          ) : validChartValues.length === 0 ? (
             <p className="grid h-62.5 place-items-center text-center text-md text-muted">
               {t.detail.chartEmpty}
             </p>
@@ -429,7 +432,7 @@ export function CoinDetailPage() {
                     label={`${coin.name} ${chartType === "prices" ? t.detail.chartPrices : chartType === "total_volumes" ? t.detail.chartVolumes : t.detail.chartMarketCaps}`}
                     className="h-95"
                   />
-                  {hoveredPoint && (
+                  {hoveredPoint && hoveredPoint.value !== null && (
                     <div
                       className="pointer-events-none absolute top-3 z-10 flex -translate-x-1/2 flex-col items-center whitespace-nowrap rounded-md border border-line bg-surface-2 px-3 py-2 text-[12px] shadow-(--shadow)"
                       style={{
@@ -487,6 +490,8 @@ export function CoinDetailPage() {
             </StatRow>
             <StatRow label={t.detail.max}>{supply(maxSupply)}</StatRow>
             <StatRow label={t.detail.fdv}>{money(fdv)}</StatRow>
+            <StatRow label={lang === "fa" ? "سلطهٔ بازار" : "Market dominance"}>{percent(metadata?.dominance)}</StatRow>
+            <StatRow label={lang === "fa" ? "نسبت حجم به ارزش بازار" : "Volume / market cap"}>{metadata?.turnover == null ? unavailable : metadata.turnover.toLocaleString(lang === "fa" ? "fa-IR" : "en-US", { maximumFractionDigits: 6 })}</StatRow>
           </div>
         </aside>
       </div>
@@ -551,7 +556,7 @@ export function CoinDetailPage() {
       )}
 
       {tab === "markets" && (
-        <p className="py-7 text-md text-muted">{t.detail.noMarkets}</p>
+        <CoinPairs coinId={coin.id} />
       )}
 
       {tab === "about" && (

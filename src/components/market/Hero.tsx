@@ -1,14 +1,17 @@
 import { formatCompactUsd, formatPercent } from "../../lib/format";
 
 import { Sparkline } from "../Sparkline";
-import { getOneMonthDateRange } from "@/hooks/lastMonthDate";
+import { ApiNotice } from "@/components/ApiNotice";
 import { useBitcoin } from "@/hooks/useBitcoin";
 import { useI18n } from "../../i18n/I18nContext";
 
 export function Hero() {
   const { t, lang } = useI18n();
-  const { coin: bitcoin } = useBitcoin();
-  const { from, to } = getOneMonthDateRange();
+  const { coin: bitcoin, error, isLoading, data } = useBitcoin();
+  const timestamps = bitcoin?.sparklineTimestamps ?? [];
+  const date = (timestamp?: number) => timestamp == null ? "—" : new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", { dateStyle: "medium" }).format(timestamp);
+  const from = date(timestamps[0]);
+  const to = date(timestamps.at(-1));
   const chartData = bitcoin?.sparkline ?? [];
   return (
     <section className="grid gap-10 px-5 py-11 nav:grid-cols-[1fr_1.1fr] nav:items-center nav:gap-15 nav:px-7.5 nav:py-14">
@@ -49,14 +52,16 @@ export function Hero() {
       </div>
       <div className="rounded-lg bg-surface-2 px-6 pb-4 pt-5.5 shadow-(--shadow)">
         <div className="flex justify-between text-[13px] text-muted">
-          <span>{t.hero.chartTitle}</span>
-          <strong className="font-medium">{t.hero.chartSubtitle}</strong>
+          <span>{lang === "fa" ? "قیمت بیت کوین" : "Bitcoin price"}</span>
+          <strong className="font-medium">{lang === "fa" ? "۷ روز گذشته · USD" : "Last 7 days · USD"}</strong>
         </div>
         <Sparkline
           data={chartData}
+          timestamps={timestamps}
           positive={(bitcoin?.change24h ?? 0) >= 0}
           className="mt-5.5 h-55"
         />
+        <ApiNotice error={error} loading={isLoading} stale={data?.stale} />
         <div className="mt-0.5 flex justify-between text-[13px] text-muted">
           <span>{from}</span>
           <span>{to}</span>

@@ -1,12 +1,7 @@
-import { mockCoins } from "@/lib/mockCoins";
-import { useLiveCoin } from "./useLiveCoin";
-
-const bitcoin = mockCoins.find((coin) => coin.symbol === "BTC");
-
-if (!bitcoin) {
-  throw new Error("Bitcoin is missing from the coin list.");
-}
+import { useCoinPrice } from "./usePricingApi";
+import { priceToCoin } from "@/lib/pricecatcher";
 
 export function useBitcoin() {
-  return useLiveCoin(bitcoin);
+  const query = useCoinPrice("bitcoin");
+  return { ...query, coin: query.data ? priceToCoin(query.data) : undefined };
 }

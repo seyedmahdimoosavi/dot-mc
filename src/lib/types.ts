@@ -15,7 +15,10 @@ export interface Coin {
   fully_diluted_valuation: number | null
   allTimeHigh: number
   allTimeLow: number
-  sparkline: number[]
+  sparkline: (number | null)[]
+  sparklineTimestamps?: number[]
+  stale?: boolean
+  fetchedAt?: string
   color: string
   logo: string
   address: string

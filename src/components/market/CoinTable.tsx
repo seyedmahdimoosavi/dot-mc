@@ -1,9 +1,8 @@
 import { Check, Copy } from "lucide-react";
 import {
-  formatCompactNumber,
-  formatCompactUsd,
+  formatQuotedCompact,
   formatPercent,
-  formatPrice,
+  formatQuotedPrice,
 } from "../../lib/format";
 
 import type { Coin } from "../../lib/types";
@@ -13,13 +12,13 @@ import { Icon } from "../icons/Icon";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
 import { useI18n } from "../../i18n/I18nContext";
-import { useLiveCoin } from "@/hooks/useLiveCoin";
+import type { Quote } from "@/lib/pricecatcher";
 import { useState } from "react";
 import { useWatchlist } from "../../lib/WatchlistContext";
 
 function Change({ value, lang }: { value: number; lang: "en" | "fa" }) {
   return (
-    <span className={value >= 0 ? "text-green" : "text-red"}>
+    <span className={!Number.isFinite(value) ? "text-muted" : value >= 0 ? "text-green" : "text-red"}>
       {formatPercent(value, lang)}
     </span>
   );
@@ -39,16 +38,16 @@ type CoinRowProps = {
   toggle: (id: string) => void;
   lang: "en" | "fa";
   index: number;
+  quote?: Quote;
 };
 
 function CoinRow({
-  coin: baseCoin,
+  coin,
   isWatched,
   toggle,
   lang,
-  index,
+  quote = "USD",
 }: CoinRowProps) {
-  const { coin, isLoading: isPriceLoading } = useLiveCoin(baseCoin);
 
   /*
    * Copy address state
@@ -77,7 +76,7 @@ function CoinRow({
   };
 
   return (
-    <tr className="group hover:bg-surface">
+    <tr className="group hover:bg-surface" title={coin.stale ? (lang === "fa" ? "داده به‌روز نیست" : "Stale data") : undefined}>
       {/* Rank */}
       <td className={`${td} ${start} text-muted`}>
         <div className="flex en items-center gap-1.5">
@@ -91,7 +90,7 @@ function CoinRow({
             <Icon name={isWatched ? "starFilled" : "star"} size={16} />
           </button>
 
-          {index + 1}
+          {Number.isFinite(coin.rank) ? coin.rank : "—"}
         </div>
       </td>
 
@@ -115,7 +114,7 @@ function CoinRow({
             </small>
 
             {/* Address + Copy */}
-            <div className="flex min-w-0 items-center gap-1">
+            {coin.address && <div className="flex min-w-0 items-center gap-1">
               <span
                 className="truncate en text-md text-muted"
                 title={coin.address}
@@ -136,7 +135,7 @@ function CoinRow({
                   <Copy className="size-3.5" />
                 )}
               </button>
-            </div>
+            </div>}
 
             {/* <span className="text-[10px] text-muted">Token</span> */}
           </span>
@@ -145,11 +144,7 @@ function CoinRow({
 
       {/* Price */}
       <td className={`${td} ${middle} font-semibold`}>
-        {isPriceLoading ? (
-          <span className="text-muted">...</span>
-        ) : (
-          formatPrice(coin.price, lang)
-        )}
+        {formatQuotedPrice(coin.price, quote, lang)}
       </td>
 
       {/* 1h */}
@@ -169,23 +164,19 @@ function CoinRow({
 
       {/* Market Cap */}
       <td className={`${td} ${middle}`}>
-        {formatCompactUsd(coin.marketCap, lang)}
+        {formatQuotedCompact(coin.marketCap, quote, lang)}
       </td>
 
       {/* Volume 24h */}
       <td className={`${td} ${middle}`}>
-        {formatCompactUsd(coin.volume24h, lang)}
-      </td>
-
-      {/* Circulating Supply */}
-      <td className={`${td} ${middle}`}>
-        {formatCompactNumber(coin.circulatingSupply, lang)}
+        {formatQuotedCompact(coin.volume24h, quote, lang)}
       </td>
 
       {/* Sparkline (7d) */}
       <td className={`${td} ${end} w-25`}>
         <Sparkline
           data={coin.sparkline}
+          timestamps={coin.sparklineTimestamps}
           positive={coin.change7d >= 0}
           className="h-8"
         />
@@ -194,7 +185,7 @@ function CoinRow({
   );
 }
 
-export function CoinTable({ coins }: { coins: Coin[] }) {
+export function CoinTable({ coins, quote }: { coins: Coin[]; quote?: Quote }) {
   const { t, lang } = useI18n();
   const { isWatched, toggle } = useWatchlist();
 
@@ -227,8 +218,6 @@ export function CoinTable({ coins }: { coins: Coin[] }) {
 
             <th className={`${th} ${middle}`}>{t.table.volume24h}</th>
 
-            <th className={`${th} ${middle}`}>{t.table.circulatingSupply}</th>
-
             <th className={`${th} ${end}`}>{t.table.last7d}</th>
           </tr>
         </thead>
@@ -238,6 +227,7 @@ export function CoinTable({ coins }: { coins: Coin[] }) {
             <CoinRow
               key={coin.id}
               coin={coin}
+              quote={quote}
               index={index}
               isWatched={isWatched(coin.id)}
               toggle={toggle}

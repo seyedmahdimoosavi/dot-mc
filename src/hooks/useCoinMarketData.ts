@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { COIN_API_BASE_URL } from '../lib/api';
+import { useCoinMetadata, useCoinPrice } from './usePricingApi';
+import { decimalNumber } from '@/lib/pricecatcher';
 
 export interface CoinMarketData {
   name: string;
@@ -52,25 +52,25 @@ export interface CoinMarketData {
   };
 }
 
-const POLL_INTERVAL = 30_000;
-
-export default function useCoinMarketData(address: string | undefined) {
-  return useQuery<CoinMarketData>({
-    queryKey: ['coin-market-data', address?.toLowerCase()],
-    enabled: Boolean(address),
-    refetchInterval: POLL_INTERVAL,
-    staleTime: POLL_INTERVAL,
-    gcTime: Infinity,
-    placeholderData: (previousData) => previousData,
-    retry: false,
-    queryFn: async () => {
-      const res = await fetch(`${COIN_API_BASE_URL}/coins/${address}`);
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch coin market data for ${address}`);
-      }
-
-      return res.json() as Promise<CoinMarketData>;
-    },
-  });
+export default function useCoinMarketData(identifier: string | undefined) {
+  const priceQuery = useCoinPrice(identifier);
+  const metadataQuery = useCoinMetadata(identifier);
+  const price = priceQuery.data;
+  const metadata = metadataQuery.data;
+  const data: CoinMarketData | undefined = price ? {
+    name: price.base.name, symbol: price.base.symbol,
+    image: { thumb: "", small: "", large: "" },
+    market_cap_rank: price.base.rank,
+    total_supply: metadata ? decimalNumber(metadata.total_supply) : null,
+    max_supply: metadata?.max_supply == null ? null : decimalNumber(metadata.max_supply),
+    circulating_supply: metadata ? decimalNumber(metadata.circulating_supply) : null,
+    market_cap: decimalNumber(price.market_cap), current_price: decimalNumber(price.price),
+    fully_diluted_valuation: null, total_volume: decimalNumber(price.volume_24h),
+    high_24h: decimalNumber(price.high_24h), low_24h: decimalNumber(price.low_24h),
+    price_change_24h: null, price_change_percentage_24h: price.percent_change["24h"] ?? null,
+    ath: metadata ? decimalNumber(metadata.ath) : null,
+    atl: metadata ? decimalNumber(metadata.atl) : null,
+    last_updated: price.fetched_at,
+  } : undefined;
+  return { ...priceQuery, data, metadata, priceData: price, isLoading: priceQuery.isLoading, error: priceQuery.error ?? metadataQuery.error };
 }

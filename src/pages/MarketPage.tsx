@@ -1,128 +1,46 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useI18n } from "../i18n/I18nContext";
-import { mockCoins } from "../lib/mockCoins";
-import type { Coin } from "../lib/types";
 import { Hero } from "../components/market/Hero";
 import { TrendingPanel } from "../components/market/TrendingPanel";
-import {
-  FilterTabs,
-  type CategoryFilter,
-  type SortMode,
-} from "../components/market/FilterTabs";
+import { FilterTabs } from "../components/market/FilterTabs";
 import { CoinTable } from "../components/market/CoinTable";
 import { Pagination } from "../components/market/Pagination";
 import { ExchangesTable } from "../components/market/ExchangesTable";
-
-function sortCoins(coins: Coin[], mode: SortMode): Coin[] {
-  const list = [...coins];
-  switch (mode) {
-    case "trending":
-      return list.sort(
-        (a, b) => b.volume24h / b.marketCap - a.volume24h / a.marketCap,
-      );
-    case "gainersLosers":
-      return list.sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h));
-    case "recentlyAdded":
-      return list.sort((a, b) => b.rank - a.rank);
-    case "mostVisited":
-      return list.sort((a, b) => b.volume24h - a.volume24h);
-    default:
-      return list.sort((a, b) => a.rank - b.rank);
-  }
-}
+import { ApiNotice } from "@/components/ApiNotice";
+import { useDebouncedValue, useMarkets } from "@/hooks/usePricingApi";
+import { priceToCoin, type MarketFilters } from "@/lib/pricecatcher";
 
 export function MarketPage() {
   const { t } = useI18n();
-  const [sortMode, setSortMode] = useState<SortMode>("top");
-  const [category, setCategory] = useState<CategoryFilter>("all");
-  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<MarketFilters>({ sort: "rank", order: "asc", quote: "USD" });
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState(20);
-  const [mainTab, setMainTab] = useState<"cryptocurrencies" | "exchanges">(
-    "cryptocurrencies",
-  );
-
-  function updateSortMode(mode: SortMode) {
-    setSortMode(mode);
+  const [mainTab, setMainTab] = useState<"cryptocurrencies" | "exchanges">("cryptocurrencies");
+  const debouncedFilters = useDebouncedValue(filters);
+  // Reset pagination when filters settle, so every request uses a coherent filter/page combination.
+  const [lastFilters, setLastFilters] = useState(debouncedFilters);
+  if (lastFilters !== debouncedFilters) {
+    setLastFilters(debouncedFilters);
     setPage(1);
   }
-  function updateCategory(next: CategoryFilter) {
-    setCategory(next);
-    setPage(1);
-  }
-  function updateQuery(next: string) {
-    setQuery(next);
-    setPage(1);
-  }
-  function updateRows(next: number) {
-    setRows(next);
-    setPage(1);
-  }
-
-  const filtered = useMemo(() => {
-    let list = mockCoins;
-    if (category !== "all")
-      list = list.filter((c) => c.categories.includes(category));
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      list = list.filter((c) =>
-        `${c.name} ${c.symbol}`.toLowerCase().includes(q),
-      );
-    }
-    return sortCoins(list, sortMode);
-  }, [category, query, sortMode]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / rows));
-  const pageCoins = filtered.slice((page - 1) * rows, page * rows);
-
+  const markets = useMarkets({ ...debouncedFilters, page, page_size: rows }, mainTab === "cryptocurrencies");
+  const pageCoins = markets.data?.data.map(item => priceToCoin(item)) ?? [];
+  const totalPages = Math.max(1, markets.data?.meta.total_pages ?? 1);
   return (
-    <main className="mx-auto w-full ">
-      <Hero />
-      <TrendingPanel />
+    <main className="mx-auto w-full">
+      <Hero /><TrendingPanel />
       <section className="px-5 pb-21 pt-2.5 nav:px-7.5">
-        <div className="mb-5.5 border-b border-line">
-          <div className="flex items-center gap-6">
-            {(["cryptocurrencies", "exchanges"] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setMainTab(tab)}
-                className={`relative py-3 text-lg font-semibold transition-colors ${
-                  mainTab === tab
-                    ? "text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-gold after:content-['']"
-                    : "text-muted hover:text-ink"
-                }`}
-              >
-                {t.marketTabs[tab]}
-              </button>
-            ))}
-          </div>
-        </div>
-        {mainTab === "exchanges" ? (
-          <ExchangesTable />
-        ) : (
-          <>
-            <h2 className="mb-5.5 font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
-              {t.table.sectionTitle}
-            </h2>
-            <FilterTabs
-              sortMode={sortMode}
-              onSortMode={updateSortMode}
-              category={category}
-              onCategory={updateCategory}
-              query={query}
-              onQuery={updateQuery}
-            />
-            <CoinTable coins={pageCoins} />
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              onPage={setPage}
-              rows={rows}
-              onRows={updateRows}
-            />
-          </>
-        )}
+        <div className="mb-5.5 border-b border-line"><div className="flex items-center gap-6">
+          {(["cryptocurrencies", "exchanges"] as const).map(tab => <button key={tab} type="button" onClick={() => setMainTab(tab)}
+            className={`relative py-3 text-lg font-semibold transition-colors ${mainTab === tab ? "border-b-2 border-gold text-ink" : "text-muted hover:text-ink"}`}>{t.marketTabs[tab]}</button>)}
+        </div></div>
+        {mainTab === "exchanges" ? <ExchangesTable /> : <>
+          <h2 className="mb-5.5 font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">{t.table.sectionTitle}</h2>
+          <FilterTabs filters={filters} onChange={setFilters} />
+          <ApiNotice error={markets.error} loading={markets.isLoading} stale={pageCoins.some(coin => coin.stale)} />
+          {!markets.isLoading && (!markets.error || pageCoins.length > 0) && <CoinTable coins={pageCoins} quote={debouncedFilters.quote} />}
+          <Pagination page={page} totalPages={totalPages} onPage={setPage} rows={rows} onRows={next => { setRows(next); setPage(1); }} />
+        </>}
       </section>
     </main>
   );

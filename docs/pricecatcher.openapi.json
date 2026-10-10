@@ -1,0 +1,3702 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Crypto Pricing API",
+    "description": "Prices for crypto assets, served from a cache that a background worker keeps fresh. The API\n**never calls the upstream data provider** on the request path.\n\n## Authentication\nSend your consumer key in the **`X-API-Key`** header (click **Authorize** above). Keys look like\n`cp_live_...` and are created by an operator with `python -m app.cli create-key`.\n`/v1/admin/*` uses a different key in **`X-Admin-Key`**; an admin key is never valid on consumer\nendpoints and vice versa. Bad keys all return the same `401 invalid_api_key`. Repeated failures\nfrom one IP are throttled with `429`.\n\n## Rate limits\nEvery authenticated response carries `X-RateLimit-Limit` (requests per window),\n`X-RateLimit-Remaining` and `X-RateLimit-Reset` (seconds until a slot frees up). Over the limit\nyou get `429 rate_limited` with a `Retry-After` header (seconds).\n\n## Conventions\n- **Decimals.** `price`, `price_toman`, `volume_24h`, `market_cap`, `high_24h` and `low_24h` are JSON\n  *strings* (exact decimals, never scientific notation). Percent changes are JSON numbers.\n- **Sparkline.** Every price object has a chart-ready 7-day `sparkline`; pass `sparkline=false`\n  to omit it. Point `i` is at `start + i * interval_seconds` (Unix seconds, UTC); `null` means no data\n  (never forward-filled). The last point is the live price. The values are plain JSON **numbers**\n  (the one exception to the decimal-string rule, because chart libraries need numbers).\n  `source` is `history`, `percent_change_anchors` (day-one fallback) or `none`.\n- **IRR** is the Iranian Rial; `price_toman` = Rial / 10.\n- **Derived pairs.** A pair whose quote is not USD/BTC/ETH/IRR (e.g. `SOL/USDT`) is a cross rate\n  computed as `base_usd / quote_usd` (`derived: true`). These are aggregated market rates,\n  **not exchange order-book prices**.\n- **Freshness.** `fetched_at`, `age_seconds` and `stale` are on every price.\n- **Errors** always look like `{\"error\": {\"code\", \"message\", \"request_id\"}}`.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Ops"
+        ],
+        "summary": "Liveness",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "Ops"
+        ],
+        "summary": "Readiness: Postgres, Redis and a populated cache",
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Ready Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices": {
+      "get": {
+        "tags": [
+          "Prices"
+        ],
+        "summary": "Batch price lookup",
+        "description": "Prices for several coins at once (max `PAIRS_MAX_PER_REQUEST` identifiers).\n\nUnknown identifiers are reported in `errors`; the request itself still succeeds.",
+        "operationId": "batch_prices_v1_prices_get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sparkline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set false to omit the sparkline",
+              "default": true,
+              "title": "Sparkline"
+            },
+            "description": "Set false to omit the sparkline"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated CMC ids",
+              "title": "Ids"
+            },
+            "description": "Comma-separated CMC ids"
+          },
+          {
+            "name": "symbols",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated symbols or slugs",
+              "title": "Symbols"
+            },
+            "description": "Comma-separated symbols or slugs"
+          },
+          {
+            "name": "quote",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "USD | BTC | ETH | IRR",
+              "default": "USD",
+              "title": "Quote"
+            },
+            "description": "USD | BTC | ETH | IRR"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/prices/{coin}": {
+      "get": {
+        "tags": [
+          "Prices"
+        ],
+        "summary": "Price of one coin",
+        "description": "`coin` is a CMC id, `id:\u003Ccmc_id\u003E`, a symbol (best rank wins) or a slug.",
+        "operationId": "one_price_v1_prices__coin__get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "coin",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Coin"
+            }
+          },
+          {
+            "name": "sparkline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set false to omit the sparkline",
+              "default": true,
+              "title": "Sparkline"
+            },
+            "description": "Set false to omit the sparkline"
+          },
+          {
+            "name": "quote",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "USD | BTC | ETH | IRR",
+              "default": "USD",
+              "title": "Quote"
+            },
+            "description": "USD | BTC | ETH | IRR"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceItem"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/top": {
+      "get": {
+        "tags": [
+          "Prices"
+        ],
+        "summary": "Top coins by rank",
+        "operationId": "top_v1_top_get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Number of coins (max API_TOP_MAX_LIMIT)",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Number of coins (max API_TOP_MAX_LIMIT)"
+          },
+          {
+            "name": "sparkline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set false to omit the sparkline",
+              "default": true,
+              "title": "Sparkline"
+            },
+            "description": "Set false to omit the sparkline"
+          },
+          {
+            "name": "quote",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "USD | BTC | ETH | IRR",
+              "default": "USD",
+              "title": "Quote"
+            },
+            "description": "USD | BTC | ETH | IRR"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/coins": {
+      "get": {
+        "tags": [
+          "Coins"
+        ],
+        "summary": "Coin metadata (no sparkline)",
+        "operationId": "coins_v1_coins_get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Search"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoinsResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/coins/{coin}": {
+      "get": {
+        "tags": [
+          "Coins"
+        ],
+        "summary": "Metadata for one coin",
+        "description": "Supplies, all-time high/low, dominance and turnover. `coin` is an id, `id:\u003Cn\u003E`, a symbol\n(best rank wins) or a slug. Does not count towards hot-set promotion.",
+        "operationId": "coin_detail_v1_coins__coin__get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "coin",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Coin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoinDetail"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/markets": {
+      "get": {
+        "tags": [
+          "Prices"
+        ],
+        "summary": "Market list (search, filters, sort)",
+        "description": "Standard `PriceItem`s (plus `pair_ref`) for many coins, from Postgres.\n\nSearch ranks an exact symbol match first, then symbol prefix, then name/slug prefix, then\nanything containing the text, then by rank. Sorting puts missing values last in both\ndirections and breaks ties by rank, so pages are stable. Sparklines come from the Redis cache\nonly (a coin without a cached sparkline gets an all-null one with `coverage: 0`); this endpoint\nnever builds one from history and does not count towards hot-set promotion.\n\nFor `quote=IRR` only `search`, `rank_max` and `sort` in `rank | name | price` apply (the\nupstream has no IRR volume, market cap or percent changes); anything else is a 422\n`unsupported_for_quote`.",
+        "operationId": "markets_v1_markets_get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "Name, symbol or slug (case-insensitive)",
+              "default": "",
+              "title": "Search"
+            },
+            "description": "Name, symbol or slug (case-insensitive)"
+          },
+          {
+            "name": "rank_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only coins ranked \u003C= this",
+              "title": "Rank Max"
+            },
+            "description": "Only coins ranked \u003C= this"
+          },
+          {
+            "name": "min_market_cap",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Market Cap"
+            }
+          },
+          {
+            "name": "min_volume_24h",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Volume 24H"
+            }
+          },
+          {
+            "name": "min_change_24h",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Percent",
+              "title": "Min Change 24H"
+            },
+            "description": "Percent"
+          },
+          {
+            "name": "max_change_24h",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Percent",
+              "title": "Max Change 24H"
+            },
+            "description": "Percent"
+          },
+          {
+            "name": "stale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "include",
+                    "only",
+                    "exclude"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stale"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "rank",
+                "name",
+                "price",
+                "change_1h",
+                "change_24h",
+                "change_7d",
+                "volume_24h",
+                "market_cap"
+              ],
+              "type": "string",
+              "default": "rank",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Order"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Max MARKETS_MAX_PAGE_SIZE",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Max MARKETS_MAX_PAGE_SIZE"
+          },
+          {
+            "name": "sparkline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set false to omit the sparkline",
+              "default": true,
+              "title": "Sparkline"
+            },
+            "description": "Set false to omit the sparkline"
+          },
+          {
+            "name": "quote",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "USD | BTC | ETH | IRR",
+              "default": "USD",
+              "title": "Quote"
+            },
+            "description": "USD | BTC | ETH | IRR"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketsResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/pairs": {
+      "get": {
+        "tags": [
+          "Pairs"
+        ],
+        "summary": "Token pairs (GET)",
+        "description": "Look up `BASE/QUOTE` pairs. Separators `/`, `-` and `_` are accepted and\nmatching is case-insensitive. BASE may be a symbol, a slug or `id:\u003Ccmc_id\u003E`; a ticker shared\nby several coins resolves to the best rank (the response echoes `base.id` / `base.slug`).\n\n* `USD`, `BTC`, `ETH`, `IRR` quotes are **native** (`derived: false`).\n* Any other coin as QUOTE is a **derived cross rate** (`derived: true`): `base_usd / quote_usd`.\n  Derived pairs are aggregated market rates, **not exchange order-book prices**; their volume,\n  market cap and 24h high/low are `null`. Disabled when `PAIRS_ALLOW_CROSS=false`.\n\nA well-formed request always returns HTTP 200 with per-pair `errors` (`invalid_pair`,\n`unknown_base`, `unknown_quote`, `same_base_quote`, `cross_disabled`, `no_data`). Results keep\nrequest order with duplicates removed. 422: empty list, too many pairs or malformed body.",
+        "operationId": "pairs_get_v1_pairs_get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pairs",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated pairs, e.g. BTC/USD,ETH-BTC,SOL_USDT",
+              "title": "Pairs"
+            },
+            "description": "Comma-separated pairs, e.g. BTC/USD,ETH-BTC,SOL_USDT"
+          },
+          {
+            "name": "sparkline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Set false to omit the sparkline",
+              "default": true,
+              "title": "Sparkline"
+            },
+            "description": "Set false to omit the sparkline"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pairs"
+        ],
+        "summary": "Token pairs (POST, for long lists)",
+        "description": "Look up `BASE/QUOTE` pairs. Separators `/`, `-` and `_` are accepted and\nmatching is case-insensitive. BASE may be a symbol, a slug or `id:\u003Ccmc_id\u003E`; a ticker shared\nby several coins resolves to the best rank (the response echoes `base.id` / `base.slug`).\n\n* `USD`, `BTC`, `ETH`, `IRR` quotes are **native** (`derived: false`).\n* Any other coin as QUOTE is a **derived cross rate** (`derived: true`): `base_usd / quote_usd`.\n  Derived pairs are aggregated market rates, **not exchange order-book prices**; their volume,\n  market cap and 24h high/low are `null`. Disabled when `PAIRS_ALLOW_CROSS=false`.\n\nA well-formed request always returns HTTP 200 with per-pair `errors` (`invalid_pair`,\n`unknown_base`, `unknown_quote`, `same_base_quote`, `cross_disabled`, `no_data`). Results keep\nrequest order with duplicates removed. 422: empty list, too many pairs or malformed body.",
+        "operationId": "pairs_post_v1_pairs_post",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairsRequest"
+              },
+              "examples": {
+                "mixed": {
+                  "summary": "Native and derived pairs",
+                  "value": {
+                    "pairs": [
+                      "BTC/USD",
+                      "ETH-BTC",
+                      "SOL_USDT",
+                      "id:1027/IRR"
+                    ],
+                    "sparkline": true
+                  }
+                },
+                "light": {
+                  "summary": "Without sparklines",
+                  "value": {
+                    "pairs": [
+                      "bitcoin/USD",
+                      "ETH/USD"
+                    ],
+                    "sparkline": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/history/{coin}": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "Full-resolution price history",
+        "description": "History for custom ranges (the standard `sparkline` is the default chart data).\n\nStored quotes (`HISTORY_QUOTES`, default USD and IRR) are read directly; BTC/ETH-quoted\nhistory is derived per bucket from USD history (`derived: true`). Each bucket holds the last\nsnapshot in it. Max range per interval is configurable.",
+        "operationId": "history_v1_history__coin__get",
+        "security": [
+          {
+            "ConsumerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "coin",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Coin"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds or ISO-8601",
+              "title": "From"
+            },
+            "description": "Unix seconds or ISO-8601"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds or ISO-8601 (default: now)",
+              "title": "To"
+            },
+            "description": "Unix seconds or ISO-8601 (default: now)"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "5m | 1h | 1d",
+              "default": "1h",
+              "title": "Interval"
+            },
+            "description": "5m | 1h | 1d"
+          },
+          {
+            "name": "quote",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "USD | BTC | ETH | IRR",
+              "default": "USD",
+              "title": "Quote"
+            },
+            "description": "USD | BTC | ETH | IRR"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing key (`missing_api_key`) or an invalid, revoked or expired key (`invalid_api_key`; the message is identical for all three).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_api_key",
+                    "message": "Invalid API key",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key is valid but not allowed from this `Origin`.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "origin_not_allowed",
+                    "message": "This API key is not allowed from this origin",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters or body.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (`rate_limited`) or too many failed authentication attempts from this IP (`too_many_auth_failures`).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Rate limit exceeded",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Requests allowed per window for this key.",
+                "schema": {
+                  "type": "integer",
+                  "example": 120
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 117
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Seconds until the oldest request leaves the window (a slot frees up).",
+                "schema": {
+                  "type": "integer",
+                  "example": 41
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/hot/{coin_id}": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Pin a coin to the hot tier",
+        "operationId": "pin_v1_admin_hot__coin_id__post",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "coin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Coin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Pin V1 Admin Hot  Coin Id  Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin key.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_admin_key",
+                    "message": "Admin key required",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown coin.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "unknown_coin",
+                    "message": "No coin with id 424242",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The tier is already running.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "already_running",
+                    "message": "Tier 'hot' is already running",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many failed authentication attempts from this IP.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "too_many_auth_failures",
+                    "message": "Too many failed authentication attempts; try again later",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Unpin a coin",
+        "operationId": "unpin_v1_admin_hot__coin_id__delete",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "coin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Coin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Unpin V1 Admin Hot  Coin Id  Delete"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin key.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_admin_key",
+                    "message": "Admin key required",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown coin.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "unknown_coin",
+                    "message": "No coin with id 424242",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The tier is already running.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "already_running",
+                    "message": "Tier 'hot' is already running",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many failed authentication attempts from this IP.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "too_many_auth_failures",
+                    "message": "Too many failed authentication attempts; try again later",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/refresh": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Refresh a tier now (top priority)",
+        "description": "Runs in the background through the global upstream limiter at ADMIN priority, which is\nserved before hot, warm and full requests. Follow progress in `/v1/admin/status`.",
+        "operationId": "refresh_v1_admin_refresh_post",
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tier",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "hot",
+                "warm",
+                "full"
+              ],
+              "type": "string",
+              "default": "hot",
+              "title": "Tier"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Refresh V1 Admin Refresh Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin key.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "invalid_admin_key",
+                    "message": "Admin key required",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown coin.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "unknown_coin",
+                    "message": "No coin with id 424242",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The tier is already running.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "already_running",
+                    "message": "Tier 'hot' is already running",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many failed authentication attempts from this IP.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "too_many_auth_failures",
+                    "message": "Too many failed authentication attempts; try again later",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/status": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Operational status",
+        "operationId": "status_v1_admin_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Status V1 Admin Status Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_admin_key",
+                    "message": "Admin key required",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown coin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "unknown_coin",
+                    "message": "No coin with id 424242",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The tier is already running.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "already_running",
+                    "message": "Tier 'hot' is already running",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Invalid request",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many failed authentication attempts from this IP.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": {
+                    "code": "too_many_auth_failures",
+                    "message": "Too many failed authentication attempts; try again later",
+                    "request_id": "9f1c2b7e4d3a4c0e8b1f"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminApiKey": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BaseCoin": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "slug",
+          "name"
+        ],
+        "title": "BaseCoin"
+      },
+      "CoinDetail": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "circulating_supply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Circulating Supply"
+          },
+          "total_supply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Supply"
+          },
+          "max_supply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Supply"
+          },
+          "ath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ath"
+          },
+          "atl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atl"
+          },
+          "dominance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominance",
+            "description": "Market dominance in percent (USD row)"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover",
+            "description": "24h volume / market cap (USD row)"
+          },
+          "pair_ref": {
+            "type": "string",
+            "title": "Pair Ref",
+            "description": "Use as BASE in `/v1/pairs` for this coin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "slug",
+          "name",
+          "rank",
+          "is_active",
+          "circulating_supply",
+          "total_supply",
+          "max_supply",
+          "ath",
+          "atl",
+          "pair_ref"
+        ],
+        "title": "CoinDetail",
+        "description": "Metadata for one coin (detail pages)."
+      },
+      "CoinOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "circulating_supply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Circulating Supply"
+          },
+          "total_supply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Supply"
+          },
+          "max_supply": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Supply"
+          },
+          "ath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ath"
+          },
+          "atl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "slug",
+          "name",
+          "rank",
+          "is_active",
+          "circulating_supply",
+          "total_supply",
+          "max_supply",
+          "ath",
+          "atl"
+        ],
+        "title": "CoinOut"
+      },
+      "CoinsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CoinOut"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "CoinsResponse"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "details": {
+            "anyOf": [
+              {
+
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "examples": [
+          {
+            "error": {
+              "code": "invalid_api_key",
+              "message": "Invalid API key",
+              "request_id": "9f1c2b7e4d3a4c0e8b1f"
+            }
+          }
+        ]
+      },
+      "HistoryPoint": {
+        "properties": {
+          "ts": {
+            "type": "integer",
+            "title": "Ts"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "price"
+        ],
+        "title": "HistoryPoint"
+      },
+      "HistoryResponse": {
+        "properties": {
+          "coin": {
+            "$ref": "#/components/schemas/BaseCoin"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "derived": {
+            "type": "boolean",
+            "title": "Derived"
+          },
+          "interval": {
+            "type": "string",
+            "title": "Interval"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds"
+          },
+          "from": {
+            "type": "integer",
+            "title": "From"
+          },
+          "to": {
+            "type": "integer",
+            "title": "To"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coin",
+          "quote",
+          "derived",
+          "interval",
+          "interval_seconds",
+          "from",
+          "to",
+          "points"
+        ],
+        "title": "HistoryResponse"
+      },
+      "ItemError": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "code",
+          "message"
+        ],
+        "title": "ItemError"
+      },
+      "ListMeta": {
+        "properties": {
+          "requested": {
+            "type": "integer",
+            "title": "Requested"
+          },
+          "resolved": {
+            "type": "integer",
+            "title": "Resolved"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requested",
+          "resolved",
+          "failed"
+        ],
+        "title": "ListMeta"
+      },
+      "MarketItem": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "base": {
+            "$ref": "#/components/schemas/BaseCoin"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "derived": {
+            "type": "boolean",
+            "title": "Derived",
+            "description": "true for cross pairs (aggregated market rates)"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "price_toman": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Toman",
+            "description": "IRR quote only: Rial price / IRR_TO_TOMAN_DIVISOR"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "description": "'IRR' for the Rial quote, otherwise null"
+          },
+          "percent_change": {
+            "$ref": "#/components/schemas/PercentChange"
+          },
+          "volume_24h": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume 24H"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "high_24h": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High 24H"
+          },
+          "low_24h": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low 24H"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fetched At"
+          },
+          "age_seconds": {
+            "type": "integer",
+            "title": "Age Seconds"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "sparkline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sparkline"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pair_ref": {
+            "type": "string",
+            "title": "Pair Ref",
+            "description": "Use as BASE in `/v1/pairs`: the symbol when it resolves to this coin, otherwise the slug (several coins can share a ticker; the best rank wins the symbol)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "base",
+          "quote",
+          "derived",
+          "price",
+          "percent_change",
+          "fetched_at",
+          "age_seconds",
+          "stale",
+          "pair_ref"
+        ],
+        "title": "MarketItem",
+        "description": "A ``PriceItem`` plus the identifier to use in a pair link for this coin.",
+        "examples": [
+          {
+            "age_seconds": 12,
+            "base": {
+              "id": 1,
+              "name": "Bitcoin",
+              "rank": 1,
+              "slug": "bitcoin",
+              "symbol": "BTC"
+            },
+            "derived": false,
+            "fetched_at": "2026-10-06T05:07:00Z",
+            "high_24h": "86678.81129575295",
+            "low_24h": "84971.86517872974",
+            "market_cap": "1720032967811.3406",
+            "pair": "BTC/USD",
+            "percent_change": {
+              "1h": 0.0413,
+              "24h": 0.0462,
+              "30d": 7.1656,
+              "60d": 33.4664,
+              "7d": 2.9174,
+              "90d": 36.3453
+            },
+            "price": "85598.79904257292",
+            "quote": "USD",
+            "sparkline": {
+              "change_pct": 2.9174,
+              "coverage": 0.97,
+              "high": 86010.4,
+              "interval_seconds": 3600,
+              "low": 83176.1,
+              "prices": [83176.1, 83210.4, null, 83390.7, 83402.2, 85598.799],
+              "range_hours": 168,
+              "source": "history",
+              "start": 1759708800
+            },
+            "stale": false,
+            "volume_24h": "26885539731.984627"
+          }
+        ]
+      },
+      "MarketsMeta": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "page_size",
+          "total",
+          "total_pages",
+          "quote",
+          "generated_at"
+        ],
+        "title": "MarketsMeta"
+      },
+      "MarketsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MarketItem"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/MarketsMeta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "MarketsResponse"
+      },
+      "PageMeta": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "PageMeta"
+      },
+      "PairsRequest": {
+        "properties": {
+          "pairs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pairs",
+            "description": "BASE/QUOTE strings; separators '/', '-' or '_'"
+          },
+          "sparkline": {
+            "type": "boolean",
+            "title": "Sparkline",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "pairs"
+        ],
+        "title": "PairsRequest",
+        "examples": [
+          {
+            "pairs": [
+              "BTC/USD",
+              "ETH-BTC",
+              "SOL_USDT"
+            ],
+            "sparkline": true
+          }
+        ]
+      },
+      "PercentChange": {
+        "properties": {
+          "1h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "1H"
+          },
+          "24h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "24H"
+          },
+          "7d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "7D"
+          },
+          "30d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "30D"
+          },
+          "60d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "60D"
+          },
+          "90d": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "90D"
+          }
+        },
+        "type": "object",
+        "title": "PercentChange"
+      },
+      "PriceItem": {
+        "properties": {
+          "pair": {
+            "type": "string",
+            "title": "Pair"
+          },
+          "base": {
+            "$ref": "#/components/schemas/BaseCoin"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "derived": {
+            "type": "boolean",
+            "title": "Derived",
+            "description": "true for cross pairs (aggregated market rates)"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "price_toman": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Toman",
+            "description": "IRR quote only: Rial price / IRR_TO_TOMAN_DIVISOR"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "description": "'IRR' for the Rial quote, otherwise null"
+          },
+          "percent_change": {
+            "$ref": "#/components/schemas/PercentChange"
+          },
+          "volume_24h": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume 24H"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "high_24h": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High 24H"
+          },
+          "low_24h": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low 24H"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fetched At"
+          },
+          "age_seconds": {
+            "type": "integer",
+            "title": "Age Seconds"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "sparkline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Sparkline"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair",
+          "base",
+          "quote",
+          "derived",
+          "price",
+          "percent_change",
+          "fetched_at",
+          "age_seconds",
+          "stale"
+        ],
+        "title": "PriceItem",
+        "examples": [
+          {
+            "age_seconds": 12,
+            "base": {
+              "id": 1,
+              "name": "Bitcoin",
+              "rank": 1,
+              "slug": "bitcoin",
+              "symbol": "BTC"
+            },
+            "derived": false,
+            "fetched_at": "2026-10-06T05:07:00Z",
+            "high_24h": "86678.81129575295",
+            "low_24h": "84971.86517872974",
+            "market_cap": "1720032967811.3406",
+            "pair": "BTC/USD",
+            "percent_change": {
+              "1h": 0.0413,
+              "24h": 0.0462,
+              "30d": 7.1656,
+              "60d": 33.4664,
+              "7d": 2.9174,
+              "90d": 36.3453
+            },
+            "price": "85598.79904257292",
+            "quote": "USD",
+            "sparkline": {
+              "change_pct": 2.9174,
+              "coverage": 0.97,
+              "high": 86010.4,
+              "interval_seconds": 3600,
+              "low": 83176.1,
+              "prices": [83176.1, 83210.4, null, 83390.7, 83402.2, 85598.799],
+              "range_hours": 168,
+              "source": "history",
+              "start": 1759708800
+            },
+            "stale": false,
+            "volume_24h": "26885539731.984627"
+          }
+        ]
+      },
+      "PriceListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PriceItem"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ItemError"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ListMeta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "errors",
+          "meta"
+        ],
+        "title": "PriceListResponse",
+        "examples": [
+          {
+            "data": [
+              {
+                "age_seconds": 12,
+                "base": {
+                  "id": 1,
+                  "name": "Bitcoin",
+                  "rank": 1,
+                  "slug": "bitcoin",
+                  "symbol": "BTC"
+                },
+                "derived": false,
+                "fetched_at": "2026-10-06T05:07:00Z",
+                "high_24h": "86678.81129575295",
+                "low_24h": "84971.86517872974",
+                "market_cap": "1720032967811.3406",
+                "pair": "BTC/USD",
+                "percent_change": {
+                  "1h": 0.0413,
+                  "24h": 0.0462,
+                  "30d": 7.1656,
+                  "60d": 33.4664,
+                  "7d": 2.9174,
+                  "90d": 36.3453
+                },
+                "price": "85598.79904257292",
+                "quote": "USD",
+                "sparkline": {
+                  "change_pct": 2.9174,
+                  "coverage": 0.97,
+                  "high": 86010.4,
+                  "interval_seconds": 3600,
+                  "low": 83176.1,
+                  "prices": [83176.1, 83210.4, null, 83390.7, 83402.2, 85598.799],
+                  "range_hours": 168,
+                  "source": "history",
+                  "start": 1759708800
+                },
+                "stale": false,
+                "volume_24h": "26885539731.984627"
+              },
+              {
+                "age_seconds": 12,
+                "base": {
+                  "id": 5426,
+                  "name": "Solana",
+                  "rank": 7,
+                  "slug": "solana",
+                  "symbol": "SOL"
+                },
+                "derived": true,
+                "fetched_at": "2026-10-06T05:07:00Z",
+                "pair": "SOL/USDT",
+                "percent_change": {
+                  "1h": 0.12,
+                  "24h": -1.4,
+                  "7d": 3.25
+                },
+                "price": "120.12139074",
+                "quote": "USDT",
+                "sparkline": {
+                  "change_pct": 2.9174,
+                  "coverage": 0.97,
+                  "high": 121,
+                  "interval_seconds": 3600,
+                  "low": 118.2,
+                  "prices": [118.2, 118.9, null, 119.4, 119.8, 120.121],
+                  "range_hours": 168,
+                  "source": "history",
+                  "start": 1759708800
+                },
+                "stale": false
+              }
+            ],
+            "errors": [
+              {
+                "code": "unknown_base",
+                "message": "No coin matches 'FOO'",
+                "pair": "FOO/USD"
+              }
+            ],
+            "meta": {
+              "failed": 1,
+              "requested": 3,
+              "resolved": 2
+            }
+          }
+        ]
+      },
+      "Sparkline": {
+        "properties": {
+          "range_hours": {
+            "type": "integer",
+            "title": "Range Hours"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "prices": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Prices"
+          },
+          "change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Pct"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High"
+          },
+          "low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low"
+          },
+          "coverage": {
+            "type": "number",
+            "title": "Coverage"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "history | percent_change_anchors | none"
+          }
+        },
+        "type": "object",
+        "required": [
+          "range_hours",
+          "interval_seconds",
+          "start",
+          "prices",
+          "coverage",
+          "source"
+        ],
+        "title": "Sparkline",
+        "description": "Chart-ready series on a shared epoch-aligned grid. Values are plain JSON numbers.\n\nPoint ``i`` is at ``start + i * interval_seconds`` (UTC seconds); ``null`` = no data."
+      }
+    },
+    "securitySchemes": {
+      "ConsumerApiKey": {
+        "type": "apiKey",
+        "description": "Consumer API key (`cp_live_...`), created with `python -m app.cli create-key`.",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "AdminApiKey": {
+        "type": "apiKey",
+        "description": "Admin key (`ADMIN_API_KEY`). Never valid on consumer endpoints.",
+        "in": "header",
+        "name": "X-Admin-Key"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Prices",
+      "description": "Latest prices with sparklines: single coin, batch and top lists."
+    },
+    {
+      "name": "Pairs",
+      "description": "`BASE/QUOTE` lookups, including derived cross rates."
+    },
+    {
+      "name": "Coins",
+      "description": "Coin metadata search (no prices, no sparkline)."
+    },
+    {
+      "name": "History",
+      "description": "Full-resolution history for custom ranges."
+    },
+    {
+      "name": "Admin",
+      "description": "Pinning, forced refresh and status. Needs `X-Admin-Key`."
+    },
+    {
+      "name": "Ops",
+      "description": "Liveness, readiness and metrics. No consumer key needed."
+    }
+  ]
+}

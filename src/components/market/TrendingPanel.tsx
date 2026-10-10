@@ -1,37 +1,20 @@
 import { formatPercent, formatPrice } from "../../lib/format";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { Coin } from "../../lib/types";
 import { CoinIcon } from "../CoinIcon";
 import { CoinName } from "../CoinName";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
-import { mockCoins } from "../../lib/mockCoins";
-import { useLiveCoin } from "@/hooks/useLiveCoin";
+import { useMarkets } from "@/hooks/usePricingApi";
+import { priceToCoin } from "@/lib/pricecatcher";
+import { ApiNotice } from "@/components/ApiNotice";
 import { useI18n } from "../../i18n/I18nContext";
 
 type TabKey = "trending" | "gainers" | "losers" | "recentlyAdded";
 
-function pickList(coins: Coin[], tab: TabKey): Coin[] {
-  switch (tab) {
-    case "gainers":
-      return [...coins].sort((a, b) => b.change24h - a.change24h).slice(0, 6);
-
-    case "losers":
-      return [...coins].sort((a, b) => a.change24h - b.change24h).slice(0, 6);
-
-    case "recentlyAdded":
-      return [...coins].sort((a, b) => b.rank - a.rank).slice(0, 6);
-
-    default:
-      return [...coins]
-        .sort((a, b) => b.volume24h / b.marketCap - a.volume24h / a.marketCap)
-        .slice(0, 6);
-  }
-}
-
 function TrendingCoinCard({
-  coin: baseCoin,
+  coin,
   index,
   lang,
 }: {
@@ -39,7 +22,6 @@ function TrendingCoinCard({
   index: number;
   lang: "en" | "fa";
 }) {
-  const { coin } = useLiveCoin(baseCoin);
 
   return (
     <Link
@@ -68,6 +50,7 @@ function TrendingCoinCard({
 
       <Sparkline
         data={coin.sparkline}
+        timestamps={coin.sparklineTimestamps}
         positive={coin.change24h >= 0}
         className="h-11"
       />
@@ -85,9 +68,10 @@ function TrendingCoinCard({
 
 export function TrendingPanel() {
   const { t, lang } = useI18n();
-  const [tab, setTab] = useState<TabKey>("trending");
+  const [tab, setTab] = useState<TabKey>("gainers");
 
-  const list = useMemo(() => pickList(mockCoins, tab), [tab]);
+  const markets = useMarkets({ sort: "change_24h", order: tab === "losers" ? "asc" : "desc", page_size: 6 });
+  const list = markets.data?.data.map(item => priceToCoin(item)) ?? [];
 
   const tabs: TabKey[] = ["trending", "gainers", "losers", "recentlyAdded"];
 
@@ -108,11 +92,13 @@ export function TrendingPanel() {
           {tabs.map((key) => (
             <button
               key={key}
-              className={`rounded-md px-2.75 py-1.75 text-[13px] ${
+              className={`rounded-md px-2.75 py-1.75 text-[13px] disabled:opacity-35 ${
                 tab === key
                   ? "bg-accent text-white"
                   : "bg-transparent text-muted hover:text-ink"
               }`}
+              disabled={key === "trending" || key === "recentlyAdded"}
+              title={key === "trending" || key === "recentlyAdded" ? t.detail.unavailable : undefined}
               onClick={() => setTab(key)}
             >
               {t.trending.tabs[key]}
@@ -125,6 +111,7 @@ export function TrendingPanel() {
         {t.trending.subtitle}
       </p>
 
+      <ApiNotice error={markets.error} loading={markets.isLoading} stale={list.some(coin => coin.stale)} />
       <div className="grid grid-cols-1 gap-3.5 min-[431px]:grid-cols-2 min-[801px]:grid-cols-6">
         {list.map((coin, i) => (
           <TrendingCoinCard key={coin.id} coin={coin} index={i} lang={lang} />
