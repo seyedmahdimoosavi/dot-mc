@@ -6,7 +6,6 @@ import { FilterTabs } from "../components/market/FilterTabs";
 import { CoinTable } from "../components/market/CoinTable";
 import { Pagination } from "../components/market/Pagination";
 import { ExchangesTable } from "../components/market/ExchangesTable";
-import { ApiNotice } from "@/components/ApiNotice";
 import { useDebouncedValue, useMarkets } from "@/hooks/usePricingApi";
 import { priceToCoin, type MarketFilters } from "@/lib/pricecatcher";
 
@@ -62,13 +61,17 @@ export function MarketPage() {
               {t.table.sectionTitle}
             </h2>
             <FilterTabs filters={filters} onChange={setFilters} />
-            <ApiNotice
-              error={markets.error}
-              loading={markets.isLoading}
-              stale={pageCoins.some((coin) => coin.stale)}
-            />
-            {!markets.isLoading && (!markets.error || pageCoins.length > 0) && (
-              <CoinTable coins={pageCoins} quote={debouncedFilters.quote} />
+            {(markets.isFetching || !markets.error || pageCoins.length > 0) && (
+              <CoinTable
+                coins={pageCoins}
+                loading={markets.isFetching}
+                quote={debouncedFilters.quote}
+                sort={filters.sort}
+                order={filters.order}
+                onSort={(sort) => {
+                  setFilters(current => ({ ...current, sort, order: current.sort === sort && current.order === "desc" ? "asc" : "desc" }));
+                }}
+              />
             )}
             <Pagination
               page={page}

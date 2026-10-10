@@ -1,13 +1,12 @@
 import { formatCompactUsd, formatPercent } from "../../lib/format";
 
 import { Sparkline } from "../Sparkline";
-import { ApiNotice } from "@/components/ApiNotice";
 import { useBitcoin } from "@/hooks/useBitcoin";
 import { useI18n } from "../../i18n/I18nContext";
 
 export function Hero() {
   const { t, lang } = useI18n();
-  const { coin: bitcoin, error, isLoading, data } = useBitcoin();
+  const { coin: bitcoin } = useBitcoin();
   const timestamps = bitcoin?.sparklineTimestamps ?? [];
   const date = (timestamp?: number) => timestamp == null ? "—" : new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", { dateStyle: "medium" }).format(timestamp);
   const availableTimestamps = timestamps.filter((_, index) => bitcoin?.sparkline[index] != null && Number.isFinite(bitcoin.sparkline[index]));
@@ -63,7 +62,6 @@ export function Hero() {
           positive={(bitcoin?.change24h ?? 0) >= 0}
           className="mt-5.5 h-55"
         />
-        <ApiNotice error={error} loading={isLoading} stale={data?.stale} />
         <div className="mt-0.5 flex justify-between text-[13px] text-muted">
           <span>{from}</span>
           <span>{to}</span>

@@ -1,6 +1,26 @@
 import type { MarketFilters, MarketSort, Quote } from "@/lib/pricecatcher";
 
 import { useI18n } from "@/i18n/I18nContext";
+import type { ReactNode } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+function FilterSelect({ value, onValueChange, disabled, children }: {
+  value: string | number;
+  onValueChange: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return <Select value={String(value) || "all"} disabled={disabled}
+    onValueChange={next => { if (next != null) onValueChange(next === "all" ? "" : next); }}>
+    <SelectTrigger className="h-10 w-full min-w-0 border-line bg-surface-2 px-3 text-md font-semibold text-ink shadow-sm transition-all duration-200 hover:border-accent focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20">
+      <SelectValue className="truncate pe-2" />
+    </SelectTrigger>
+    <SelectContent alignItemWithTrigger={false} className="border-line bg-surface-2 text-ink shadow-(--shadow) duration-200">
+      {children}
+    </SelectContent>
+  </Select>;
+}
 
 export function FilterTabs({
   filters,
@@ -117,11 +137,11 @@ export function FilterTabs({
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1">
             {fa ? "واحد قیمت" : "Quote"}
-            <select
+            <FilterSelect
               className={inputClass}
               value={filters.quote ?? "USD"}
-              onChange={(event) => {
-                const quote = event.target.value as Quote;
+              onValueChange={(value) => {
+                const quote = value as Quote;
                 onChange(
                   quote === "IRR"
                     ? {
@@ -135,92 +155,92 @@ export function FilterTabs({
               }}
             >
               {["USD", "BTC", "ETH", "IRR"].map((quote) => (
-                <option key={quote}>{quote}</option>
+                <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" key={quote} value={quote}>{quote}</SelectItem>
               ))}
-            </select>
+            </FilterSelect>
           </label>
           <label className="flex flex-col gap-1">
             {fa ? "مرتب‌سازی" : "Sort by"}
-            <select
+            <FilterSelect
               className={inputClass}
               value={filters.sort ?? "rank"}
-              onChange={(event) =>
-                onChange({ ...filters, sort: event.target.value as MarketSort })
+              onValueChange={(value) =>
+                onChange({ ...filters, sort: value as MarketSort })
               }
             >
               {sortFields.map(([value, label]) => (
-                <option
+                <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
                   key={value}
                   value={value}
                   disabled={irr && !["rank", "name", "price"].includes(value)}
                 >
                   {label}
-                </option>
+                </SelectItem>
               ))}
-            </select>
+            </FilterSelect>
           </label>
           <label className="flex flex-col gap-1">
             {fa ? "ترتیب" : "Order"}
-            <select
+            <FilterSelect
               className={inputClass}
               value={filters.order ?? "asc"}
-              onChange={(event) =>
+              onValueChange={(value) =>
                 onChange({
                   ...filters,
-                  order: event.target.value as "asc" | "desc",
+                  order: value as "asc" | "desc",
                 })
               }
             >
-              <option value="asc">{fa ? "صعودی" : "Ascending"}</option>
-              <option value="desc">{fa ? "نزولی" : "Descending"}</option>
-            </select>
+              <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" value="asc">{fa ? "صعودی" : "Ascending"}</SelectItem>
+              <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" value="desc">{fa ? "نزولی" : "Descending"}</SelectItem>
+            </FilterSelect>
           </label>
           <label className="flex flex-col gap-1">
             {fa ? "تازگی داده" : "Freshness"}
-            <select
+            <FilterSelect
               disabled={irr}
               className={inputClass}
               value={filters.stale ?? "include"}
-              onChange={(event) =>
+              onValueChange={(value) =>
                 onChange({
                   ...filters,
-                  stale: event.target.value as MarketFilters["stale"],
+                  stale: value as MarketFilters["stale"],
                 })
               }
             >
-              <option value="include">{fa ? "همه" : "All"}</option>
-              <option value="exclude">
+              <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" value="include">{fa ? "همه" : "All"}</SelectItem>
+              <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" value="exclude">
                 {fa ? "فقط به‌روز" : "Fresh only"}
-              </option>
-              <option value="only">{fa ? "فقط قدیمی" : "Stale only"}</option>
-            </select>
+              </SelectItem>
+              <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" value="only">{fa ? "فقط قدیمی" : "Stale only"}</SelectItem>
+            </FilterSelect>
           </label>
           {numericFields.map(([key, label]) => (
             <label key={key} className="flex flex-col gap-1">
               {label}
-              <select
+              <FilterSelect
                 className={inputClass}
                 disabled={irr && key !== "rank_max"}
                 value={filters[key] ?? ""}
-                onChange={(event) =>
+                onValueChange={(value) =>
                   onChange({
                     ...filters,
                     [key]:
-                      event.target.value === ""
+                      value === ""
                         ? undefined
                         : key === "rank_max"
-                          ? Number(event.target.value)
-                          : event.target.value,
+                          ? Number(value)
+                          : value,
                   })
                 }
               >
-                <option value="">{fa ? "همه" : "All"}</option>
+                <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" value="all">{fa ? "همه" : "All"}</SelectItem>
                 {filterOptions[key].map(([value, text]) => (
-                  <option key={value} value={value}>
+                  <SelectItem className="cursor-pointer ps-3 pe-8 py-2 text-md text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink" key={value} value={value}>
                     {text}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
+              </FilterSelect>
             </label>
           ))}
         </div>

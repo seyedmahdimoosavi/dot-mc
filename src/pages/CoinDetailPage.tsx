@@ -16,7 +16,6 @@ import { Sparkline } from "../components/Sparkline";
 import { useI18n } from "../i18n/I18nContext";
 import useCoinMarketData from "@/hooks/useCoinMarketData";
 import { priceToCoin } from "@/lib/pricecatcher";
-import { ApiNotice } from "@/components/ApiNotice";
 import { CoinPairs } from "@/components/market/CoinPairs";
 import { PricingApiError } from "@/lib/api";
 import {
@@ -103,7 +102,7 @@ export function CoinDetailPage() {
     <Link to="/" className="text-muted">{t.detail.back}</Link>
     {error instanceof PricingApiError && error.status === 404
       ? <p className="mt-4">{lang === "fa" ? "این رمزارز پیدا نشد." : "Coin not found."}</p>
-      : <ApiNotice error={error} loading={isPriceLoading} />}
+      : null}
   </main>;
 
   const shortAddress = address
@@ -221,7 +220,6 @@ export function CoinDetailPage() {
 
   return (
     <main className="mx-auto max-w-310 px-5 pb-20 pt-6.5 nav:px-7.5">
-      <ApiNotice error={error} stale={priceData?.stale} />
       <Link
         className="mb-8 inline-block text-md text-muted hover:text-ink"
         to="/"

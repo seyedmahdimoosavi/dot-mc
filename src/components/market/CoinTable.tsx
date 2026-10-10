@@ -12,7 +12,7 @@ import { Icon } from "../icons/Icon";
 import { Link } from "react-router-dom";
 import { Sparkline } from "../Sparkline";
 import { useI18n } from "../../i18n/I18nContext";
-import type { Quote } from "@/lib/pricecatcher";
+import type { MarketSort, Quote } from "@/lib/pricecatcher";
 import { useState } from "react";
 import { useWatchlist } from "../../lib/WatchlistContext";
 
@@ -100,7 +100,7 @@ function CoinRow({
           className="flex min-w-0 items-start gap-1.5"
           to={`/currencies/${coin.slug}`}
         >
-          <CoinIcon coin={coin} />
+          <CoinIcon coin={coin} transparent />
 
           <span className="flex min-w-0 max-w-50 flex-col gap-1">
             <CoinName
@@ -174,23 +174,40 @@ function CoinRow({
 
       {/* Sparkline (7d) */}
       <td className={`${td} ${end} min-w-[120px]`}>
-        <Sparkline
+        {coin.sparkline.some(value => value !== null && Number.isFinite(value)) ? <Sparkline
           data={coin.sparkline}
           timestamps={coin.sparklineTimestamps}
           trimEmptyEdges
           positive={coin.change7d >= 0}
           className="h-8 min-w-[100px]"
-        />
+        /> : <span className="en flex h-8 min-w-[100px] items-center justify-center text-sm text-muted">No Data</span>}
       </td>
     </tr>
   );
 }
 
-export function CoinTable({ coins, quote }: { coins: Coin[]; quote?: Quote }) {
+export function CoinTable({ coins, quote, sort = "rank", order = "asc", onSort, loading = false }: {
+  coins: Coin[];
+  quote?: Quote;
+  sort?: MarketSort;
+  order?: "asc" | "desc";
+  onSort?: (sort: MarketSort) => void;
+  loading?: boolean;
+}) {
   const { t, lang } = useI18n();
   const { isWatched, toggle } = useWatchlist();
+  const columns: { key: MarketSort; label: string }[] = [
+    { key: "rank", label: t.table.rank },
+    { key: "name", label: t.table.name },
+    { key: "price", label: t.table.price },
+    { key: "change_1h", label: t.table.change1h },
+    { key: "change_24h", label: t.table.change24h },
+    { key: "change_7d", label: t.table.change7d },
+    { key: "market_cap", label: t.table.marketCap },
+    { key: "volume_24h", label: t.table.volume24h },
+  ];
 
-  if (coins.length === 0) {
+  if (coins.length === 0 && !loading) {
     return (
       <p className="py-7.5 text-center text-sm text-muted">
         {t.table.noResults}
@@ -200,31 +217,42 @@ export function CoinTable({ coins, quote }: { coins: Coin[]; quote?: Quote }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-300 border-collapse text-md">
+      <table className="w-full min-w-300 border-collapse text-md" aria-busy={loading}>
         <thead>
           <tr>
-            <th className={`${th} ${start}`}>{t.table.rank}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.name}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.price}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.change1h}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.change24h}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.change7d}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.marketCap}</th>
-
-            <th className={`${th} ${middle}`}>{t.table.volume24h}</th>
+            {columns.map(column => {
+              const disabled = !onSort || (quote === "IRR" && !["rank", "name", "price"].includes(column.key));
+              return <th key={column.key} scope="col" className={`${th} ${column.key === "rank" ? start : middle}`}
+                aria-sort={sort === column.key ? order === "desc" ? "descending" : "ascending" : "none"}>
+                <button type="button" disabled={disabled} onClick={() => onSort?.(column.key)}
+                  className={`inline-flex items-center gap-1 disabled:cursor-default disabled:opacity-50 ${sort === column.key ? "text-ink" : "hover:text-ink"}`}>
+                  {column.label}
+                  {sort === column.key && <span aria-hidden="true">{order === "desc" ? "↓" : "↑"}</span>}
+                </button>
+              </th>;
+            })}
 
             <th className={`${th} ${end}`}>{t.table.last7d}</th>
           </tr>
         </thead>
 
         <tbody>
-          {coins.map((coin, index) => (
+          {loading ? Array.from({ length: 10 }, (_, index) => (
+            <tr key={`skeleton-${index}`} aria-hidden="true">
+              <td className={`${td} ${start}`}><div className="h-4 w-10 animate-pulse rounded bg-line motion-reduce:animate-none" /></td>
+              <td className={td}>
+                <div className="flex items-center gap-1.5">
+                  <div className="size-8 shrink-0 animate-pulse rounded-full bg-line motion-reduce:animate-none" />
+                  <div className="flex flex-col gap-1">
+                    <div className="h-4 w-28 animate-pulse rounded bg-line motion-reduce:animate-none" />
+                    <div className="h-3.5 w-12 animate-pulse rounded bg-line motion-reduce:animate-none" />
+                  </div>
+                </div>
+              </td>
+              {Array.from({ length: 6 }, (_, cell) => <td key={cell} className={`${td} ${middle}`}><div className={`mx-auto h-4 animate-pulse rounded bg-line motion-reduce:animate-none ${cell >= 4 ? "w-20" : "w-16"}`} /></td>)}
+              <td className={`${td} ${end} min-w-[120px]`}><div className="h-8 min-w-[100px] animate-pulse rounded bg-line motion-reduce:animate-none" /></td>
+            </tr>
+          )) : coins.map((coin, index) => (
             <CoinRow
               key={coin.id}
               coin={coin}
