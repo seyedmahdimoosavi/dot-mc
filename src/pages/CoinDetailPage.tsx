@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, Check, Copy, ExternalLink, SearchX } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import {
   formatCompactNumber,
@@ -113,14 +113,25 @@ export function CoinDetailPage() {
   if (!coin)
     return (
       <main className="mx-auto max-w-310 px-5 py-10">
-        <Link to="/" className="text-muted">
-          {t.detail.back}
-        </Link>
         {error instanceof PricingApiError && error.status === 404 ? (
-          <p className="mt-4">
-            {lang === "fa" ? "این رمزارز پیدا نشد." : "Coin not found."}
-          </p>
-        ) : null}
+          <section className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-line bg-surface-2 px-6 py-10 text-center">
+            <SearchX className="mb-4 size-10 text-muted" aria-hidden="true" />
+            <h1 className="text-xl font-bold">{t.detail.notFoundTitle}</h1>
+            <p className="mt-3 max-w-md text-sm leading-7 text-muted">
+              {t.detail.notFoundDescription}
+            </p>
+            <Button asChild variant="solid" className="mt-6">
+              <Link to="/">
+                <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
+                {t.detail.back}
+              </Link>
+            </Button>
+          </section>
+        ) : (
+          <Link to="/" className="text-muted">
+            {t.detail.back}
+          </Link>
+        )}
       </main>
     );
 

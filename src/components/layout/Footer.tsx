@@ -84,7 +84,7 @@ export function Footer() {
               D
             </span>
             <span>
-              dot<span className="text-gold">market</span>
+              Dot<span className="text-gold">Market</span>
             </span>
           </div>
           <p className="my-4 max-w-55 text-md leading-7 text-muted">

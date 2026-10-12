@@ -100,6 +100,8 @@ export interface Dictionary {
   pagination: { prev: string; next: string }
   detail: {
     back: string
+    notFoundTitle: string
+    notFoundDescription: string
     priceOf: (name: string) => string
     statsTitle: (name: string) => string
     high: string
@@ -275,6 +277,8 @@ export const dictionaries: Record<Language, Dictionary> = {
     pagination: { prev: 'Previous', next: 'Next' },
     detail: {
       back: 'Back to market',
+      notFoundTitle: 'We couldn’t find this coin',
+      notFoundDescription: 'Please check the link or return to the market to explore available cryptocurrencies.',
       priceOf: (name: string) => `${name} price`,
       statsTitle: (name: string) => `${name} stats`,
       high: 'All-time high',
@@ -287,7 +291,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       markets: 'Markets',
       about: 'About',
       aboutBody: (name: string) =>
-        `${name} is a decentralized digital asset that enables fast, secure and transparent transactions. Explore live price data, market statistics and historical performance on dotmarket.`,
+        `${name} is a decentralized digital asset that enables fast, secure and transparent transactions. Explore live price data, market statistics and historical performance on DotMarket.`,
       converter: 'Converter',
       watchlistAdd: 'Add to watchlist',
       buy: 'Buy',
@@ -339,7 +343,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       language: 'Language',
       currency: 'Currency',
       download: 'Get the app',
-      copyright: '© 2026 dotmarket. All rights reserved.',
+      copyright: '© 2026 DotMarket. All rights reserved.',
       disclaimer:
         'Cryptocurrencies are volatile and speculative assets. Prices shown are for informational purposes only and are not financial advice.',
     },
@@ -450,6 +454,8 @@ export const dictionaries: Record<Language, Dictionary> = {
     pagination: { prev: 'قبلی', next: 'بعدی' },
     detail: {
       back: 'بازگشت به بازار',
+      notFoundTitle: 'رمزارز موردنظر پیدا نشد',
+      notFoundDescription: 'لطفاً آدرس صفحه را بررسی کنید یا برای مشاهدهٔ رمزارزهای موجود به صفحهٔ بازار برگردید.',
       priceOf: (name: string) => `قیمت ${name}`,
       statsTitle: (name: string) => `آمار ${name}`,
       high: 'بالاترین قیمت تاریخ',
@@ -462,7 +468,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       markets: 'بازارها',
       about: 'درباره',
       aboutBody: (name: string) =>
-        `${name} یک دارایی دیجیتال غیرمتمرکز است که امکان تراکنش‌های سریع، امن و شفاف را فراهم می‌کند. داده‌های لحظه‌ای قیمت، آمار بازار و عملکرد تاریخی را در dotmarket دنبال کنید.`,
+        `${name} یک دارایی دیجیتال غیرمتمرکز است که امکان تراکنش‌های سریع، امن و شفاف را فراهم می‌کند. داده‌های لحظه‌ای قیمت، آمار بازار و عملکرد تاریخی را در DotMarket دنبال کنید.`,
       converter: 'مبدل',
       watchlistAdd: 'افزودن به لیست علاقمندی ',
       buy: 'خرید',
@@ -514,7 +520,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       language: 'زبان',
       currency: 'واحد پول',
       download: 'دریافت اپلیکیشن',
-      copyright: '© ۲۰۲۶ dotmarket. تمامی حقوق محفوظ است.',
+      copyright: '© ۲۰۲۶ DotMarket. تمامی حقوق محفوظ است.',
       disclaimer:
         'رمزارزها دارایی‌هایی نوسانی و پرریسک هستند. قیمت‌های نمایش داده شده صرفاً جنبه اطلاع‌رسانی دارند و توصیه مالی محسوب نمی‌شوند.',
     },
