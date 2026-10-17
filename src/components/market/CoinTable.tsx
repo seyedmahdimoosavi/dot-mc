@@ -40,6 +40,51 @@ const start = "text-start";
 const middle = "text-center";
 const end = "text-end";
 
+function DotoPlaceholderRow() {
+  return (
+    <tr className="group hover:bg-surface">
+      <td className={`${td} ${start} text-muted`}>
+        <span className="en"></span>
+      </td>
+      <td className={`${td} ${middle}`}>
+        <div className="flex min-w-0 items-start gap-1.5">
+          <img
+            src="/logo.svg"
+            alt="Doto"
+            width={32}
+            height={32}
+            className="size-8 shrink-0 object-contain"
+          />
+          <span className="flex min-w-0 max-w-50 flex-col gap-1">
+            <CoinName
+              name="Doto"
+              as="strong"
+              className="text-md en font-semibold"
+            />
+            <small className="en text-md uppercase text-muted">DOTO</small>
+          </span>
+        </div>
+      </td>
+      {Array.from({ length: 7 }, (_, index) => (
+        <td
+          key={index}
+          className={`${td} ${index === 6 ? `${end} min-w-[120px]` : middle} text-muted`}
+        >
+          <span
+            className={
+              index === 6
+                ? "en flex h-8 min-w-[100px] items-center justify-center"
+                : "en"
+            }
+          >
+            N/A
+          </span>
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 type CoinRowProps = {
   coin: Coin;
   isWatched: boolean;
@@ -240,14 +285,6 @@ export function CoinTable({
     { key: "volume_24h", label: t.table.volume24h },
   ];
 
-  if (coins.length === 0 && !loading) {
-    return (
-      <p className="py-7.5 text-center text-sm text-muted">
-        {t.table.noResults}
-      </p>
-    );
-  }
-
   return (
     <div className="overflow-x-auto">
       <table
@@ -265,7 +302,7 @@ export function CoinTable({
                 <th
                   key={column.key}
                   scope="col"
-                  className={`${th} ${column.key === "rank" ? start : middle}`}
+                  className={`${th} ${column.key === "rank" || column.key === "name" ? start : middle}`}
                   aria-sort={
                     sort === column.key
                       ? order === "desc"
@@ -296,34 +333,37 @@ export function CoinTable({
         </thead>
 
         <tbody>
-          {loading
-            ? Array.from({ length: 10 }, (_, index) => (
-                <tr key={`skeleton-${index}`} aria-hidden="true">
-                  <td className={`${td} ${start}`}>
-                    <div className="h-4 w-10 animate-pulse rounded bg-line motion-reduce:animate-none" />
-                  </td>
-                  <td className={td}>
-                    <div className="flex items-center gap-1.5">
-                      <div className="size-8 shrink-0 animate-pulse rounded-full bg-line motion-reduce:animate-none" />
-                      <div className="flex flex-col gap-1">
-                        <div className="h-4 w-28 animate-pulse rounded bg-line motion-reduce:animate-none" />
-                        <div className="h-3.5 w-12 animate-pulse rounded bg-line motion-reduce:animate-none" />
-                      </div>
+          {loading ? (
+            Array.from({ length: 10 }, (_, index) => (
+              <tr key={`skeleton-${index}`} aria-hidden="true">
+                <td className={`${td} ${start}`}>
+                  <div className="h-4 w-10 animate-pulse rounded bg-line motion-reduce:animate-none" />
+                </td>
+                <td className={td}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="size-8 shrink-0 animate-pulse rounded-full bg-line motion-reduce:animate-none" />
+                    <div className="flex flex-col gap-1">
+                      <div className="h-4 w-28 animate-pulse rounded bg-line motion-reduce:animate-none" />
+                      <div className="h-3.5 w-12 animate-pulse rounded bg-line motion-reduce:animate-none" />
                     </div>
+                  </div>
+                </td>
+                {Array.from({ length: 6 }, (_, cell) => (
+                  <td key={cell} className={`${td} ${middle}`}>
+                    <div
+                      className={`mx-auto h-4 animate-pulse rounded bg-line motion-reduce:animate-none ${cell >= 4 ? "w-20" : "w-16"}`}
+                    />
                   </td>
-                  {Array.from({ length: 6 }, (_, cell) => (
-                    <td key={cell} className={`${td} ${middle}`}>
-                      <div
-                        className={`mx-auto h-4 animate-pulse rounded bg-line motion-reduce:animate-none ${cell >= 4 ? "w-20" : "w-16"}`}
-                      />
-                    </td>
-                  ))}
-                  <td className={`${td} ${end} min-w-[120px]`}>
-                    <div className="h-8 min-w-[100px] animate-pulse rounded bg-line motion-reduce:animate-none" />
-                  </td>
-                </tr>
-              ))
-            : coins.map((coin, index) => (
+                ))}
+                <td className={`${td} ${end} min-w-[120px]`}>
+                  <div className="h-8 min-w-[100px] animate-pulse rounded bg-line motion-reduce:animate-none" />
+                </td>
+              </tr>
+            ))
+          ) : (
+            <>
+              <DotoPlaceholderRow />
+              {coins.map((coin, index) => (
                 <CoinRow
                   key={coin.id}
                   coin={coin}
@@ -334,6 +374,18 @@ export function CoinTable({
                   lang={lang}
                 />
               ))}
+              {coins.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className={`${td} py-7.5 text-center text-sm text-muted`}
+                  >
+                    {t.table.noResults}
+                  </td>
+                </tr>
+              )}
+            </>
+          )}
         </tbody>
       </table>
     </div>
