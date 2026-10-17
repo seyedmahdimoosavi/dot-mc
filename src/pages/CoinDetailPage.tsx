@@ -112,7 +112,7 @@ export function CoinDetailPage() {
     ).format(new Date(timestamp));
   if (!coin)
     return (
-      <main className="mx-auto max-w-310 px-5 py-10">
+      <main className="mx-auto w-full max-w-[calc(25%+58.125rem)] px-3.75 py-10">
         {error instanceof PricingApiError && error.status === 404 ? (
           <section className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-line bg-surface-2 px-6 py-10 text-center">
             <SearchX className="mb-4 size-10 text-muted" aria-hidden="true" />
@@ -249,7 +249,7 @@ export function CoinDetailPage() {
   };
 
   return (
-    <main className="mx-auto max-w-310 px-5 pb-20 pt-6.5 nav:px-7.5">
+    <main className="mx-auto w-full max-w-[calc(25%+58.125rem)] px-3.75 pb-20 pt-6.5 nav:px-[22.5px]">
       <Link
         className="mb-8 inline-block text-md text-muted hover:text-ink"
         to="/"
