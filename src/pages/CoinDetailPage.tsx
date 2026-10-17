@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Copy, ExternalLink, SearchX } from "lucide-react";
+import { ArrowLeft, Check, Copy, SearchX } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import {
   formatCompactNumber,
@@ -33,6 +33,8 @@ const RANGES: { value: ChartDays; label: string }[] = [
   { value: "365d", label: "365D" },
 ];
 
+const EXCHANGE_SYMBOLS = new Set(["BTC", "USDT", "DOGE", "BNB", "ETH"]);
+
 function StatRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-3 text-[13px] last:border-b-0">
@@ -42,17 +44,6 @@ function StatRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function safeUrl(value: string | null | undefined): string | null {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:"
-      ? url.href
-      : null;
-  } catch {
-    return null;
-  }
-}
 
 export function CoinDetailPage() {
   const { id, symbol } = useParams<{ id: string; symbol: string }>();
@@ -63,7 +54,6 @@ export function CoinDetailPage() {
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(
     null,
   );
-  const [tab, setTab] = useState<"overview" | "markets" | "about">("markets");
 
   const [copied, setCopied] = useState(false);
 
@@ -75,6 +65,7 @@ export function CoinDetailPage() {
     isLoading: isPriceLoading,
   } = useCoinMarketData(id);
   const coin = priceData ? priceToCoin(priceData, metadata) : undefined;
+  const exchangeSymbol = (symbol ?? coin?.symbol ?? "").trim().toUpperCase();
   const address = marketData?.contract_address;
   const chart = useCoinChart(id, chartType, range);
   const chartPoints = chart.data ?? [];
@@ -172,70 +163,6 @@ export function CoinDetailPage() {
     value == null || !Number.isFinite(value)
       ? unavailable
       : `${formatCompactNumber(value, lang)} ${coin.symbol}`;
-  const date = (value: string | null | undefined) => {
-    if (!value || Number.isNaN(Date.parse(value))) return unavailable;
-    return new Intl.DateTimeFormat(lang === "fa" ? "fa-IR" : "en-US", {
-      dateStyle: "medium",
-      timeStyle: value.includes("T") ? "short" : undefined,
-    }).format(new Date(value));
-  };
-  const links = marketData?.links;
-  const linkGroups = [
-    { label: t.detail.website, urls: links?.homepage },
-    { label: t.detail.whitepaper, urls: [links?.whitepaper] },
-    { label: t.detail.explorer, urls: links?.blockchain_site },
-    { label: t.detail.forum, urls: links?.official_forum_url },
-    { label: t.detail.community, urls: links?.chat_url },
-    { label: t.detail.announcements, urls: links?.announcement_url },
-    { label: t.detail.snapshot, urls: [links?.snapshot_url] },
-    {
-      label: "X",
-      urls: links?.twitter_screen_name
-        ? [
-            `https://x.com/${encodeURIComponent(links.twitter_screen_name.replace(/^@/, ""))}`,
-          ]
-        : [],
-    },
-    {
-      label: "Facebook",
-      urls: links?.facebook_username
-        ? [
-            `https://www.facebook.com/${encodeURIComponent(links.facebook_username)}`,
-          ]
-        : [],
-    },
-    {
-      label: "Telegram",
-      urls: links?.telegram_channel_identifier
-        ? [
-            `https://t.me/${encodeURIComponent(links.telegram_channel_identifier.replace(/^@/, ""))}`,
-          ]
-        : [],
-    },
-    { label: "Reddit", urls: [links?.subreddit_url] },
-    {
-      label: "Bitcointalk",
-      urls:
-        links?.bitcointalk_thread_identifier != null
-          ? [
-              `https://bitcointalk.org/index.php?topic=${links.bitcointalk_thread_identifier}`,
-            ]
-          : [],
-    },
-    { label: "GitHub", urls: links?.repos_url?.github },
-    { label: "Bitbucket", urls: links?.repos_url?.bitbucket },
-  ]
-    .map((group) => ({
-      label: group.label,
-      urls: [
-        ...new Set(
-          (group.urls ?? [])
-            .map((url) => safeUrl(url))
-            .filter((url): url is string => url !== null),
-        ),
-      ],
-    }))
-    .filter((group) => group.urls.length > 0);
 
   const handleCopy = async () => {
     try {
@@ -546,131 +473,20 @@ export function CoinDetailPage() {
         </aside>
       </div>
 
-      <section className="mt-10 flex gap-6 overflow-x-auto border-b border-line">
-        {/* <button
-          className={`whitespace-nowrap py-3.25 text-md ${tab === "overview" ? "border-b-2 border-gold text-ink" : "text-muted"}`}
-          onClick={() => setTab("overview")}
-        >
-          {t.detail.overview}
-        </button> */}
-        <button
-          className={`whitespace-nowrap py-3.25 text-md ${tab === "markets" ? "border-b-2 border-gold text-ink" : "text-muted"}`}
-          onClick={() => setTab("markets")}
-        >
-          {t.detail.markets}
-        </button>
-        <button
-          className={`whitespace-nowrap py-3.25 text-md ${tab === "about" ? "border-b-2 border-gold text-ink" : "text-muted"}`}
-          onClick={() => setTab("about")}
-        >
-          {t.detail.about}
-        </button>
-      </section>
-
-      {tab === "overview" && (
-        <div className="grid gap-8 py-7 nav:grid-cols-2">
-          <section>
-            <h2 className="font-display text-base font-semibold">
-              {t.detail.overview}
-            </h2>
-            <div className="mt-3">
-              <StatRow label={t.detail.dayPriceChange}>
-                {price(
-                  marketData?.price_change_24h_in_currency ??
-                    marketData?.price_change_24h,
-                )}
-              </StatRow>
-              <StatRow label={t.detail.dayMarketCapChange}>
-                {money(
-                  marketData?.market_cap_change_24h_in_currency ??
-                    marketData?.market_cap_change_24h,
-                )}
-              </StatRow>
-              <StatRow label={t.detail.dayMarketCapChangePercent}>
-                {percent(marketData?.market_cap_change_percentage_24h)}
-              </StatRow>
-              <StatRow label={t.detail.updated}>
-                {date(marketData?.last_updated)}
-              </StatRow>
-            </div>
+      {EXCHANGE_SYMBOLS.has(exchangeSymbol) && (
+        <>
+          <section className="mt-10 flex gap-6 overflow-x-auto border-b border-line">
+            <button
+              type="button"
+              className="whitespace-nowrap border-b-2 border-gold py-3.25 text-md text-ink"
+            >
+              {t.detail.markets}
+            </button>
           </section>
-          <section>
-            <h2 className="font-display text-base font-semibold">
-              {t.detail.about} {coin.name}
-            </h2>
-            <p className="mt-3 text-[13px] leading-[1.9] text-muted">
-              {t.detail.noDescription}
-            </p>
-          </section>
-        </div>
-      )}
-
-      {tab === "markets" && (
-        <div className="py-7">
-          <ExchangesTable fixedSymbol={symbol ?? coin.symbol} />
-        </div>
-      )}
-
-      {tab === "about" && (
-        <div className="grid gap-8 py-7 nav:grid-cols-2">
-          <section>
-            <h2 className="font-display text-base font-semibold">
-              {t.detail.about} {coin.name}
-            </h2>
-            <div className="mt-3">
-              <StatRow label={t.detail.platform}>
-                {marketData?.asset_platform_id || unavailable}
-              </StatRow>
-              <StatRow label={t.detail.address}>
-                <span className="en break-all" title={address ?? undefined}>
-                  {address || unavailable}
-                </span>
-              </StatRow>
-              <StatRow label={t.detail.decimals}>
-                {marketData?.decimal_place ?? unavailable}
-              </StatRow>
-              <StatRow label={t.detail.genesisDate}>
-                {date(marketData?.genesis_date)}
-              </StatRow>
-              <StatRow label={t.detail.blockTime}>
-                {marketData?.block_time_in_minutes || unavailable}
-              </StatRow>
-            </div>
-          </section>
-          <section>
-            <h2 className="font-display text-base font-semibold">
-              {t.detail.links}
-            </h2>
-            {linkGroups.length === 0 ? (
-              <p className="mt-3 text-[13px] text-muted">{unavailable}</p>
-            ) : (
-              <div className="mt-3 space-y-4">
-                {linkGroups.map(({ label, urls }) => (
-                  <div key={label}>
-                    <h3 className="mb-1.5 text-[13px] text-muted">{label}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {urls.map((url) => (
-                        <a
-                          key={url}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={url}
-                          className="inline-flex max-w-full items-center gap-1 truncate rounded-md border border-line px-2.5 py-1.5 text-[13px] text-ink hover:bg-accent-soft"
-                        >
-                          <span className="truncate en">
-                            {new URL(url).hostname}
-                          </span>
-                          <ExternalLink size={13} className="shrink-0" />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
+          <div className="py-7">
+            <ExchangesTable key={exchangeSymbol} fixedSymbol={exchangeSymbol} />
+          </div>
+        </>
       )}
     </main>
   );

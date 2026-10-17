@@ -16,23 +16,25 @@ const HEIGHT = 150;
 export function Sparkline({ data, timestamps, positive = true, showGrid = false, className, label = "Price movement chart", trimEmptyEdges = false }: SparklineProps) {
   const gradientId = useId();
   const segments = useMemo(() => {
-    const values = data.filter((value): value is number => value !== null && Number.isFinite(value));
+    // Normalize missing samples for rendering only; preserve the original API data.
+    const chartData = data.map(value => value === null ? 0 : value);
+    const values = chartData.filter(value => Number.isFinite(value));
     if (!values.length) return [];
     const min = Math.min(...values), max = Math.max(...values);
     const range = max - min || 1;
-    const valid = (value: number | null) => value !== null && Number.isFinite(value);
-    const firstIndex = trimEmptyEdges ? data.findIndex(valid) : 0;
-    let lastIndex = data.length - 1;
+    const valid = (value: number) => Number.isFinite(value);
+    const firstIndex = trimEmptyEdges ? chartData.findIndex(valid) : 0;
+    let lastIndex = chartData.length - 1;
     if (trimEmptyEdges) {
-      while (lastIndex > firstIndex && !valid(data[lastIndex])) lastIndex--;
+      while (lastIndex > firstIndex && !valid(chartData[lastIndex])) lastIndex--;
     }
     const firstTime = timestamps?.[firstIndex] ?? 0;
     const timeSpan = timestamps?.length === data.length ? timestamps[lastIndex] - firstTime : 0;
     const groups: string[][] = [];
     let current: string[] = [];
-    data.forEach((value, index) => {
+    chartData.forEach((value, index) => {
       if (index < firstIndex || index > lastIndex) return;
-      if (value === null || !Number.isFinite(value)) {
+      if (!Number.isFinite(value)) {
         if (current.length) groups.push(current);
         current = [];
         return;

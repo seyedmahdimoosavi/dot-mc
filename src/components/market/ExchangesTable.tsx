@@ -49,7 +49,11 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
   const headingId = useId();
   const [selectedSymbol, setSymbol] = useState("BTC");
   const symbol = fixedSymbol === undefined ? selectedSymbol : fixedSymbol.trim().toUpperCase();
-  const [pair, setPair] = useState<"USDT" | "TMN">("USDT");
+  const [selectedPair, setPair] = useState<"USDT" | "TMN">(
+    fixedSymbol === undefined ? "USDT" : "TMN",
+  );
+  const pair = fixedSymbol !== undefined && symbol === "USDT" ? "TMN" : selectedPair;
+  const availablePairs: ("USDT" | "TMN")[] = symbol === "USDT" ? ["TMN"] : ["USDT", "TMN"];
 
   const symbolsQuery = usePricingSymbols(fixedSymbol === undefined);
   const orderBooksQuery = useOrderBooks(symbol, pair);
@@ -148,7 +152,7 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
             <div className="flex flex-col gap-1.5 text-sm font-medium text-muted">
               <span>{t.exchanges.marketBase}</span>
               <div className="flex gap-1 rounded-md border border-line bg-surface-2 p-1" role="group" aria-label={t.exchanges.marketBase}>
-                {(["USDT", "TMN"] as const).map(value => (
+                {availablePairs.map(value => (
                   <button
                     key={value}
                     type="button"
