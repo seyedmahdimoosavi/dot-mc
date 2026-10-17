@@ -13,7 +13,7 @@ import {
 import { ShoppingCart } from "lucide-react";
 import bitbankLogo from "@/assets/bitbank-logo.png";
 import { useI18n } from "../../i18n/I18nContext";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 const COIN_API_IMAGE_URL =
   import.meta.env.VITE_COIN_API_IMAGE_URL || "https://pricing.dotone.online";
@@ -44,12 +44,14 @@ function formatMarketPrice(value: number, lang: "en" | "fa") {
   }).format(value);
 }
 
-export function ExchangesTable() {
+export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
   const { lang, t } = useI18n();
-  const [symbol, setSymbol] = useState("BTC");
+  const headingId = useId();
+  const [selectedSymbol, setSymbol] = useState("BTC");
+  const symbol = fixedSymbol === undefined ? selectedSymbol : fixedSymbol.trim().toUpperCase();
   const [pair, setPair] = useState<"USDT" | "TMN">("USDT");
 
-  const symbolsQuery = usePricingSymbols();
+  const symbolsQuery = usePricingSymbols(fixedSymbol === undefined);
   const orderBooksQuery = useOrderBooks(symbol, pair);
   const orderBooks = orderBooksQuery.data ?? [];
   const nobitex = orderBooks.find((item) => item.exchange === "nobitex");
@@ -79,11 +81,11 @@ export function ExchangesTable() {
   const remainingColumnAlignment = isPersian ? "text-center" : "text-left";
 
   return (
-    <section aria-labelledby="exchanges-heading">
+    <section aria-labelledby={headingId}>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2
-            id="exchanges-heading"
+            id={headingId}
             className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl"
           >
             {t.exchanges.title}
@@ -91,6 +93,7 @@ export function ExchangesTable() {
           <p className="mt-1 text-sm text-muted">{t.exchanges.subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          {fixedSymbol === undefined ? <>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
             {t.exchanges.currency}
             <Select
@@ -141,10 +144,28 @@ export function ExchangesTable() {
               </SelectContent>
             </Select>
           </label>
+          </> : (
+            <div className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+              <span>{t.exchanges.marketBase}</span>
+              <div className="flex gap-1 rounded-md border border-line bg-surface-2 p-1" role="group" aria-label={t.exchanges.marketBase}>
+                {(["USDT", "TMN"] as const).map(value => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={pair === value}
+                    onClick={() => setPair(value)}
+                    className={`en rounded px-4 py-2 text-sm font-semibold transition-colors ${pair === value ? "bg-accent text-white" : "text-muted hover:bg-accent-soft hover:text-ink"}`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {symbolsQuery.isError || orderBooksQuery.isError ? (
+      {(fixedSymbol === undefined && symbolsQuery.isError) || orderBooksQuery.isError ? (
         <p className="rounded-md border border-red/30 bg-red-soft px-4 py-3 text-sm text-red">
           {t.exchanges.error}
         </p>

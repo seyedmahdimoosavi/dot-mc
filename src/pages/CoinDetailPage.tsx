@@ -16,7 +16,7 @@ import { Sparkline } from "../components/Sparkline";
 import { useI18n } from "../i18n/I18nContext";
 import useCoinMarketData from "@/hooks/useCoinMarketData";
 import { priceToCoin } from "@/lib/pricecatcher";
-import { CoinPairs } from "@/components/market/CoinPairs";
+import { ExchangesTable } from "@/components/market/ExchangesTable";
 import { PricingApiError } from "@/lib/api";
 import {
   useCoinChart,
@@ -55,7 +55,7 @@ function safeUrl(value: string | null | undefined): string | null {
 }
 
 export function CoinDetailPage() {
-  const { id } = useParams<{ id: string; symbol: string }>();
+  const { id, symbol } = useParams<{ id: string; symbol: string }>();
   const { t, lang } = useI18n();
   const { isWatched, toggle } = useWatchlist();
   const [range, setRange] = useState<ChartDays>("1d");
@@ -605,7 +605,11 @@ export function CoinDetailPage() {
         </div>
       )}
 
-      {tab === "markets" && <CoinPairs coinId={coin.id} />}
+      {tab === "markets" && (
+        <div className="py-7">
+          <ExchangesTable fixedSymbol={symbol ?? coin.symbol} />
+        </div>
+      )}
 
       {tab === "about" && (
         <div className="grid gap-8 py-7 nav:grid-cols-2">

@@ -18,9 +18,10 @@ export interface OrderBook {
   exchangeDetails: ExchangeDetails;
 }
 
-export function usePricingSymbols() {
+export function usePricingSymbols(enabled = true) {
   return useQuery<string[]>({
     queryKey: ["pricing-symbols"],
+    enabled,
     staleTime: 5 * 60_000,
     retry: false,
     queryFn: async () => {
