@@ -47,7 +47,7 @@ function TrendingCoinCard({
       </div>
 
       <Sparkline
-        data={coin.sparkline}
+        data={coin.sparkline.map(value => value === null ? 0 : value)}
         timestamps={coin.sparklineTimestamps}
         positive={coin.change24h >= 0}
         className="h-9"

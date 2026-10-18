@@ -57,8 +57,18 @@ export function decimalNumber(value: string | number | null | undefined): number
   const result = Number(value);
   return Number.isFinite(result) ? result : NaN;
 }
+
+export function sparklineToPoints(sparkline?: ApiSparkline | null): { timestamp: number; value: number | null }[] {
+  if (!sparkline || !Number.isFinite(sparkline.start) ||
+    !Number.isFinite(sparkline.interval_seconds) || sparkline.interval_seconds <= 0) return [];
+  return sparkline.prices.map((value, index) => ({
+    timestamp: (sparkline.start + index * sparkline.interval_seconds) * 1000,
+    value: value !== null && Number.isFinite(value) ? value : null,
+  }));
+}
 // Exact decimal strings stay on the API object; convert only for display/charts.
 export function priceToCoin(item: PriceItem, metadata?: CoinMetadata): Coin {
+  const sparkline = sparklineToPoints(item.sparkline);
   return {
     id: String(item.base.id), rank: item.base.rank ?? NaN,
     name: item.base.name, symbol: item.base.symbol, slug: item.base.slug,
@@ -69,23 +79,19 @@ export function priceToCoin(item: PriceItem, metadata?: CoinMetadata): Coin {
     maxSupply: metadata?.max_supply == null ? null : decimalNumber(metadata.max_supply),
     fully_diluted_valuation: null,
     allTimeHigh: decimalNumber(metadata?.ath), allTimeLow: decimalNumber(metadata?.atl),
-    sparkline: item.sparkline?.prices ?? [],
-    sparklineTimestamps: item.sparkline?.prices.map((_, index) => (item.sparkline!.start + index * item.sparkline!.interval_seconds) * 1000),
+    sparkline: sparkline.map(point => point.value),
+    sparklineTimestamps: sparkline.map(point => point.timestamp),
     color: "#718096", logo: `https://s2.coinmarketcap.com/static/img/coins/200x200/${item.base.id}.png`, address: "", categories: [],
     stale: item.stale, fetchedAt: item.fetched_at,
   };
 }
 
 export function historyToPoints(response: HistoryResponse): { timestamp: number; value: number | null }[] {
-  const step = response.interval_seconds;
-  if (!Number.isFinite(step) || step <= 0) throw new Error("Invalid history interval");
+  // Plot only samples returned by the API, at their actual timestamps.
+  // The response cadence may differ from interval_seconds; never invent gap samples.
   const samples = [...response.points].sort((a, b) => a.ts - b.ts);
   const result: { timestamp: number; value: number | null }[] = [];
   for (const point of samples) {
-    const previous = result.at(-1);
-    if (previous && point.ts * 1000 - previous.timestamp > step * 1000) {
-      result.push({ timestamp: previous.timestamp + step * 1000, value: null });
-    }
     const value = decimalNumber(point.price);
     result.push({ timestamp: point.ts * 1000, value: Number.isFinite(value) ? value : null });
   }

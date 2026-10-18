@@ -16,13 +16,13 @@ const HEIGHT = 150;
 export function Sparkline({ data, timestamps, positive = true, showGrid = false, className, label = "Price movement chart", trimEmptyEdges = false }: SparklineProps) {
   const gradientId = useId();
   const segments = useMemo(() => {
-    // Normalize missing samples for rendering only; preserve the original API data.
-    const chartData = data.map(value => value === null ? 0 : value);
-    const values = chartData.filter(value => Number.isFinite(value));
+    // Missing prices are gaps, not zero-price samples.
+    const chartData = data;
+    const values = chartData.filter((value): value is number => value !== null && Number.isFinite(value));
     if (!values.length) return [];
     const min = Math.min(...values), max = Math.max(...values);
     const range = max - min || 1;
-    const valid = (value: number) => Number.isFinite(value);
+    const valid = (value: number | null) => value !== null && Number.isFinite(value);
     const firstIndex = trimEmptyEdges ? chartData.findIndex(valid) : 0;
     let lastIndex = chartData.length - 1;
     if (trimEmptyEdges) {
@@ -34,7 +34,7 @@ export function Sparkline({ data, timestamps, positive = true, showGrid = false,
     let current: string[] = [];
     chartData.forEach((value, index) => {
       if (index < firstIndex || index > lastIndex) return;
-      if (!Number.isFinite(value)) {
+      if (value === null || !Number.isFinite(value)) {
         if (current.length) groups.push(current);
         current = [];
         return;

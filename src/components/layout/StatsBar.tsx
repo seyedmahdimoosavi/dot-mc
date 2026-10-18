@@ -1,10 +1,9 @@
 import { formatCompactUsd, formatPercent } from "../../lib/format";
+
 import { useBitcoin } from "@/hooks/useBitcoin";
-import {
-  useOrderBooks,
-} from "@/hooks/useExchangeMarketData";
 import { useI18n } from "../../i18n/I18nContext";
 import { useMarkets } from "@/hooks/usePricingApi";
+import { useOrderBooks } from "@/hooks/useExchangeMarketData";
 
 function Sep() {
   return <span className="h-3 w-px shrink-0 bg-line" />;
@@ -38,11 +37,18 @@ export function StatsBar() {
         }).format(fee)}%`;
 
   return (
-    <div className="overflow-x-auto border-b border-line bg-surface">
-      <div className="mx-auto flex max-w-310 items-center justify-center gap-3.5 whitespace-nowrap px-6 py-2.5 text-[13px] text-muted">
+    <div
+      className="w-full min-w-0 overflow-x-auto overscroll-x-contain border-b border-line bg-surface px-4"
+      role="region"
+      aria-label={lang === "fa" ? "آمار بازار" : "Market statistics"}
+      tabIndex={0}
+    >
+      <div className="mx-auto flex w-max min-w-full items-center justify-center gap-3.5 whitespace-nowrap py-2.5 text-[13px] text-muted sm:px-6 [&>span]:shrink-0">
         <span>
           <strong className="font-bold text-ink">
-            {symbolsQuery.data?.meta.total.toLocaleString(lang === "fa" ? "fa-IR" : "en-US") ?? "—"}
+            {symbolsQuery.data?.meta.total.toLocaleString(
+              lang === "fa" ? "fa-IR" : "en-US",
+            ) ?? "—"}
           </strong>{" "}
           {t.statsBar.cryptos}
         </span>

@@ -327,7 +327,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       chartVolumes: 'Volume',
       chartMarketCaps: 'Market cap',
       chartLoading: 'Loading chart…',
-      chartEmpty: 'No chart data is available for this range.',
+      chartEmpty: 'Price chart data for this coin is currently unavailable for the selected period.',
       chartError: 'Could not load chart data.',
     },
     footer: {
@@ -504,7 +504,7 @@ export const dictionaries: Record<Language, Dictionary> = {
       chartVolumes: 'حجم معاملات',
       chartMarketCaps: 'ارزش بازار',
       chartLoading: 'در حال بارگذاری نمودار…',
-      chartEmpty: 'داده‌ای برای این بازه موجود نیست.',
+      chartEmpty: 'در حال حاضر داده‌های نمودار قیمت این رمزارز برای بازهٔ انتخاب‌شده در دسترس نیست.',
       chartError: 'دریافت دادهٔ نمودار ناموفق بود.',
     },
     footer: {

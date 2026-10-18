@@ -44,7 +44,6 @@ function StatRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-
 export function CoinDetailPage() {
   const { id, symbol } = useParams<{ id: string; symbol: string }>();
   const { t, lang } = useI18n();
@@ -68,7 +67,22 @@ export function CoinDetailPage() {
   const exchangeSymbol = (symbol ?? coin?.symbol ?? "").trim().toUpperCase();
   const address = marketData?.contract_address;
   const chart = useCoinChart(id, chartType, range);
-  const chartPoints = chart.data ?? [];
+  const samples = chart.data ?? [];
+  const firstValidIndex = samples.findIndex(
+    (point) => point.value !== null && Number.isFinite(point.value),
+  );
+  let lastValidIndex = samples.length - 1;
+  while (
+    lastValidIndex > firstValidIndex &&
+    (samples[lastValidIndex].value === null ||
+      !Number.isFinite(samples[lastValidIndex].value))
+  )
+    lastValidIndex--;
+  // Match Sparkline's trimmed time domain for labels and pointer coordinates, too.
+  const chartPoints =
+    firstValidIndex < 0
+      ? []
+      : samples.slice(firstValidIndex, lastValidIndex + 1);
   const hoveredPoint =
     hoveredPointIndex === null ? undefined : chartPoints[hoveredPointIndex];
   const chartValues = chartPoints.map((point) => point.value);
@@ -113,7 +127,10 @@ export function CoinDetailPage() {
             </p>
             <Button asChild variant="solid" className="mt-6">
               <Link to="/">
-                <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
+                <ArrowLeft
+                  className="size-4 rtl:rotate-180"
+                  aria-hidden="true"
+                />
                 {t.detail.back}
               </Link>
             </Button>
@@ -308,43 +325,47 @@ export function CoinDetailPage() {
                 />
               </h2>
             </div>
-            <div className="flex flex-wrap gap-0.75">
-              {RANGES.map(({ value, label }) => (
+            {validChartValues.length > 0 && (
+              <div className="flex flex-wrap gap-0.75">
+                {RANGES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    className={`rounded px-2 py-1.25 text-[12px] ${range === value ? "bg-accent-soft text-ink" : "text-muted"}`}
+                    onClick={() => {
+                      setHoveredPointIndex(null);
+                      setRange(value);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {validChartValues.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 pb-3">
+              {(
+                [
+                  ["prices", t.detail.chartPrices],
+                  ["total_volumes", t.detail.chartVolumes],
+                  ["market_caps", t.detail.chartMarketCaps],
+                ] as const
+              ).map(([type, label]) => (
                 <button
-                  key={value}
-                  className={`rounded px-2 py-1.25 text-[12px] ${range === value ? "bg-accent-soft text-ink" : "text-muted"}`}
+                  key={type}
+                  disabled={type !== "prices"}
+                  title={type !== "prices" ? t.detail.unavailable : undefined}
+                  className={`rounded-md px-3 py-1.5 text-[13px] disabled:opacity-35 ${chartType === type ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
                   onClick={() => {
                     setHoveredPointIndex(null);
-                    setRange(value);
+                    setChartType(type);
                   }}
                 >
                   {label}
                 </button>
               ))}
             </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2 pb-3">
-            {(
-              [
-                ["prices", t.detail.chartPrices],
-                ["total_volumes", t.detail.chartVolumes],
-                ["market_caps", t.detail.chartMarketCaps],
-              ] as const
-            ).map(([type, label]) => (
-              <button
-                key={type}
-                disabled={type !== "prices"}
-                title={type !== "prices" ? t.detail.unavailable : undefined}
-                className={`rounded-md px-3 py-1.5 text-[13px] disabled:opacity-35 ${chartType === type ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
-                onClick={() => {
-                  setHoveredPointIndex(null);
-                  setChartType(type);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          )}
           {!id ? (
             <p className="grid h-62.5 place-items-center text-center text-md text-muted">
               {t.detail.chartEmpty}
@@ -363,11 +384,12 @@ export function CoinDetailPage() {
             </p>
           ) : (
             <>
-              <div className="mt-10 flex gap-3">
+              <div className="mt-10 flex">
                 <div
                   className="relative min-w-0 flex-1 cursor-crosshair"
                   onPointerMove={(event) => {
                     const rect = event.currentTarget.getBoundingClientRect();
+                    if (!rect.width || !chartPoints.length) return;
                     const progress = Math.max(
                       0,
                       Math.min(1, (event.clientX - rect.left) / rect.width),
@@ -377,6 +399,11 @@ export function CoinDetailPage() {
                     const target = first + progress * (last - first);
                     let nearest = 0;
                     for (let i = 1; i < chartPoints.length; i++) {
+                      if (
+                        chartPoints[i].value === null ||
+                        !Number.isFinite(chartPoints[i].value)
+                      )
+                        continue;
                       if (
                         Math.abs(chartPoints[i].timestamp - target) <
                         Math.abs(chartPoints[nearest].timestamp - target)
@@ -390,6 +417,7 @@ export function CoinDetailPage() {
                   <Sparkline
                     data={chartValues}
                     timestamps={chartPoints.map((point) => point.timestamp)}
+                    trimEmptyEdges
                     positive={chartPositive}
                     label={`${coin.name} ${chartType === "prices" ? t.detail.chartPrices : chartType === "total_volumes" ? t.detail.chartVolumes : t.detail.chartMarketCaps}`}
                     className="h-95"
