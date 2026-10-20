@@ -36,6 +36,14 @@ function getFooterColumns(
           label: fa ? "ویزارد" : "Wizard",
           href: "https://wizard.dotone.online",
         },
+        {
+          label: fa ? "اکسپلورر" : "Explorer",
+          href: "https://dotscan.one",
+        },
+        {
+          label: fa ? "بریج" : "Bridge",
+          href: "https://bridge.dotone.online",
+        },
       ],
     },
     {
@@ -76,7 +84,7 @@ export function Footer() {
   const footerColumns = getFooterColumns(lang);
 
   return (
-    <footer className="border-t border-line bg-surface-2 px-6 pb-6 pt-14 nav:px-[max(30px,calc((100%-1180px)/2))]">
+    <footer className="border-t border-line bg-surface-2 px-6 pb-6 pt-14">
       <div className="grid grid-cols-2 gap-7 pb-10 nav:grid-cols-[2.1fr_repeat(4,1fr)] nav:gap-9">
         <div className="col-span-2 nav:col-span-1">
           <div className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink">
@@ -188,9 +196,9 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div className="max-w-225 border-t border-line pt-4 text-[10.5px] leading-7 text-muted">
+      {/* <div className="max-w-225 border-t border-line pt-4 text-[10.5px] leading-7 text-muted">
         {t.footer.disclaimer}
-      </div>
+      </div> */}
       <div className="flex flex-col justify-between gap-2 pt-3.5 text-[12px] text-muted nav:flex-row">
         <span>{t.footer.copyright}</span>
         {/* <span>{t.footer.download}: iOS · Android</span> */}

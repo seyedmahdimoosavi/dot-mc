@@ -18,7 +18,7 @@ import { useI18n } from "../../i18n/I18nContext";
 import { useTheme } from "../../theme/ThemeContext";
 
 const NAV_KEYS = [
-  "cryptocurrencies",
+  // "cryptocurrencies",
   "exchanges",
   "community",
   "products",
@@ -81,10 +81,20 @@ function externalNavigationLinks(
         external: true,
       },
       {
-        label: fa ? "مستندات API" : "API Documents",
-        href: "https://docs.dotone.online/developers/api-reference",
+        label: fa ? "اکسپلورر" : "Explorer",
+        href: "https://dotscan.one",
         external: true,
       },
+      {
+        label: fa ? "بریج" : "Bridge",
+        href: "https://bridge.dotone.online",
+        external: true,
+      },
+      // {
+      //   label: fa ? "مستندات API" : "API Documents",
+      //   href: "https://docs.dotone.online/developers/api-reference",
+      //   external: true,
+      // },
     ],
   };
 }

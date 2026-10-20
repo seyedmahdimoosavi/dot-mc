@@ -61,7 +61,8 @@ export interface Dictionary {
   }
   marketTabs: {
     cryptocurrencies: string
-    exchanges: string
+    dexExchanges: string
+    cexExchanges: string
   }
   exchanges: {
     title: string
@@ -238,7 +239,8 @@ export const dictionaries: Record<Language, Dictionary> = {
     },
     marketTabs: {
       cryptocurrencies: 'Cryptocurrencies',
-      exchanges: 'Exchanges',
+      cexExchanges: 'Centralized Exchanges',
+      dexExchanges: 'Decentralized Exchanges',
     },
     exchanges: {
       title: 'Exchange prices',
@@ -360,7 +362,7 @@ export const dictionaries: Record<Language, Dictionary> = {
     nav: {
       cryptocurrencies: 'رمزارزها',
       exchanges: 'صرافی‌ها',
-      community: 'جامعه',
+      community: 'شبکه‌های اجتماعی',
       products: 'محصولات',
       learn: 'آموزش',
       watchlist: 'لیست پیگیری',
@@ -415,7 +417,8 @@ export const dictionaries: Record<Language, Dictionary> = {
     },
     marketTabs: {
       cryptocurrencies: 'رمزارزها',
-      exchanges: 'صرافی‌ها',
+      cexExchanges: 'صرافی‌های متمرکز',
+      dexExchanges: 'صرافی‌های غیرمتمرکز',
     },
     exchanges: {
       title: 'قیمت صرافی‌ها',

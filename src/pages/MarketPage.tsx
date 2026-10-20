@@ -18,9 +18,9 @@ export function MarketPage() {
   });
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState(20);
-  const [mainTab, setMainTab] = useState<"cryptocurrencies" | "exchanges">(
-    "cryptocurrencies",
-  );
+  const [mainTab, setMainTab] = useState<
+    "cryptocurrencies" | "dexExchanges" | "cexExchanges"
+  >("cryptocurrencies");
   const debouncedFilters = useDebouncedValue(filters);
   // Reset pagination when filters settle, so every request uses a coherent filter/page combination.
   const [lastFilters, setLastFilters] = useState(debouncedFilters);
@@ -41,7 +41,9 @@ export function MarketPage() {
       <section className="px-5 pb-21 pt-2.5 nav:px-7.5">
         <div className="mb-5.5 border-b border-line">
           <div className="flex items-center gap-6">
-            {(["cryptocurrencies", "exchanges"] as const).map((tab) => (
+            {(
+              ["cryptocurrencies", "dexExchanges", "cexExchanges"] as const
+            ).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -53,8 +55,10 @@ export function MarketPage() {
             ))}
           </div>
         </div>
-        {mainTab === "exchanges" ? (
+        {mainTab === "cexExchanges" ? (
           <ExchangesTable />
+        ) : mainTab === "dexExchanges" ? (
+          <></>
         ) : (
           <>
             <h2 className="mb-5.5 font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
@@ -69,7 +73,14 @@ export function MarketPage() {
                 sort={filters.sort}
                 order={filters.order}
                 onSort={(sort) => {
-                  setFilters(current => ({ ...current, sort, order: current.sort === sort && current.order === "desc" ? "asc" : "desc" }));
+                  setFilters((current) => ({
+                    ...current,
+                    sort,
+                    order:
+                      current.sort === sort && current.order === "desc"
+                        ? "asc"
+                        : "desc",
+                  }));
                 }}
               />
             )}
