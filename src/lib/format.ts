@@ -98,3 +98,17 @@ export function formatPercent(
 
   return `${sign}${formatted.replace(/٫/g, '.')}%`
 }
+
+export function formatCompact(value: bigint, decimals = 18): string {
+  const n = Number(value) / 10 ** decimals;
+  if (!Number.isFinite(n)) return "—";
+  return Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(n);
+}
+export function toDecimalString(value: bigint, decimals = 18): string {
+  const base = 10n ** BigInt(decimals);
+  const whole = value / base;
+  const fraction = (value % base).toString().padStart(decimals, "0").replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : `${whole}`;
+}
+export function shortAddress(address: string, start = 4, end = 4) { return address.length > start + end + 2 ? `${address.slice(0, start + 2)}…${address.slice(-end)}` : address; }
+export function addressUrl(address: string) { return `${import.meta.env.VITE_DOTONE_EXPLORER_URL ?? "https://explorer.dotone.network"}/address/${address}`; }

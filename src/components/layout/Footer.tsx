@@ -1,5 +1,8 @@
 import { Icon } from "../icons/Icon";
+import LogoDark from "../../assets/logo-dark.png";
+import LogoLight from "../../assets/logo-light.png";
 import { useI18n } from "../../i18n/I18nContext";
+import { useTheme } from "@/theme/ThemeContext";
 
 type FooterLink = {
   label: string;
@@ -82,20 +85,26 @@ function getFooterColumns(
 export function Footer() {
   const { t, lang, toggleLang } = useI18n();
   const footerColumns = getFooterColumns(lang);
+  const { theme } = useTheme();
 
   return (
-    <footer className="border-t border-line bg-surface-2 px-6 pb-6 pt-14">
-      <div className="grid grid-cols-2 gap-7 pb-10 nav:grid-cols-[2.1fr_repeat(4,1fr)] nav:gap-9">
+    <footer className="border-t border-line bg-surface-2 px-6 py-6">
+      <div className="grid grid-cols-2 gap-11 pb-2 nav:grid-cols-[2.1fr_repeat(4,1fr)] nav:gap-15">
         <div className="col-span-2 nav:col-span-1">
           <div className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink">
-            <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
+            {/* <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
               D
             </span>
             <span>
               Dot<span className="text-gold">Market</span>
-            </span>
+            </span> */}
+            {theme == "light" ? (
+              <img src={LogoLight} width={220} />
+            ) : (
+              <img src={LogoDark} width={220} />
+            )}
           </div>
-          <p className="my-4 max-w-55 text-md leading-7 text-muted">
+          <p className="mb-2 max-w-55 text-md leading-7 text-muted">
             {t.footer.tagline}
           </p>
           <div className="flex items-center gap-3">
@@ -182,17 +191,26 @@ export function Footer() {
             <h3 className="mb-4 mt-1 font-display text-md font-semibold">
               {col.title}
             </h3>
-            {col.links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="my-2.5 block text-[13px] text-muted hover:text-ink"
-              >
-                {link.label}
-              </a>
-            ))}
+
+            <div
+              className={
+                col.title === (lang === "fa" ? "مستندات" : "Documents")
+                  ? "grid grid-cols-2 gap-x-4"
+                  : "block"
+              }
+            >
+              {col.links.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="my-2.5 block whitespace-nowrap text-[13px] text-muted hover:text-ink"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </div>
         ))}
       </div>

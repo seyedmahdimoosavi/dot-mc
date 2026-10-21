@@ -12,6 +12,8 @@ import { Button } from "../ui/button";
 import { CoinIcon } from "../CoinIcon";
 import { CoinName } from "../CoinName";
 import { Icon } from "../icons/Icon";
+import LogoDark from "../../assets/logo-dark.png";
+import LogoLight from "../../assets/logo-light.png";
 import { priceToCoin } from "@/lib/pricecatcher";
 import { slugify } from "../../lib/slug";
 import { useI18n } from "../../i18n/I18nContext";
@@ -294,12 +296,17 @@ export function Header() {
           className="flex shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink"
           to="/"
         >
-          <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
+          {/* <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
             D
           </span>
           <span>
             Dot<span className="text-gold">Market</span>
-          </span>
+          </span> */}
+          {theme == "light" ? (
+            <img src={LogoLight} width={160} />
+          ) : (
+            <img src={LogoDark} width={160} />
+          )}
         </Link>
 
         <nav className="hidden h-full flex-1 nav:flex">
