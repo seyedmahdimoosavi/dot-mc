@@ -135,7 +135,7 @@ function NavDropdown({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger
-        className="flex h-full items-center gap-1 px-2.5 text-[13px] text-muted outline-none transition-colors hover:text-ink data-[state=open]:text-ink"
+        className="flex h-full items-center gap-1 px-2.5 text-[13px] text-muted outline-none transition-colors hover:text-gold data-[state=open]:text-gold"
         onPointerEnter={(event) => {
           if (event.pointerType === "mouse") {
             cancelClose();
@@ -291,9 +291,9 @@ export function Header() {
         </Link>
       </div> */}
 
-      <header className="relative z-30 flex h-16 items-center gap-3 border-b border-line bg-surface-2 px-4 nav:h-19 nav:gap-8 nav:px-[max(30px,calc((100%-1180px)/2))]">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-2 border-b border-line bg-topbar px-3 nav:h-19 nav:gap-8 nav:px-[max(30px,calc((100%-1180px)/2))]">
         <Link
-          className="flex shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink"
+          className="flex min-w-0 shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink"
           to="/"
         >
           {/* <span className="grid h-6.75 w-6.75 shrink-0 place-items-center rounded-tl-lg rounded-br-lg rounded-tr-lg bg-gold text-[17px] text-white">
@@ -303,9 +303,19 @@ export function Header() {
             Dot<span className="text-gold">Market</span>
           </span> */}
           {theme == "light" ? (
-            <img src={LogoLight} width={160} />
+            <img
+              src={LogoLight}
+              width={160}
+              alt="DotMarket"
+              className="h-auto w-[112px] sm:w-[160px]"
+            />
           ) : (
-            <img src={LogoDark} width={160} />
+            <img
+              src={LogoDark}
+              width={160}
+              alt="DotMarket"
+              className="h-auto w-[112px] sm:w-[160px]"
+            />
           )}
         </Link>
 
@@ -326,10 +336,10 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1.5 nav:ml-0">
+        <div className="ms-auto flex items-center gap-1 sm:gap-1.5 nav:ms-0">
           <MobileNavMenu />
 
-          <div className="relative flex h-8 items-center gap-2 rounded-md border border-line bg-surface px-2.5 text-muted nav:h-8.5 nav:px-2.5">
+          <div className="relative flex h-8 items-center gap-2 rounded-lg border border-line bg-surface px-2 text-muted transition-colors focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25 nav:h-8.5 nav:px-2.5">
             <Icon name="search" size={16} className="shrink-0" />
             <input
               className="w-0 bg-transparent text-md text-ink outline-none placeholder:text-muted nav:w-37.5"
@@ -340,11 +350,11 @@ export function Header() {
               onBlur={() => setTimeout(() => setSearchFocused(false), 120)}
             />
             {searchFocused && results.length > 0 && (
-              <div className="absolute inset-x-0 top-[calc(100%+8px)] z-40 overflow-hidden rounded-lg border border-line bg-surface-2 shadow-(--shadow)">
+              <div className="absolute inset-x-0 top-[calc(100%+8px)] z-40 overflow-hidden rounded-xl border border-line bg-surface-2 shadow-(--shadow-xl)">
                 {results.map((coin) => (
                   <button
                     key={coin.id}
-                    className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-md hover:bg-accent-soft"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-md hover:bg-accent-soft focus:bg-accent-soft"
                     onMouseDown={() => goToCoin(coin.id, coin.symbol)}
                   >
                     <CoinIcon coin={coin} size={22} />
@@ -386,11 +396,12 @@ export function Header() {
           </Button>
           <Button
             variant="icon"
-            size="default"
+            size="sm"
             onClick={toggleLang}
-            className="gap-1.5 px-2 text-[13px] font-bold"
+            className="gap-1 px-1.5 text-[12px] font-bold sm:gap-1.5 sm:px-2 sm:text-[13px]"
           >
-            <Icon name="globe" size={16} /> {lang === "en" ? "FA" : "EN"}
+            <Icon name="globe" size={16} className="hidden sm:inline" />{" "}
+            {lang === "en" ? "FA" : "EN"}
           </Button>
         </div>
       </header>

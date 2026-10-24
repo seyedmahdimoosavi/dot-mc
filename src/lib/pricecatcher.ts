@@ -81,7 +81,7 @@ export function priceToCoin(item: PriceItem, metadata?: CoinMetadata): Coin {
     allTimeHigh: decimalNumber(metadata?.ath), allTimeLow: decimalNumber(metadata?.atl),
     sparkline: sparkline.map(point => point.value),
     sparklineTimestamps: sparkline.map(point => point.timestamp),
-    color: "#718096", logo: `https://s2.coinmarketcap.com/static/img/coins/200x200/${item.base.id}.png`, address: "", categories: [],
+    color: "#4A4F52", logo: `https://s2.coinmarketcap.com/static/img/coins/200x200/${item.base.id}.png`, address: "", categories: [],
     stale: item.stale, fetchedAt: item.fetched_at,
   };
 }

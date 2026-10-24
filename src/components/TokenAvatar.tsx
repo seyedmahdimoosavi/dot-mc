@@ -20,7 +20,7 @@ export function TokenAvatar({ symbol, logoUrl, size = 30, className = "" }: Prop
   const initials = (symbol || "?").slice(0, 2).toUpperCase();
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-700 dark:bg-slate-700 dark:text-white ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface text-[10px] font-bold text-muted ${className}`}
       style={{ width: size, height: size }}
     >
       {src && !failed ? (

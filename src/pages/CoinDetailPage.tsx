@@ -195,7 +195,7 @@ export function CoinDetailPage() {
   return (
     <main className="mx-auto w-full max-w-[calc(25%+58.125rem)] px-3.75 pb-20 pt-6.5 nav:px-[22.5px]">
       <Link
-        className="mb-8 inline-block text-md text-muted hover:text-ink"
+        className="mb-8 inline-block text-md text-muted transition-colors hover:text-gold"
         to="/"
       >
         ← {t.detail.back}
@@ -207,7 +207,7 @@ export function CoinDetailPage() {
             {/* <div className="mb-1.5 text-[13px] text-muted">
               {t.nav.cryptocurrencies} / {coin.name}
             </div> */}
-            <h1 className="flex items-baseline gap-1.75 font-display text-[26px] font-bold tracking-[-0.04em] nav:text-[30px]">
+            <h1 className="flex items-baseline gap-1.75 font-display text-[26px] font-semibold tracking-[-0.02em] nav:text-[30px]">
               <CoinName name={coin.name} as="span" className="max-w-70" />
               <span className="text-sm font-medium text-muted">
                 {coin.symbol}
@@ -238,7 +238,7 @@ export function CoinDetailPage() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="shrink-0 text-muted transition-colors hover:text-primary"
+                  className="shrink-0 text-muted transition-colors hover:text-gold"
                   title={copied ? "Copied" : "Copy address"}
                   aria-label={copied ? "Address copied" : "Copy address"}
                 >
@@ -274,7 +274,7 @@ export function CoinDetailPage() {
           <span className="text-[12px] text-muted">
             {t.detail.priceOf(coin.name)}
           </span>
-          <strong className="font-display text-2xl font-bold">
+          <strong className="font-display text-2xl font-semibold">
             {isPriceLoading ? (
               <span className="text-muted">...</span>
             ) : (
@@ -314,7 +314,7 @@ export function CoinDetailPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-5 nav:grid-cols-[1.65fr_1fr]">
-        <section className="rounded-lg border border-line bg-surface-2 p-5.5">
+        <section className="rounded-xl border border-line bg-surface-2 p-5.5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-base font-semibold">
@@ -330,7 +330,7 @@ export function CoinDetailPage() {
                 {RANGES.map(({ value, label }) => (
                   <button
                     key={value}
-                    className={`rounded px-2 py-1.25 text-[12px] ${range === value ? "bg-accent-soft text-ink" : "text-muted"}`}
+                    className={`rounded px-2 py-1.25 text-[12px] font-medium transition-colors ${range === value ? "bg-accent-soft text-gold" : "text-muted hover:text-ink"}`}
                     onClick={() => {
                       setHoveredPointIndex(null);
                       setRange(value);
@@ -355,7 +355,7 @@ export function CoinDetailPage() {
                   key={type}
                   disabled={type !== "prices"}
                   title={type !== "prices" ? t.detail.unavailable : undefined}
-                  className={`rounded-md px-3 py-1.5 text-[13px] disabled:opacity-35 ${chartType === type ? "bg-accent text-white" : "text-muted hover:text-ink"}`}
+                  className={`rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors disabled:opacity-35 ${chartType === type ? "bg-accent text-accent-ink" : "text-muted hover:text-gold"}`}
                   onClick={() => {
                     setHoveredPointIndex(null);
                     setChartType(type);
@@ -451,7 +451,7 @@ export function CoinDetailPage() {
             </>
           )}
         </section>
-        <aside className="rounded-lg border border-line bg-surface-2 p-5.5">
+        <aside className="rounded-xl border border-line bg-surface-2 p-5.5">
           <h2 className="font-display text-base font-semibold">
             <CoinName
               name={t.detail.statsTitle(coin.name)}

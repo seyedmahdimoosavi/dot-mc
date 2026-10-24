@@ -90,7 +90,7 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
         <div>
           <h2
             id={headingId}
-            className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl"
+            className="font-display text-xl font-semibold tracking-[-0.01em] nav:text-2xl"
           >
             {t.exchanges.title}
           </h2>
@@ -158,7 +158,7 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
                     type="button"
                     aria-pressed={pair === value}
                     onClick={() => setPair(value)}
-                    className={`en rounded px-4 py-2 text-sm font-semibold transition-colors ${pair === value ? "bg-accent text-white" : "text-muted hover:bg-accent-soft hover:text-ink"}`}
+                    className={`en rounded-md px-4 py-2 text-sm font-semibold transition-colors ${pair === value ? "bg-accent text-accent-ink" : "text-muted hover:bg-accent-soft hover:text-ink"}`}
                   >
                     {value}
                   </button>
@@ -182,37 +182,37 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
           {t.exchanges.empty}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+        <div className="overflow-x-auto rounded-xl border border-line bg-surface-2">
           <table className="w-full min-w-220 border-collapse text-md">
             <thead>
               <tr>
                 <th
-                  className={`whitespace-nowrap px-4 py-3.5 text-[13px] font-medium uppercase tracking-[.04em] text-muted ${firstColumnAlignment}`}
+                  className={`whitespace-nowrap bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted ${firstColumnAlignment}`}
                 >
                   {t.exchanges.exchange}
                 </th>
                 <th
-                  className={`whitespace-nowrap px-4 py-3.5 text-[13px] font-medium uppercase tracking-[.04em] text-muted ${remainingColumnAlignment}`}
+                  className={`whitespace-nowrap bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted ${remainingColumnAlignment}`}
                 >
                   {t.exchanges.type}
                 </th>
                 <th
-                  className={`whitespace-nowrap px-4 py-3.5 text-[13px] font-medium uppercase tracking-[.04em] text-muted ${remainingColumnAlignment}`}
+                  className={`whitespace-nowrap bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted ${remainingColumnAlignment}`}
                 >
                   {t.exchanges.minFee}
                 </th>
                 <th
-                  className={`whitespace-nowrap px-4 py-3.5 text-[13px] font-medium uppercase tracking-[.04em] text-muted ${remainingColumnAlignment}`}
+                  className={`whitespace-nowrap bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted ${remainingColumnAlignment}`}
                 >
                   {t.exchanges.maxFee}
                 </th>
                 <th
-                  className={`whitespace-nowrap px-4 py-3.5 text-[13px] font-medium uppercase tracking-[.04em] text-muted ${remainingColumnAlignment}`}
+                  className={`whitespace-nowrap bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted ${remainingColumnAlignment}`}
                 >
                   {t.exchanges.buy}
                 </th>
                 <th
-                  className={`whitespace-nowrap px-4 py-3.5 text-[13px] font-medium uppercase tracking-[.04em] text-muted ${remainingColumnAlignment}`}
+                  className={`whitespace-nowrap bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted ${remainingColumnAlignment}`}
                 >
                   {t.exchanges.sell}
                 </th>
@@ -228,7 +228,7 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
                 return (
                   <tr
                     key={orderBook.exchange}
-                    className="border-t border-line transition-colors hover:bg-surface-2"
+                    className="border-t border-line transition-colors hover:bg-accent-soft/40"
                   >
                     <td className={`px-4 py-4 ${firstColumnAlignment}`}>
                       <div className="flex items-center gap-3">

@@ -1,47 +1,113 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
 
 /*
-  These variables mirror src/theme/colors.ts exactly - that file is the
-  single source of truth for the palette (aligned with the DotOne / dotscan.one
-  brand: gold accent #F5BC27, near-black dark surfaces, steel-blue light surfaces).
-  src/styles/tailwind.css maps these onto Tailwind color utilities.
+  DotOneScan design-system tokens, retinted for a gold/black brand.
+
+  The semantic names follow the DotOneScan design system
+  (`bg.primary`, `text.primary`, `link`, `hover`, `selected`, `border.divider`,
+  `input.*`, radius/shadow ladders) so a component never needs a raw hex value.
+  The system's blue ramp (blue.300/400) is replaced by brand gold #F5BC27;
+  no blue role survives in either theme.
+
+  src/theme/colors.ts mirrors these values - that file stays the single source
+  of truth for the JS side, this file for CSS. src/styles/tailwind.css maps the
+  variables onto Tailwind colour utilities.
 */
 :root {
-  --bg: #E8EEF1;
-  --surface: #F7F9FA;
-  --surface-strong: #FFFFFF;
-  --text: #263A48;
-  --muted: #6B7C88;
-  --line: #D6E0E4;
-  --line-strong: #AFC6D2;
-  --accent: #365C74;
-  --accent-soft: #DCE7EC;
-  --gold: #B58A35;
-  --gold-soft: #F1EAD9;
-  --green: #56857F;
-  --green-soft: #E1ECEA;
-  --red: #D26363;
-  --red-soft: #F6E3E3;
-  --shadow: 0 10px 30px rgba(38,58,72,.07);
-  --overlay: rgba(38,58,72,.45);
+  color-scheme: light;
+
+  /* surfaces - light: three neutral steps */
+  --bg: #e8eef1;
+  --topbar: #eff3f5;
+  --surface: #f7f9fa;
+  --surface-strong: #ffffff;
+  --table-head: #eff3f5;
+
+  /* text & lines */
+  --text: #263a48;
+  --muted: #6b7c88;
+  --line: #d5dfe4;
+  --line-strong: #afc6d2;
+
+  /* action - gold replaces the system's blue ramp */
+  --accent: #f5bc27;
+  --accent-ink: #16130a;
+  --accent-hover: #d9a21d;
+  --accent-soft: #f8efd9;
+  --gold: #8a6516;
+  --gold-soft: #f3e9d2;
+  --focus: #a87925;
+  --link: #8a6516;
+
+  /* states */
+  --green: #38a169;
+  --green-soft: rgba(56, 161, 105, 0.12);
+  --red: #e53e3e;
+  --red-soft: rgba(229, 62, 62, 0.1);
+
+  /* data visualisation - one series, one colour */
+  --chart: #b58a35;
+  --chart-soft: rgba(181, 138, 53, 0.28);
+
+  /* form */
+  --field: #ffffff;
+  --field-border: #d5dfe4;
+  --field-placeholder: #a0aec0;
+
+  /* elevation */
+  --shadow: 0 1px 2px rgba(16, 17, 18, 0.06), 0 1px 3px rgba(16, 17, 18, 0.08);
+  --shadow-lg: 0 4px 6px -2px rgba(16, 17, 18, 0.05),
+    0 10px 15px -3px rgba(16, 17, 18, 0.1);
+  --shadow-xl: 0 15px 50px -12px rgba(16, 17, 18, 0.25);
+  --overlay: rgba(16, 17, 18, 0.55);
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
+
+  /* surfaces - #101112 canvas, translucent chrome, one floating layer */
   --bg: #101112;
-  --surface: #17191B;
-  --surface-strong: #1D2022;
-  --text: #F7FAFC;
-  --muted: #9BA7AE;
-  --line: #303538;
-  --line-strong: #414141;
-  --accent: #90CDF4;
-  --accent-soft: #262D31;
-  --gold: #F5BC27;
-  --gold-soft: rgba(245,188,39,.14);
-  --green: #76B9A8;
-  --green-soft: rgba(118,185,168,.14);
-  --red: #EF8989;
-  --red-soft: rgba(239,137,137,.14);
-  --shadow: 0 12px 32px rgba(0,0,0,.22);
-  --overlay: rgba(0,0,0,.6);
+  --topbar: #141517;
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-strong: #17191b;
+  --table-head: rgba(255, 255, 255, 0.04);
+
+  /* text & lines */
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.62);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.18);
+
+  /* action - gold on black */
+  --accent: #f5bc27;
+  --accent-ink: #16130a;
+  --accent-hover: #ffd45e;
+  --accent-soft: rgba(245, 188, 39, 0.12);
+  --gold: #f5bc27;
+  --gold-soft: rgba(245, 188, 39, 0.14);
+  --focus: #f5bc27;
+  --link: #f5bc27;
+
+  /* states */
+  --green: #38a169;
+  --green-soft: rgba(56, 161, 105, 0.14);
+  --red: #f56565;
+  --red-soft: rgba(245, 101, 101, 0.12);
+
+  /* data visualisation */
+  --chart: #f5bc27;
+  --chart-soft: rgba(245, 188, 39, 0.3);
+
+  /* form */
+  --field: #101112;
+  --field-border: #3a3f42;
+  --field-placeholder: #718096;
+
+  /* elevation - depth from the ring, not a heavy drop shadow */
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 8px 28px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 15px 40px rgba(0, 0, 0, 0.4), 0 5px 10px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-xl: 0 15px 40px rgba(0, 0, 0, 0.4), 0 5px 10px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  --overlay: rgba(0, 0, 0, 0.6);
 }

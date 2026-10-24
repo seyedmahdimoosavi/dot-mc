@@ -201,13 +201,13 @@ function PairAvatars({
         logoUrl={token0.logoUrl}
         size={30}
       />
-      <div className="-ml-2.5">
+      <div className="-ms-2.5">
         <TokenAvatar
           symbol={token1.symbol}
           address={token1.address}
           logoUrl={token1.logoUrl}
           size={30}
-          className="ring-2 ring-white dark:ring-slate-900"
+          className="ring-2 ring-surface-2 "
         />
       </div>
     </div>
@@ -216,18 +216,18 @@ function PairAvatars({
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center gap-3 border-b border-slate-200 px-3 py-3.5 last:border-b-0 dark:border-slate-800 sm:px-4">
+    <div className="flex items-center gap-3 border-b border-line px-3 py-3.5 last:border-b-0 sm:px-4">
       <div className="flex shrink-0 items-center">
-        <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-        <div className="-ml-2.5 h-8 w-8 animate-pulse rounded-full bg-slate-300 ring-2 ring-white dark:bg-slate-600 dark:ring-slate-900" />
+        <div className="h-8 w-8 animate-pulse rounded-full bg-line " />
+        <div className="-ms-2.5 h-8 w-8 animate-pulse rounded-full bg-line-2 ring-2 ring-surface-2 " />
       </div>
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="h-4 w-28 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-        <div className="h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+        <div className="h-4 w-28 animate-pulse rounded bg-line " />
+        <div className="h-3 w-16 animate-pulse rounded bg-surface " />
       </div>
-      <div className="hidden h-4 w-14 animate-pulse rounded bg-slate-200 dark:bg-slate-700 sm:block" />
-      <div className="hidden h-4 w-28 animate-pulse rounded bg-slate-200 dark:bg-slate-700 md:block" />
-      <div className="hidden h-4 w-36 animate-pulse rounded bg-slate-200 dark:bg-slate-700 lg:block" />
+      <div className="hidden h-4 w-14 animate-pulse rounded bg-line sm:block" />
+      <div className="hidden h-4 w-28 animate-pulse rounded bg-line md:block" />
+      <div className="hidden h-4 w-36 animate-pulse rounded bg-line lg:block" />
     </div>
   );
 }
@@ -238,7 +238,7 @@ function SkeletonRow() {
 function SkeletonBar({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`inline-block h-4 animate-pulse rounded bg-slate-200 align-middle dark:bg-slate-700 ${className}`}
+      className={`inline-block h-4 animate-pulse rounded bg-line align-middle ${className}`}
     />
   );
 }
@@ -247,16 +247,16 @@ function SkeletonBar({ className = "" }: { className?: string }) {
  * height and the cards don't pop in. */
 function TopPoolSkeleton() {
   return (
-    <div className="w-44 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+    <div className="w-40 shrink-0 rounded-lg border border-line bg-surface p-3">
       <div className="flex items-center justify-between">
         <div className="flex shrink-0 items-center">
-          <div className="h-[30px] w-[30px] animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-          <div className="-ml-2.5 h-[30px] w-[30px] animate-pulse rounded-full bg-slate-300 ring-2 ring-white dark:bg-slate-600 dark:ring-slate-950" />
+          <div className="h-[30px] w-[30px] animate-pulse rounded-full bg-line " />
+          <div className="-ms-2.5 h-[30px] w-[30px] animate-pulse rounded-full bg-line-2 ring-2 ring-surface-2 " />
         </div>
-        <div className="h-4 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+        <div className="h-4 w-8 animate-pulse rounded-full bg-line " />
       </div>
-      <div className="mt-2 h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-      <div className="mt-1.5 h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+      <div className="mt-2 h-4 w-24 animate-pulse rounded bg-line " />
+      <div className="mt-1.5 h-3 w-16 animate-pulse rounded bg-surface " />
     </div>
   );
 }
@@ -264,10 +264,8 @@ function TopPoolSkeleton() {
 function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="font-semibold text-slate-900 dark:text-white">
-        {value}
-      </div>
+      <div className="text-xs text-muted ">{label}</div>
+      <div className="font-semibold text-ink ">{value}</div>
     </div>
   );
 }
@@ -294,7 +292,12 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
   // networks silently empty ("No pools found yet"), which reads exactly like
   // "this network has no pools" rather than "the request failed".
   const hasError = Boolean(
-    v3.error || v2.error || bsc.error || ethereum.error || polygon.error || arbitrum.error,
+    v3.error ||
+      v2.error ||
+      bsc.error ||
+      ethereum.error ||
+      polygon.error ||
+      arbitrum.error,
   );
 
   function retryAll() {
@@ -415,14 +418,15 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
     );
   }
 
-  const buttonBase = "rounded-full px-4 py-2 text-sm font-medium transition";
+  const buttonBase =
+    "rounded-lg px-4 py-2 text-sm font-medium transition-colors";
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] pb-6 text-slate-900 dark:text-white">
-      <section className="mb-6 flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:flex-row lg:items-center lg:justify-between">
+    <div className="mx-auto w-full max-w-[1600px] pb-6 text-ink">
+      <section className="mb-6 flex flex-col gap-5 rounded-xl border border-line bg-surface-2 p-5">
         <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">
-            Earn from <span className="text-amber-500">Liquidity Pools</span>
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.01em] sm:text-3xl">
+            Earn from <span className="text-gold">Liquidity Pools</span>
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Stat
@@ -460,9 +464,9 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
               },
             ].map((tile) => (
               <Fragment key={tile.label}>
-                <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-700 sm:block" />
+                <div className="hidden h-8 w-px bg-line sm:block" />
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-700">
+                  <span className="rounded-full border border-line-2 px-2 py-0.5 text-xs text-muted">
                     {tile.label}
                   </span>
                   <Stat
@@ -481,28 +485,28 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
           </div>
         </div>
         {(topPools.length > 0 || isLoading) && (
-          <div className="min-w-0">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-500">
+          <div className="min-w-0 border-t border-line pt-4">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[.14em] text-gold">
               Top Pools by Liquidity
             </div>
-            <div className="flex gap-3 overflow-x-auto">
+            <div className="flex gap-2 overflow-x-auto">
               {isLoading
                 ? [0, 1, 2].map((i) => <TopPoolSkeleton key={i} />)
                 : topPools.map((row) => (
                     <div
                       key={row.key}
-                      className="w-44 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950"
+                      className="w-40 shrink-0 rounded-lg border border-line bg-surface p-3"
                     >
                       <div className="flex items-center justify-between">
                         <PairAvatars token0={row.token0} token1={row.token1} />
-                        <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] dark:border-slate-700">
+                        <span className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-muted">
                           {row.typeLabel.split(" | ")[0]}
                         </span>
                       </div>
                       <div className="mt-2 truncate text-sm font-semibold">
                         {row.token0.symbol} / {row.token1.symbol}
                       </div>
-                      <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                      <div className="truncate text-xs text-muted ">
                         {row.liquidityLabel}
                       </div>
                     </div>
@@ -513,7 +517,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
       </section>
 
       <>
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface-2 p-3">
           <div className="relative">
             <label className="sr-only" htmlFor="pool-network-filter">
               Network
@@ -525,7 +529,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                 setNetwork(e.target.value as NetworkFilter);
                 setVisibleCount(PAGE_SIZE);
               }}
-              className="h-10 max-w-[190px] appearance-none rounded-full border border-slate-300 bg-slate-50 py-2 pl-3 pr-9 text-sm font-medium dark:border-slate-700 dark:bg-slate-950"
+              className="h-10 max-w-[190px] appearance-none rounded-lg border border-line-2 bg-surface py-2 ps-3 pe-9 text-sm font-medium text-ink transition-colors hover:border-accent focus:border-accent"
             >
               {NETWORK_FILTERS.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -533,10 +537,10 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <ChevronDown className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           </div>
           <div className="relative w-full sm:max-w-[280px] sm:flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <input
               value={search}
               onChange={(e) => {
@@ -544,11 +548,11 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                 setVisibleCount(PAGE_SIZE);
               }}
               placeholder="Search name or paste address"
-              className="h-10 w-full rounded-full border border-slate-300 bg-transparent pl-9 pr-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700"
+              className="h-10 w-full rounded-lg border border-line-2 bg-transparent ps-9 pe-3 text-sm text-ink placeholder:text-muted transition-colors focus:border-accent"
             />
           </div>
           {(network === "all" || network === "dotone") && (
-            <div className="ml-auto flex rounded-full bg-slate-100 p-1 dark:bg-slate-800">
+            <div className="ms-auto flex rounded-lg bg-surface p-1">
               {(["all", "v3", "v2"] as const).map((item) => (
                 <button
                   key={item}
@@ -557,7 +561,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                     setVersion(item);
                     setVisibleCount(PAGE_SIZE);
                   }}
-                  className={`${buttonBase} px-4 py-1.5 ${version === item ? "bg-amber-500 text-black" : "text-slate-600 dark:text-slate-300"}`}
+                  className={`${buttonBase} px-4 py-1.5 ${version === item ? "bg-accent text-accent-ink" : "text-muted hover:text-gold"}`}
                 >
                   {item.toUpperCase() === "ALL" ? "All" : item.toUpperCase()}
                 </button>
@@ -565,17 +569,17 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
             </div>
           )}
         </div>
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <div className="hidden items-center gap-3 border-b border-slate-200 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:border-slate-800 sm:flex">
+        <div className="overflow-hidden rounded-xl border border-line bg-surface-2">
+          <div className="hidden items-center gap-3 border-b border-line bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted sm:flex">
             <div className="flex-1">Pool</div>
-            <div className="w-20 shrink-0">Type</div>
+            <div className="w-24 shrink-0">Type</div>
             <button
               type="button"
               onClick={() => {
                 setSortDir((d) => (d === "desc" ? "asc" : "desc"));
                 setVisibleCount(PAGE_SIZE);
               }}
-              className="hidden w-32 shrink-0 items-center gap-1 text-left hover:text-slate-900 dark:hover:text-white md:flex"
+              className="hidden w-32 shrink-0 items-center gap-1 text-start transition-colors hover:text-gold md:flex"
             >
               Liquidity{" "}
               {sortDir === "desc" ? (
@@ -599,83 +603,82 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
             </>
           ) : hasError ? (
             <div className="p-6 text-center">
-              <p className="text-sm text-red-600">Failed to load pools.</p>
+              <p className="text-sm text-red">Failed to load pools.</p>
               <button
                 type="button"
                 onClick={retryAll}
-                className="mt-3 rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="mt-3 rounded-lg border border-line-2 px-4 py-2 text-xs font-semibold text-ink transition-colors hover:border-accent hover:bg-accent-soft"
               >
                 Retry
               </button>
             </div>
           ) : rows.length === 0 ? (
-            <p className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
+            <p className="p-6 text-center text-sm text-muted ">
               {search ? "No pools match your search." : "No pools found yet."}
             </p>
           ) : (
             <>
-              {visibleRows.map((row, i) => (
-              <button
-                key={row.key}
-                type="button"
-                onClick={() => selectRow(row)}
-                className="flex w-full animate-in items-center gap-3 border-b border-slate-200 px-3 py-3 text-left transition hover:bg-slate-50 last:border-b-0 dark:border-slate-800 dark:hover:bg-slate-800/60 sm:px-4"
-                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <PairAvatars token0={row.token0} token1={row.token1} />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">
-                      {row.token0.symbol} / {row.token1.symbol}
-                    </div>
-                    {row.source === "dotone" ? (
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                        <span>{shortAddress(row.address, 4, 4)}</span>
-                        <a
-                          href={addressUrl(row.address)}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="hover:text-slate-900 dark:hover:text-white"
-                        >
-                          ↗
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {
-                          LIFI_NETWORKS.find((n) => n.id === row.network)
-                            ?.defiLlama.projectLabel
-                        }{" "}
-                        · {row.typeLabel}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="w-20 shrink-0">
-                  <span className="block truncate rounded-full border border-slate-300 px-2 py-1 text-center text-xs dark:border-slate-700">
-                    {row.typeLabel}
-                  </span>
-                </div>
-                <div className="hidden w-32 shrink-0 truncate text-sm md:block">
-                  {row.liquidityLabel}
-                </div>
-                <div
-                  className={`hidden w-40 shrink-0 truncate text-xs lg:block ${row.source === "lifi" && row.apy != null ? "font-semibold text-emerald-600" : "text-slate-500 dark:text-slate-400"}`}
+              {visibleRows.map((row) => (
+                <button
+                  key={row.key}
+                  type="button"
+                  onClick={() => selectRow(row)}
+                  className="flex w-full items-center gap-3 border-b border-line px-3 py-3.5 text-start transition-colors last:border-b-0 hover:bg-surface sm:px-4"
                 >
-                  {row.detailLabel}
-                </div>
-                <div className="w-14 shrink-0 text-right text-xs text-slate-500">
-                  {row.source === "lifi" ? "Swap →" : "View →"}
-                </div>
-              </button>
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <PairAvatars token0={row.token0} token1={row.token1} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold">
+                        {row.token0.symbol} / {row.token1.symbol}
+                      </div>
+                      {row.source === "dotone" ? (
+                        <div className="flex items-center gap-1 text-xs text-muted ">
+                          <span>{shortAddress(row.address, 4, 4)}</span>
+                          <a
+                            href={addressUrl(row.address)}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="transition-colors hover:text-gold"
+                          >
+                            ↗
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="truncate text-xs text-muted ">
+                          {
+                            LIFI_NETWORKS.find((n) => n.id === row.network)
+                              ?.defiLlama.projectLabel
+                          }{" "}
+                          · {row.typeLabel}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-24 shrink-0">
+                    <span className="block truncate rounded-full border border-line-2 px-2 py-1 text-center text-xs text-muted">
+                      {row.typeLabel}
+                    </span>
+                  </div>
+                  <div className="hidden w-32 shrink-0 truncate text-sm md:block">
+                    {row.liquidityLabel}
+                  </div>
+                  <div
+                    className={`hidden w-40 shrink-0 truncate text-xs lg:block ${row.source === "lifi" && row.apy != null ? "font-semibold text-green" : "text-muted "}`}
+                  >
+                    {row.detailLabel}
+                  </div>
+                  <div className="w-14 shrink-0 text-end text-xs text-muted">
+                    {row.source === "lifi" ? "Swap →" : "View →"}
+                  </div>
+                </button>
               ))}
               {rows.length > visibleCount && (
-                <div className="border-t border-slate-200 p-3 text-center dark:border-slate-800">
+                <div className="border-t border-line p-3 text-center ">
                   <button
                     type="button"
                     onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                    className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="rounded-lg border border-line-2 px-4 py-2 text-xs font-semibold text-ink transition-colors hover:border-accent hover:bg-accent-soft"
                   >
                     Show more · {rows.length - visibleCount} remaining
                   </button>
@@ -685,7 +688,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
           )}
         </div>
         {v3.data && !v3.data.scanComplete && (
-          <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-center text-xs text-muted ">
             Still scanning chain history for V3 pools — list will grow…
           </p>
         )}

@@ -4,7 +4,7 @@ A CoinMarketCap-style cryptocurrency market app built with React, TypeScript, an
 
 ## Features
 
-- **Light/dark theme** using design tokens in [`src/theme/colors.ts`](src/theme/colors.ts), aligned with the dotscan.one brand palette.
+- **Gold/black theme** driven by the DotOneScan design system and semantic tokens in [`src/styles/theme.css`](src/styles/theme.css) (dark by default, light variant available).
 - **English / Persian (RTL)** localization via [`src/i18n`](src/i18n).
 - **Landing page** with header mega-menus, a global market stats bar, a market-cap hero chart, a trending/gainers/losers panel, a filterable and paginated coin table, and a CoinMarketCap-style footer — all backed by generated mock data ([`src/lib/mockCoins.ts`](src/lib/mockCoins.ts)).
 - **Coin detail page** at `/currencies/:slug` with a price chart, range tabs, key stats, and overview/markets/about tabs.
@@ -17,6 +17,33 @@ npm run dev       # start the dev server
 npm run build      # type-check and produce a production build
 npm run lint        # run ESLint
 ```
+
+## Theme
+
+The interface follows the DotOneScan design system (semantic roles, 4 px spacing,
+8 px controls, 1 px dividers, Inter + Poppins) retinted for a **gold/black**
+brand. Dark is the default experience; the header toggle switches to the light
+variant and the choice is persisted in `localStorage`.
+
+- **Brand gold** `#F5BC27` (light text variant `#8A6516`), canvas `#101112`,
+  cards `#17191B`, dividers `rgba(255,255,255,.08)`.
+- The design system's blue ramp (`blue.300/400`, `#365C74`, `#2B6CB0`, `#90CDF4`)
+  is deliberately **not** used: every accent, link, focus ring and chart line
+  resolves to gold. Feedback colours stay semantic (`#38A169` success,
+  `#F56565` error).
+- Data charts use one series colour (gold), per the system's data-visualisation
+  rule; direction is read from the percentage, not from a second hue.
+- Persian text keeps IRANYekan; Latin headings use Poppins and body/data uses
+  Inter, with Space Grotesk as a local fallback.
+
+Tokens live in [`src/styles/theme.css`](src/styles/theme.css) and are mapped to
+Tailwind utilities in [`src/styles/tailwind.css`](src/styles/tailwind.css);
+[`src/theme/colors.ts`](src/theme/colors.ts) mirrors them for JS consumers
+(coin brand colours). To rebrand, change `--accent`, `--accent-ink`,
+`--accent-hover`, `--gold`, `--focus` and `--chart` in both theme blocks — never
+hard-code a colour in a component. Components use only semantic classes
+(`bg-canvas`, `bg-surface-2`, `text-ink`, `text-muted`, `border-line`,
+`text-gold`, `bg-accent`, `text-accent-ink`).
 
 ## Market data server
 

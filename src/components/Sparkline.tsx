@@ -46,9 +46,11 @@ export function Sparkline({ data, timestamps, positive = true, showGrid = false,
     if (current.length) groups.push(current);
     return groups;
   }, [data, timestamps, trimEmptyEdges]);
-  const stroke = positive ? "var(--green)" : "var(--red)";
+  // One series, one colour: gold is the chart token in both themes. Direction
+  // stays legible from the percentage beside the chart, not from a second hue.
+  const stroke = "var(--chart)";
   return (
-    <svg className={cn("block w-full", className)} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" role="img" aria-label={label}>
+    <svg data-trend={positive ? "up" : "down"} className={cn("block w-full", className)} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" role="img" aria-label={label}>
       {showGrid && <g>{[0, 1, 2, 3].map(i => <line key={i} x1="0" x2={WIDTH} y1={HEIGHT / 3 * i} y2={HEIGHT / 3 * i} style={{ stroke: "var(--line)", strokeWidth: 1 }} />)}</g>}
       <defs><linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={stroke} stopOpacity=".3" /><stop offset="1" stopColor={stroke} stopOpacity="0" /></linearGradient></defs>
       {segments.map((points, index) => {

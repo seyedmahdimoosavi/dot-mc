@@ -40,8 +40,8 @@ export function MarketPage() {
       <Hero />
       <TrendingPanel />
       <section className="px-5 pb-21 pt-2.5 nav:px-7.5">
-        <div className="mb-5.5 border-b border-line">
-          <div className="flex items-center gap-6">
+        <div className="mb-5.5 overflow-x-auto border-b border-line">
+          <div className="flex w-max min-w-full items-center gap-6">
             {(
               ["cryptocurrencies", "dexExchanges", "cexExchanges"] as const
             ).map((tab) => (
@@ -49,7 +49,7 @@ export function MarketPage() {
                 key={tab}
                 type="button"
                 onClick={() => setMainTab(tab)}
-                className={`relative py-3 text-lg font-semibold transition-colors ${mainTab === tab ? "border-b-2 border-gold text-ink" : "text-muted hover:text-ink"}`}
+                className={`relative whitespace-nowrap py-3 text-lg font-semibold transition-colors ${mainTab === tab ? "border-b-2 border-gold text-ink" : "text-muted hover:text-gold"}`}
               >
                 {t.marketTabs[tab]}
               </button>
@@ -70,7 +70,7 @@ export function MarketPage() {
           </>
         ) : (
           <>
-            <h2 className="mb-5.5 font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
+            <h2 className="mb-5.5 font-display text-xl font-semibold tracking-[-0.01em] nav:text-2xl">
               {t.table.sectionTitle}
             </h2>
             <FilterTabs filters={filters} onChange={setFilters} />

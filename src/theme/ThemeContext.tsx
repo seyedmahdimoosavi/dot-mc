@@ -12,10 +12,11 @@ const ThemeContext = createContext<ThemeContextValue | null>(null)
 const STORAGE_KEY = 'dotmarket-theme'
 
 function getInitialTheme(): ThemeName {
-  if (typeof window === 'undefined') return 'light'
+  if (typeof window === 'undefined') return 'dark'
   const stored = window.localStorage.getItem(STORAGE_KEY)
   if (stored === 'light' || stored === 'dark') return stored
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  // The design system makes dark the default experience; light is opt-in.
+  return 'dark'
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -23,6 +24,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#101112' : '#E8EEF1')
     window.localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 

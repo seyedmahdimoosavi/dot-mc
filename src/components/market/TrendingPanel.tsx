@@ -23,7 +23,7 @@ function TrendingCoinCard({
 }) {
   return (
     <Link
-      className="flex flex-col gap-2 rounded-lg border border-line bg-surface-2 p-3.5 transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-(--shadow)"
+      className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2 p-3.5 transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-(--shadow)"
       to={`/currencies/${coin.id}/${encodeURIComponent(coin.symbol)}`}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -92,7 +92,7 @@ export function TrendingPanel() {
             {t.filters.trending}
           </p> */}
 
-          <h2 className="font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
+          <h2 className="font-display text-xl font-semibold tracking-[-0.01em] nav:text-2xl">
             {t.trending.title}
           </h2>
         </div>
@@ -101,10 +101,10 @@ export function TrendingPanel() {
           {tabs.map((key) => (
             <button
               key={key}
-              className={`rounded-md px-2.75 py-1.75 text-[13px] disabled:opacity-35 ${
+              className={`rounded-lg px-2.75 py-1.75 text-[13px] font-semibold transition-colors disabled:opacity-35 ${
                 tab === key
-                  ? "bg-accent text-white"
-                  : "bg-transparent text-muted hover:text-ink"
+                  ? "bg-accent text-accent-ink"
+                  : "bg-transparent text-muted hover:text-gold"
               }`}
               disabled={key === "trending" || key === "recentlyAdded"}
               title={

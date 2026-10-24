@@ -30,7 +30,7 @@ export function Pagination({
       <div className="flex items-center gap-2 text-[13px] text-muted">
         <span>{t.table.showingRows}</span>
         <select
-          className="rounded-md border border-line bg-surface px-2 py-1.5 text-ink"
+          className="rounded-lg border border-line bg-surface px-2 py-1.5 text-ink transition-colors hover:border-accent focus:border-accent focus:outline-none"
           value={rows}
           onChange={(e) => onRows(Number(e.target.value))}
         >
@@ -43,7 +43,7 @@ export function Pagination({
       </div>
       <div className="flex items-center gap-1">
         <button
-          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-md text-muted disabled:opacity-35"
+          className="grid h-7.5 w-7.5 place-items-center rounded-lg border border-line text-md text-muted transition-colors hover:border-accent hover:text-gold disabled:opacity-35"
           disabled={page === 1}
           onClick={() => onPage(page - 1)}
           aria-label={t.pagination.prev}
@@ -56,10 +56,10 @@ export function Pagination({
               <span className="px-0.5 text-muted">…</span>
             )}
             <button
-              className={`h-7.5 w-7.5 rounded-md border text-md ${
+              className={`h-7.5 w-7.5 rounded-lg border text-md transition-colors ${
                 n === page
-                  ? "border-accent bg-accent text-white"
-                  : "border-line text-muted"
+                  ? "border-accent bg-accent font-semibold text-accent-ink"
+                  : "border-line text-muted hover:border-accent hover:text-gold"
               }`}
               onClick={() => onPage(n)}
             >
@@ -68,7 +68,7 @@ export function Pagination({
           </span>
         ))}
         <button
-          className="grid h-7.5 w-7.5 place-items-center rounded-md border border-line text-md text-muted disabled:opacity-35"
+          className="grid h-7.5 w-7.5 place-items-center rounded-lg border border-line text-md text-muted transition-colors hover:border-accent hover:text-gold disabled:opacity-35"
           disabled={page === totalPages}
           onClick={() => onPage(page + 1)}
           aria-label={t.pagination.next}

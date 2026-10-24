@@ -121,7 +121,7 @@ export function FilterTabs({
           <button
             key={preset.label}
             disabled={irr && preset.sort !== "rank"}
-            className={`relative py-3 text-sm disabled:opacity-40 ${filters.sort === preset.sort && filters.order === preset.order ? "border-b-2 border-gold text-ink" : "text-muted"}`}
+            className={`relative py-3 text-sm transition-colors disabled:opacity-40 ${filters.sort === preset.sort && filters.order === preset.order ? "border-b-2 border-gold text-ink" : "text-muted hover:text-gold"}`}
             onClick={() =>
               onChange({ ...filters, sort: preset.sort, order: preset.order })
             }
@@ -130,8 +130,8 @@ export function FilterTabs({
           </button>
         ))}
       </div>
-      <details className="mb-4 rounded-md border border-line p-3 text-sm">
-        <summary className="cursor-pointer text-muted">
+      <details className="mb-4 rounded-lg border border-line bg-surface p-4 text-sm">
+        <summary className="cursor-pointer text-muted transition-colors hover:text-gold">
           {fa ? "فیلترهای پیشرفته" : "Advanced filters"}
         </summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -252,7 +252,7 @@ export function FilterTabs({
           </p>
         )}
         <button
-          className="mt-3 text-muted underline"
+          className="mt-3 text-muted underline decoration-line-2 underline-offset-4 transition-colors hover:text-gold"
           onClick={() => onChange({ sort: "rank", order: "asc", quote: "USD" })}
         >
           {fa ? "پاک کردن فیلترها" : "Reset filters"}

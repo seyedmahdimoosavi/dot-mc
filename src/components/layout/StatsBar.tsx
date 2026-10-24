@@ -65,7 +65,9 @@ export function StatsBar() {
           <strong className="font-bold text-ink">
             {bitcoin ? formatCompactUsd(bitcoin.marketCap, lang) : "—"}
           </strong>{" "}
-          <em className="text-green not-italic">
+          <em
+            className={`not-italic ${(bitcoin?.change24h ?? 0) < 0 ? "text-red" : "text-green"}`}
+          >
             {bitcoin ? formatPercent(bitcoin.change24h, lang) : "—"}
           </em>
         </span>

@@ -33,7 +33,7 @@ function Change({ value, lang }: { value: number; lang: "en" | "fa" }) {
 }
 
 const th =
-  "whitespace-nowrap px-2.5 py-4 text-[14px] font-medium uppercase tracking-[.04em] text-muted";
+  "whitespace-nowrap bg-table-head px-2.5 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted";
 
 const td = "whitespace-nowrap border-t border-line px-2.5 py-3.5 text-[14px]";
 const start = "text-start";
@@ -42,7 +42,7 @@ const end = "text-end";
 
 function DotoPlaceholderRow() {
   return (
-    <tr className="group hover:bg-surface">
+    <tr className="group transition-colors hover:bg-accent-soft/60">
       <td className={`${td} ${start} text-muted`}>
         <span className="en"></span>
       </td>
@@ -129,7 +129,7 @@ function CoinRow({
 
   return (
     <tr
-      className="group hover:bg-surface"
+      className="group transition-colors hover:bg-accent-soft/60"
       title={
         coin.stale
           ? lang === "fa"
@@ -187,7 +187,7 @@ function CoinRow({
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="shrink-0 text-muted transition-colors hover:text-primary"
+                  className="shrink-0 text-muted transition-colors hover:text-gold"
                   title={copied ? "Copied" : "Copy address"}
                   aria-label={copied ? "Address copied" : "Copy address"}
                 >
@@ -206,7 +206,7 @@ function CoinRow({
       </td>
 
       {/* Price */}
-      <td className={`${td} ${middle} font-semibold`}>
+      <td className={`${td} ${middle} font-semibold tabular-nums`}>
         {formatQuotedPrice(coin.price, quote, lang)}
       </td>
 
@@ -315,7 +315,7 @@ export function CoinTable({
                     type="button"
                     disabled={disabled}
                     onClick={() => onSort?.(column.key)}
-                    className={`inline-flex items-center gap-1 disabled:cursor-default disabled:opacity-50 ${sort === column.key ? "text-ink" : "hover:text-ink"}`}
+                    className={`inline-flex items-center gap-1 transition-colors disabled:cursor-default disabled:opacity-50 ${sort === column.key ? "text-ink" : "hover:text-gold"}`}
                   >
                     {column.label}
                     {sort === column.key && (

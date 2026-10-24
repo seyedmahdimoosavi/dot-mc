@@ -20,7 +20,7 @@ export function PlaceholderPage({ title }: { title?: string }) {
       <p className="max-w-md text-sm text-muted">{t.placeholder.body}</p>
       <Link
         to="/"
-        className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
+        className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-gold hover:underline"
       >
         <Icon name="arrow" size={14} className="rotate-180" />
         {t.placeholder.back}

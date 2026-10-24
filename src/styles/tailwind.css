@@ -1,25 +1,41 @@
 @import 'tailwindcss';
 @plugin 'tailwindcss-animate';
 
+/* Theme switching follows the data-theme attribute, never the OS media query. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
   --color-canvas: var(--bg);
+  --color-topbar: var(--topbar);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-strong);
+  --color-table-head: var(--table-head);
   --color-ink: var(--text);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-line-2: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
+  --color-focus: var(--focus);
+  --color-link: var(--link);
   --color-green: var(--green);
   --color-green-soft: var(--green-soft);
   --color-red: var(--red);
   --color-red-soft: var(--red-soft);
+  --color-chart: var(--chart);
+  --color-field: var(--field);
+  --color-field-border: var(--field-border);
 
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* The design system's body/data size (16 / 24); `text-md` predates it. */
+  --text-md: 1rem;
+  --text-md--line-height: 1.5rem;
 
   --breakpoint-nav: 1300px;
 }
@@ -55,9 +71,54 @@
     min-height: 100%;
   }
 
+  html {
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
   body {
     @apply bg-canvas text-ink font-sans;
     transition: background-color 0.25s, color 0.25s;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  /* Gold replaces the system's blue on every keyboard focus stop. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 38%, transparent);
+    color: var(--text);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+
+  /* Table figures align column to column; the system sets them tabular. */
+  table {
+    font-variant-numeric: tabular-nums;
   }
 
   html[lang="fa"] body,
@@ -84,5 +145,17 @@
   a {
     text-decoration: none;
     color: inherit;
+  }
+}
+
+/* Motion confirms state changes; it never decorates an entrance. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

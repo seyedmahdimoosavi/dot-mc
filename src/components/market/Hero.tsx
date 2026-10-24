@@ -38,15 +38,15 @@ export function Hero() {
     { dateStyle: "medium", timeStyle: "short" },
   ).format(timestamp);
   return (
-    <section className="grid gap-10 px-5 py-11 nav:grid-cols-[1fr_1.1fr] nav:items-center nav:gap-15 nav:px-7.5 nav:py-14">
+    <section className="relative grid gap-10 bg-[radial-gradient(80%_120%_at_85%_0%,rgba(245,188,39,0.10),transparent_60%)] px-5 py-11 nav:grid-cols-[1fr_1.1fr] nav:items-center nav:gap-15 nav:px-7.5 nav:py-14">
       <div>
         {/* <p className="mb-3.5 flex items-center gap-1.5 font-display text-[14px] font-bold uppercase tracking-[.14em] text-gold">
           <span className="text-sm">✦</span> {t.hero.eyebrow}
         </p> */}
-        <h1 className="font-display text-[34px] font-extrabold leading-[1.08] tracking-[-0.06em] nav:text-[58px]">
+        <h1 className="font-display text-[34px] font-semibold leading-[1.08] tracking-[-0.03em] nav:text-[58px]">
           {t.hero.titleLine1}
           <br />
-          <em className="not-italic text-green">{t.hero.titleLine2Em}</em>
+          <em className="not-italic text-gold">{t.hero.titleLine2Em}</em>
         </h1>
         <p className="my-5.5 max-w-95 text-sm leading-[1.8] text-muted">
           {t.hero.copy}
@@ -61,7 +61,9 @@ export function Hero() {
             </span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <strong className="font-display text-lg font-bold text-green">
+            <strong
+              className={`font-display text-lg font-semibold ${(bitcoin?.change24h ?? 0) < 0 ? "text-red" : "text-green"}`}
+            >
               {bitcoin ? formatPercent(bitcoin.change24h, lang) : "—"}
             </strong>
             <span className="text-[14px] text-muted">{t.hero.changeLabel}</span>
@@ -74,7 +76,7 @@ export function Hero() {
           </div>
         </div>
       </div>
-      <div className="rounded-lg bg-surface-2 px-6 pb-4 pt-5.5 shadow-(--shadow)">
+      <div className="rounded-xl border border-line bg-surface-2 px-6 pb-4 pt-5.5 shadow-(--shadow)">
         <div className="flex justify-between text-[13px] text-muted">
           <span>{lang === "fa" ? "قیمت بیت کوین" : "Bitcoin price"}</span>
           <strong className="font-medium">{lang === "fa" ? "۷ روز گذشته · USD" : "Last 7 days · USD"}</strong>

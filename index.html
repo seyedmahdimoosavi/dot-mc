@@ -1,11 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101112" />
   <title>DotMarket</title>
+  <script>
+    // Apply the stored theme before paint so the gold/black canvas never flashes light.
+    try {
+      var storedTheme = localStorage.getItem('dotmarket-theme');
+      if (storedTheme === 'light' || storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', storedTheme);
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute('content', storedTheme === 'dark' ? '#101112' : '#E8EEF1');
+      }
+    } catch (error) {
+      /* storage can be blocked; the dark default still applies */
+    }
+  </script>
 </head>
 
 <body>

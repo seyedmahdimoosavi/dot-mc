@@ -88,7 +88,7 @@ export function Footer() {
   const { theme } = useTheme();
 
   return (
-    <footer className="border-t border-line bg-surface-2 px-6 py-6">
+    <footer className="border-t border-line bg-topbar px-6 py-6">
       <div className="grid grid-cols-2 gap-11 pb-2 nav:grid-cols-[2.1fr_repeat(4,1fr)] nav:gap-15">
         <div className="col-span-2 nav:col-span-1">
           <div className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink">
@@ -113,7 +113,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-ink"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted transition-colors hover:text-gold"
             >
               <Icon name="x" size={16} />
             </a>
@@ -122,7 +122,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="YouTube"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-ink"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted transition-colors hover:text-gold"
             >
               <svg
                 width="16"
@@ -144,7 +144,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Medium"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-[13px] font-extrabold text-muted hover:text-ink"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-[13px] font-extrabold text-muted transition-colors hover:text-gold"
             >
               M
             </a>
@@ -153,7 +153,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-ink"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted transition-colors hover:text-gold"
             >
               <svg
                 width="16"
@@ -179,7 +179,7 @@ export function Footer() {
             </a>
           </div>
           <button
-            className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-[13px] text-ink"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[13px] text-ink transition-colors hover:border-accent hover:text-gold"
             onClick={toggleLang}
           >
             <Icon name="globe" size={14} /> {t.footer.language}:{" "}
@@ -205,7 +205,7 @@ export function Footer() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="my-2.5 block whitespace-nowrap text-[13px] text-muted hover:text-ink"
+                  className="my-2.5 block whitespace-nowrap text-[13px] text-muted hover:text-gold"
                 >
                   {link.label}
                 </a>
