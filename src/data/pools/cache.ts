@@ -7,9 +7,14 @@ interface CacheEntry<T> {
 // One shared TTL + inflight-dedup cache for every data/ reader, replacing
 // the old app's three independent retry/dedupe implementations
 // (Pools.tsx's mapWithConcurrency, tokenList.ts's withRetry, tokens.ts's
-// withRetry) with a single place. Survives across requests via warm
-// server/lambda reuse; resets on cold start — an accepted limitation given
-// there's no database in this design (see plan.md).
+// withRetry) with a single place.
+//
+// Ported from dotoneswap's data/cache.ts, where it lives in a warm server
+// process and survives across requests. This app has no server, so the store
+// lives in the browser tab instead: it deduplicates everything a page needs
+// (React Query's own cache sits on top of it) and resets on reload — except
+// the V3 pool-scan checkpoint, which data/pools/v3Pools.ts additionally
+// mirrors into localStorage so a reload doesn't restart the scan.
 const store = new Map<string, CacheEntry<unknown>>();
 
 /**

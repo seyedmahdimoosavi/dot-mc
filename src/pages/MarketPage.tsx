@@ -43,11 +43,7 @@ export function MarketPage() {
         <div className="mb-5.5 border-b border-line">
           <div className="flex items-center gap-6">
             {(
-              [
-                "cryptocurrencies",
-                //  "dexExchanges",
-                "cexExchanges",
-              ] as const
+              ["cryptocurrencies", "dexExchanges", "cexExchanges"] as const
             ).map((tab) => (
               <button
                 key={tab}
@@ -62,26 +58,25 @@ export function MarketPage() {
         </div>
         {mainTab === "cexExchanges" ? (
           <ExchangesTable />
+        ) : mainTab === "dexExchanges" ? (
+          <>
+            <PoolsExplorer
+              onCreatePool={() =>
+                window.alert("Connect this action to your Create Pool page.")
+              }
+              onAddLiquidity={() =>
+                window.alert(
+                  "Choose a DotOne pool below, or connect this action to your Add Liquidity page.",
+                )
+              }
+              onOpenSwap={({ network, tokenA, tokenB }) => {
+                window.alert(
+                  `Connect your swap route: ${network} — ${tokenA.symbol}/${tokenB.symbol}`,
+                );
+              }}
+            />
+          </>
         ) : (
-          // : mainTab === "dexExchanges" ? (
-          //   <>
-          //     <PoolsExplorer
-          //       onCreatePool={() =>
-          //         window.alert("Connect this action to your Create Pool page.")
-          //       }
-          //       onAddLiquidity={() =>
-          //         window.alert(
-          //           "Choose a DotOne pool below, or connect this action to your Add Liquidity page.",
-          //         )
-          //       }
-          //       onOpenSwap={({ network, tokenA, tokenB }) => {
-          //         window.alert(
-          //           `Connect your swap route: ${network} — ${tokenA.symbol}/${tokenB.symbol}`,
-          //         );
-          //       }}
-          //     />
-          //   </>
-          // )
           <>
             <h2 className="mb-5.5 font-display text-xl font-bold tracking-[-0.04em] nav:text-2xl">
               {t.table.sectionTitle}

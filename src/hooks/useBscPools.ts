@@ -1,6 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import type { BscPool } from "@/domain/types";
-import { apiGet } from "./api";
+
+import { TTL } from "@/config/ttl";
+import { getBscPancakePools } from "@/data/pools/defiLlamaPools";
+
+/** PancakeSwap pools on BNB Chain, from DeFiLlama's public yields API
+ * (data/pools/defiLlamaPools.ts) — same source the swap app uses, fetched
+ * directly in the browser now instead of through `/api/bsc/pools`. */
 export function useBscPools() {
-  return useQuery({ queryKey: ["bsc-pools"], queryFn: async () => (await apiGet<{ pools: BscPool[] }>("/api/bsc/pools")).pools, staleTime: 60_000, refetchInterval: 60_000 });
+  return useQuery({
+    queryKey: ["bsc-pools"],
+    queryFn: getBscPancakePools,
+    staleTime: TTL.bscPools,
+    refetchInterval: TTL.bscPools,
+  });
 }
