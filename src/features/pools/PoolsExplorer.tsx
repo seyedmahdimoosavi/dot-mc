@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Search } from "lucide-react";
 
 import { TokenAvatar } from "@/components/TokenAvatar";
@@ -8,6 +8,7 @@ import { WDOTO } from "@/data/contracts/addresses";
 import type { BscPool, Pool, TokenInfo, V3PoolInfo } from "@/domain/types";
 import { CURATED_TOKENS } from "@/domain/tokens";
 import { feeToPercent, sqrtPriceToPrice } from "@/domain/v3-math";
+import { resolveTokenLogo, trustWalletLogo } from "@/data/tokenLogos";
 import { useBscPools } from "@/hooks/useBscPools";
 import { useNetworkPools } from "@/hooks/useNetworkPools";
 import { useV2Pools } from "@/hooks/useV2Pools";
@@ -19,6 +20,11 @@ import {
   shortAddress,
   toDecimalString,
 } from "@/lib/format";
+
+// Pool rows start at this many and grow by the same amount per "Show more":
+// a network can list several hundred pools (Ethereum's Uniswap V3 alone has
+// 300+), and rendering them all up front makes the page sluggish on mobile.
+const PAGE_SIZE = 50;
 
 type VersionFilter = "all" | "v3" | "v2";
 type SortDir = "asc" | "desc";
@@ -143,6 +149,23 @@ function toV2Row(pool: Pool): Row {
   };
 }
 
+/** Pool rows for the LI.FI-routed chains carry symbols straight from
+ * DeFiLlama, so a token's own logo has to be attached here: the symbol-keyed
+ * map first (matches the swap app), then Trust Wallet's per-address asset for
+ * anything the map doesn't know. Tokens with neither keep the generated
+ * initials in TokenAvatar. */
+function withLogo(
+  token: TokenInfo,
+  network: Exclude<SwapNetwork, "dotone">,
+): TokenInfo {
+  if (token.logoUrl) return token;
+  return {
+    ...token,
+    logoUrl:
+      resolveTokenLogo(token.symbol) ?? trustWalletLogo(network, token.address),
+  };
+}
+
 function toLifiRow(
   pool: BscPool,
   network: Exclude<SwapNetwork, "dotone">,
@@ -152,8 +175,8 @@ function toLifiRow(
     key: `${network}-${pool.id}`,
     source: "lifi",
     network,
-    token0: pool.token0,
-    token1: pool.token1,
+    token0: withLogo(pool.token0, network),
+    token1: withLogo(pool.token1, network),
     typeLabel: label,
     liquidityLabel: formatUsd(pool.tvlUsd),
     liquidityScore: pool.tvlUsd,
@@ -209,7 +232,36 @@ function SkeletonRow() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+/** Placeholder for a single numeric stat (the pool counts in the header)
+ * while that source is still loading — keeps the row from jumping when the
+ * numbers arrive, instead of printing an em dash. */
+function SkeletonBar({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-block h-4 animate-pulse rounded bg-slate-200 align-middle dark:bg-slate-700 ${className}`}
+    />
+  );
+}
+
+/** Same box as a real "Top Pools by Liquidity" card, so the header keeps its
+ * height and the cards don't pop in. */
+function TopPoolSkeleton() {
+  return (
+    <div className="w-44 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex items-center justify-between">
+        <div className="flex shrink-0 items-center">
+          <div className="h-[30px] w-[30px] animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="-ml-2.5 h-[30px] w-[30px] animate-pulse rounded-full bg-slate-300 ring-2 ring-white dark:bg-slate-600 dark:ring-slate-950" />
+        </div>
+        <div className="h-4 w-8 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+      </div>
+      <div className="mt-2 h-4 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+      <div className="mt-1.5 h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
@@ -232,9 +284,27 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
   const [version, setVersion] = useState<VersionFilter>("all");
   const [search, setSearch] = useState("");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Every filter below resets paging explicitly (rather than with an effect on
+  // the filter values), so a new selection always starts at the first page.
 
   const isLoading = v3.isLoading || v2.isLoading;
-  const hasError = Boolean(v3.error || v2.error);
+  // Every source counts: a failed DeFiLlama fetch used to leave the external
+  // networks silently empty ("No pools found yet"), which reads exactly like
+  // "this network has no pools" rather than "the request failed".
+  const hasError = Boolean(
+    v3.error || v2.error || bsc.error || ethereum.error || polygon.error || arbitrum.error,
+  );
+
+  function retryAll() {
+    void v3.refetch();
+    void v2.refetch();
+    void bsc.refetch();
+    void ethereum.refetch();
+    void polygon.refetch();
+    void arbitrum.refetch();
+  }
 
   const dotoneRows = useMemo(() => {
     const v3Rows = (v3.data?.pools ?? [])
@@ -323,6 +393,8 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
     sortDir,
   ]);
 
+  const visibleRows = rows.slice(0, visibleCount);
+
   // Our own pools have a real on-chain address, so their row is a link into
   // the swap app's pool page (details live there, not in this app). LI.FI
   // rows aren't ours — DeFiLlama identifies them by an opaque id, not an
@@ -355,26 +427,36 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Stat
               label="Total DotOne Pools"
-              value={isLoading ? "—" : dotoneRows.length}
+              value={
+                isLoading ? <SkeletonBar className="w-10" /> : dotoneRows.length
+              }
             />
             {[
               {
                 label: "V3",
-                value: isLoading ? "—" : (v3.data?.pools.length ?? 0),
+                loading: isLoading,
+                value: v3.data?.pools.length ?? 0,
               },
-              { label: "V2", value: isLoading ? "—" : (v2.data?.length ?? 0) },
-              { label: "BNB", value: bsc.isLoading ? "—" : bnbRows.length },
+              {
+                label: "V2",
+                loading: isLoading,
+                value: v2.data?.length ?? 0,
+              },
+              { label: "BNB", loading: bsc.isLoading, value: bnbRows.length },
               {
                 label: "Ethereum",
-                value: ethereum.isLoading ? "—" : ethereumRows.length,
+                loading: ethereum.isLoading,
+                value: ethereumRows.length,
               },
               {
                 label: "Polygon",
-                value: polygon.isLoading ? "—" : polygonRows.length,
+                loading: polygon.isLoading,
+                value: polygonRows.length,
               },
               {
                 label: "Arbitrum",
-                value: arbitrum.isLoading ? "—" : arbitrumRows.length,
+                loading: arbitrum.isLoading,
+                value: arbitrumRows.length,
               },
             ].map((tile) => (
               <Fragment key={tile.label}>
@@ -383,37 +465,48 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                   <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs dark:border-slate-700">
                     {tile.label}
                   </span>
-                  <Stat label="Pools" value={tile.value} />
+                  <Stat
+                    label="Pools"
+                    value={
+                      tile.loading ? (
+                        <SkeletonBar className="w-6" />
+                      ) : (
+                        tile.value
+                      )
+                    }
+                  />
                 </div>
               </Fragment>
             ))}
           </div>
         </div>
-        {topPools.length > 0 && (
+        {(topPools.length > 0 || isLoading) && (
           <div className="min-w-0">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-500">
               Top Pools by Liquidity
             </div>
             <div className="flex gap-3 overflow-x-auto">
-              {topPools.map((row) => (
-                <div
-                  key={row.key}
-                  className="w-44 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950"
-                >
-                  <div className="flex items-center justify-between">
-                    <PairAvatars token0={row.token0} token1={row.token1} />
-                    <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] dark:border-slate-700">
-                      {row.typeLabel.split(" | ")[0]}
-                    </span>
-                  </div>
-                  <div className="mt-2 truncate text-sm font-semibold">
-                    {row.token0.symbol} / {row.token1.symbol}
-                  </div>
-                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                    {row.liquidityLabel}
-                  </div>
-                </div>
-              ))}
+              {isLoading
+                ? [0, 1, 2].map((i) => <TopPoolSkeleton key={i} />)
+                : topPools.map((row) => (
+                    <div
+                      key={row.key}
+                      className="w-44 shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950"
+                    >
+                      <div className="flex items-center justify-between">
+                        <PairAvatars token0={row.token0} token1={row.token1} />
+                        <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] dark:border-slate-700">
+                          {row.typeLabel.split(" | ")[0]}
+                        </span>
+                      </div>
+                      <div className="mt-2 truncate text-sm font-semibold">
+                        {row.token0.symbol} / {row.token1.symbol}
+                      </div>
+                      <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {row.liquidityLabel}
+                      </div>
+                    </div>
+                  ))}
             </div>
           </div>
         )}
@@ -428,7 +521,10 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
             <select
               id="pool-network-filter"
               value={network}
-              onChange={(e) => setNetwork(e.target.value as NetworkFilter)}
+              onChange={(e) => {
+                setNetwork(e.target.value as NetworkFilter);
+                setVisibleCount(PAGE_SIZE);
+              }}
               className="h-10 max-w-[190px] appearance-none rounded-full border border-slate-300 bg-slate-50 py-2 pl-3 pr-9 text-sm font-medium dark:border-slate-700 dark:bg-slate-950"
             >
               {NETWORK_FILTERS.map((item) => (
@@ -443,7 +539,10 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
               placeholder="Search name or paste address"
               className="h-10 w-full rounded-full border border-slate-300 bg-transparent pl-9 pr-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700"
             />
@@ -454,7 +553,10 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                 <button
                   key={item}
                   type="button"
-                  onClick={() => setVersion(item)}
+                  onClick={() => {
+                    setVersion(item);
+                    setVisibleCount(PAGE_SIZE);
+                  }}
                   className={`${buttonBase} px-4 py-1.5 ${version === item ? "bg-amber-500 text-black" : "text-slate-600 dark:text-slate-300"}`}
                 >
                   {item.toUpperCase() === "ALL" ? "All" : item.toUpperCase()}
@@ -469,9 +571,10 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
             <div className="w-20 shrink-0">Type</div>
             <button
               type="button"
-              onClick={() =>
-                setSortDir((d) => (d === "desc" ? "asc" : "desc"))
-              }
+              onClick={() => {
+                setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+                setVisibleCount(PAGE_SIZE);
+              }}
               className="hidden w-32 shrink-0 items-center gap-1 text-left hover:text-slate-900 dark:hover:text-white md:flex"
             >
               Liquidity{" "}
@@ -490,20 +593,28 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
           polygon.isLoading ||
           arbitrum.isLoading ? (
             <>
-              <SkeletonRow />
-              <SkeletonRow />
-              <SkeletonRow />
+              {Array.from({ length: 6 }, (_, i) => (
+                <SkeletonRow key={i} />
+              ))}
             </>
           ) : hasError ? (
-            <p className="p-6 text-center text-sm text-red-600">
-              Failed to load pools.
-            </p>
+            <div className="p-6 text-center">
+              <p className="text-sm text-red-600">Failed to load pools.</p>
+              <button
+                type="button"
+                onClick={retryAll}
+                className="mt-3 rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Retry
+              </button>
+            </div>
           ) : rows.length === 0 ? (
             <p className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
               {search ? "No pools match your search." : "No pools found yet."}
             </p>
           ) : (
-            rows.map((row, i) => (
+            <>
+              {visibleRows.map((row, i) => (
               <button
                 key={row.key}
                 type="button"
@@ -558,7 +669,19 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                   {row.source === "lifi" ? "Swap →" : "View →"}
                 </div>
               </button>
-            ))
+              ))}
+              {rows.length > visibleCount && (
+                <div className="border-t border-slate-200 p-3 text-center dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                    className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    Show more · {rows.length - visibleCount} remaining
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
         {v3.data && !v3.data.scanComplete && (

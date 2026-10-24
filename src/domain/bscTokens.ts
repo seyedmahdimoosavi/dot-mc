@@ -1,13 +1,18 @@
-import { NATIVE_TOKEN_ADDRESS } from "@/data/lifi";
+import type { Address } from "viem";
 
 import type { TokenInfo } from "./types";
+
+// Pseudo-address convention every major DEX aggregator (LI.FI, 0x, 1inch) uses
+// for a chain's native coin (BNB, ETH, MATIC, …) instead of an ERC-20 address —
+// same convention on every EVM chain. DeFiLlama reports native BNB under this
+// address in a pool's underlyingTokens, so it has to match here.
+const NATIVE_TOKEN_ADDRESS: Address = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 // Curated list of major, liquid BSC mainnet tokens, copied verbatim from
 // dotoneswap's domain/bscTokens.ts — real BEP-20 contract addresses, each
 // verified live against BSC (symbol()/decimals() via eth_call) before being
-// added there. Deliberately not fetched from LI.FI's own token list API, to
-// keep this list small and intentional rather than the full firehose of BSC
-// tokens LI.FI indexes.
+// added there. Deliberately a short hand-picked list rather than the full
+// firehose of BSC tokens an indexer would return.
 //
 // Used by data/pools/defiLlamaPools.ts to vet DeFiLlama's PancakeSwap pool
 // rows: a pool is only surfaced when both of its underlying tokens appear

@@ -4,24 +4,22 @@ import { TTL } from "@/config/ttl";
 import { BSC_CURATED_TOKENS } from "@/domain/bscTokens";
 import type { BscPool, TokenInfo } from "@/domain/types";
 
-import { isLifiAvailable } from "../lifi";
-import { getCachedLifiTokens } from "../lifi/tokens";
 import { getOrFetch } from "./cache";
 
-// DeFiLlama's public yields API (no key, no auth) — used purely as a
-// read-only market-data source so the Pools page can show real TVL/APY for
-// chains LI.FI already routes swaps to, without us running an indexer for
-// someone else's AMM. Not affiliated with LI.FI — LI.FI only gives swap
-// quotes, it has no pool-listing API.
+// DeFiLlama's public yields API (no key, no auth) — the only market-data
+// source behind the read-only pool rows for LI.FI-routed chains. Ported from
+// dotoneswap's data/bsc/pancakePools.ts and data/pools/lifiNetworkPools.ts,
+// merged onto ONE cached download of the full payload: it's a ~10MB JSON
+// response, so fetching it once per network per refresh cycle — four times
+// over — would be needlessly heavy for a client.
 //
-// Ported from dotoneswap's data/bsc/pancakePools.ts and
-// data/pools/lifiNetworkPools.ts, which were two near-identical files because
-// each network key got its own server-side cache entry. Here (a browser app)
-// the two are merged onto ONE cached download of the full payload: it's a
-// ~10MB JSON response, so fetching it once per network per refresh cycle —
-// four times over — would be needlessly heavy for a client. The per-network
-// filtering itself (chain/project match, both tokens known, sort by TVL,
-// cap at 30) is unchanged.
+// The swap app additionally vets these rows against LI.FI's token index
+// (@lifi/sdk's getTokens, https://li.quest/v1/tokens). That call is gone from
+// this app: it is blocked from the browser on some networks (Cloudflare 403
+// with no CORS headers — an API key doesn't change it), the rows render fine
+// from DeFiLlama alone, and it dragged a whole SDK into the bundle for what is
+// only a quality filter. What's left of that intent is the dead-pool guard
+// below.
 interface DefiLlamaPool {
   chain: string;
   project: string;
@@ -30,9 +28,19 @@ interface DefiLlamaPool {
   apy: number | null;
   pool: string;
   underlyingTokens: string[] | null;
+  volumeUsd1d?: number | null;
 }
 
-const MAX_POOLS = 30;
+// No cap and no volume threshold on purpose. The swap app slices each network
+// to its 30 largest pools after filtering them against LI.FI's token index, so
+// any pool it happens to omit simply doesn't exist as far as its UI is
+// concerned. Here every pool DeFiLlama lists for the chain/project (with a
+// non-zero TVL) is returned, sorted by TVL; the table paginates client-side.
+//
+// A volume cutoff was tried as a replacement for that vetting and removed: it
+// hid legitimate low-turnover pools (a UNI/WETH pool with $4.1M TVL and
+// $138/day) while a wash-traded scam pool can easily clear any threshold. Only
+// a token allowlist actually filters those, and DeFiLlama can't provide one.
 
 const TOKEN_BY_ADDRESS = new Map(BSC_CURATED_TOKENS.map((t) => [t.address.toLowerCase(), t]));
 
@@ -46,54 +54,31 @@ function getDefiLlamaPools(): Promise<DefiLlamaPool[]> {
   });
 }
 
-/** That network's top-30-by-24h-volume LI.FI token list, keyed by lowercase
- * address — the same vetting list dotoneswap's lifiNetworkPools.ts uses.
- * Returns null when LI.FI can't be reached (see toPools's fallback). */
-async function lifiTokenMap(network: LifiNetworkConfig): Promise<Map<string, TokenInfo> | null> {
-  // Already known to be blocked (data/lifi.ts's backoff window): skip the
-  // request and go straight to the fallback instead of collecting another 403.
-  if (!isLifiAvailable()) return null;
-  try {
-    const tokens = await getCachedLifiTokens(network.chain.id);
-    return new Map(tokens.map((t) => [t.address.toLowerCase(), t]));
-  } catch {
-    // getLifiTokens already logged the outage once and armed the backoff —
-    // showing the chain's largest pools from DeFiLlama is still far better
-    // than an empty section, see toPools.
-    return null;
-  }
-}
-
 /** DeFiLlama names a pool "TOKEN0-TOKEN1" (e.g. "WETH-USDT"); split that into
- * per-side symbols for the fallback path where LI.FI can't supply real token
- * metadata. Decimals are unknown there and default to 18 — harmless, because
- * the pool row only renders symbols (no amount math runs on LI.FI rows). */
+ * per-side symbols. Decimals aren't published per token, so they default to
+ * 18 — harmless here, because these rows only render symbols and no amount
+ * math runs on them. */
 function symbolsFromPoolSymbol(symbol: string, index: 0 | 1): string {
   const parts = symbol.split("-");
   const part = parts[index]?.trim();
   return part && part.length > 0 ? part : "?";
 }
 
-/** Filters DeFiLlama's index down to `chain`/`project`'s pools, sorted by TVL
- * and capped at 30 copies of the dotoneswap behaviour:
- *
- * - `tokenByAddress` non-null (the normal path): only pools whose BOTH
- *   underlying tokens are in that list survive. DeFiLlama indexes thousands of
- *   low-quality/scam pairs we have no way to vet, so anything we can't name is
- *   dropped.
- * - `tokenByAddress` null (LI.FI unreachable): no vetting is possible, so
- *   token metadata is derived from DeFiLlama's own row instead. */
-function toPools(
-  all: DefiLlamaPool[],
-  chain: string,
-  project: string,
-  tokenByAddress: Map<string, TokenInfo> | null,
-): BscPool[] {
+interface PoolFilter {
+  chain: string;
+  project: string;
+  /** When provided (BNB Chain's hand-curated list), only pools whose BOTH
+   * underlying tokens are in it survive, and its metadata is used verbatim.
+   * Otherwise token metadata is derived from DeFiLlama's own row. */
+  tokenByAddress?: Map<string, TokenInfo>;
+}
+
+function toPools(all: DefiLlamaPool[], { chain, project, tokenByAddress }: PoolFilter): BscPool[] {
   const pools: BscPool[] = [];
   for (const p of all) {
     if (p.chain !== chain || p.project !== project || !p.tvlUsd) continue;
-    const [addr0, addr1] = p.underlyingTokens ?? [];
 
+    const [addr0, addr1] = p.underlyingTokens ?? [];
     let token0: TokenInfo | undefined;
     let token1: TokenInfo | undefined;
     if (tokenByAddress) {
@@ -109,25 +94,25 @@ function toPools(
 
     pools.push({ id: p.pool, symbol: p.symbol, tvlUsd: p.tvlUsd, apy: p.apy, token0, token1 });
   }
-  return pools.sort((a, b) => b.tvlUsd - a.tvlUsd).slice(0, MAX_POOLS);
+  return pools.sort((a, b) => b.tvlUsd - a.tvlUsd);
 }
 
 /** PancakeSwap's own pools on BNB Chain (config/networks.ts's "bsc" entry) —
- * vetted against the hand-curated domain/bscTokens.ts list. */
+ * vetted against the hand-curated domain/bscTokens.ts list, as in the swap
+ * app. */
 export function getBscPancakePools(): Promise<BscPool[]> {
   return getOrFetch("bsc:pancake:pools", TTL.bscPools, async () => {
     const all = await getDefiLlamaPools();
-    return toPools(all, "BSC", "pancakeswap-amm", TOKEN_BY_ADDRESS);
+    return toPools(all, { chain: "BSC", project: "pancakeswap-amm", tokenByAddress: TOKEN_BY_ADDRESS });
   });
 }
 
-/** Every other LI.FI-routed network (Ethereum, Polygon, Arbitrum) — vetted
- * against that network's LI.FI token list, exactly like dotoneswap's
- * data/pools/lifiNetworkPools.ts. */
+/** Every other LI.FI-routed network (Ethereum, Polygon, Arbitrum) — raw
+ * DeFiLlama rows, largest first. */
 export function getPoolsForNetwork(network: LifiNetworkConfig): Promise<BscPool[]> {
   return getOrFetch(`lifi:pools:${network.id}`, TTL.networkPools, async () => {
-    const [all, tokenByAddress] = await Promise.all([getDefiLlamaPools(), lifiTokenMap(network)]);
+    const all = await getDefiLlamaPools();
     const { chain, project } = network.defiLlama;
-    return toPools(all, chain, project, tokenByAddress);
+    return toPools(all, { chain, project });
   });
 }

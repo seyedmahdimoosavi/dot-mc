@@ -11,5 +11,4 @@ export const TTL = {
   transactions: 15_000,
   bscPools: 5 * 60_000,
   networkPools: 5 * 60_000,
-  lifiTokens: 5 * 60_000,
 } as const;

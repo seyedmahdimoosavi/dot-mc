@@ -370,18 +370,6 @@
   resolved "https://registry.yarnpkg.com/@keyv/serialize/-/serialize-1.1.1.tgz#0c01dd3a3483882af7cf3878d4e71d505c81fc4a"
   integrity sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==
 
-"@lifi/sdk@^4.12.1":
-  version "4.12.1"
-  resolved "https://registry.yarnpkg.com/@lifi/sdk/-/sdk-4.12.1.tgz#81c04724950f8ae03f65f8700e0064db44cb10f3"
-  integrity sha512-y3Ay06NU9h5siR41EIXJecoMu+A/rA8cXI2bE1QQ1akuDDa6qIVFy0/TDpYDGfEveDTJScfU8x0r5jzRR/aUxg==
-  dependencies:
-    "@lifi/types" "^18.13.0"
-
-"@lifi/types@^18.13.0":
-  version "18.14.0"
-  resolved "https://registry.yarnpkg.com/@lifi/types/-/types-18.14.0.tgz#c89100a04f66cbb7ef90f4e2771260a815e198e6"
-  integrity sha512-IZ5QyWxXsmz3fJTl4uNR8JP1LyQu0YqEIzwSqgre2mmpWCivGA1TbpI/ErgL1ROAzaT+O3aDQEUWXStMDg5KMg==
-
 "@napi-rs/wasm-runtime@^1.1.4":
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/@napi-rs/wasm-runtime/-/wasm-runtime-1.2.5.tgz#8c728c07e2543d80e55ccb34158c4ae9d6bd13e8"
