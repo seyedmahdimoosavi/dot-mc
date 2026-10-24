@@ -99,6 +99,15 @@ export function formatPercent(
   return `${sign}${formatted.replace(/٫/g, '.')}%`
 }
 
+/** Compact USD for TVL figures ("$10.08M", "$962.5K") — shared by the pool
+ * list rows and the pool detail view so both render the same number. */
+export function formatUsd(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
 export function formatCompact(value: bigint, decimals = 18): string {
   const n = Number(value) / 10 ** decimals;
   if (!Number.isFinite(n)) return "—";

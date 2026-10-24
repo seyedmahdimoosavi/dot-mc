@@ -14,6 +14,10 @@ function read(name: string): string | undefined {
 export const RPC_URL = read("VITE_RPC_URL") ?? "https://rpc.dotone.online";
 export const CHAIN_ID = read("VITE_CHAIN_ID") ? Number(read("VITE_CHAIN_ID")) : 505;
 
+// The swap app (this project's sibling) — pool rows link out to its own pool
+// page instead of rendering pool details here; see features/pools/PoolsExplorer.tsx.
+export const SWAP_APP_URL = read("VITE_SWAP_APP_URL") ?? "https://swap.dotone.online";
+
 // LI.FI-routed networks (see config/networks.ts) — swaps on these chains go
 // through LI.FI rather than our own AMM, so these RPCs are only needed by the
 // LI.FI SDK's token index (data/lifi.ts). Public endpoints unless overridden.

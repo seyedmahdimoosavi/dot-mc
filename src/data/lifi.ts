@@ -33,6 +33,23 @@ const lifi = createClient({
   },
 });
 
+// LI.FI's API sits behind Cloudflare, which refuses some networks outright:
+// every path (including /v1/chains) answers 403 with an HTML block page and no
+// Access-Control-Allow-Origin header, which a browser reports as a CORS error.
+// An API key doesn't change that — the refusal happens before the API sees the
+// request. Retrying on every poll would only spam the console and the network,
+// so after a failure we back off and let callers fall back
+// (see data/pools/defiLlamaPools.ts) until the window expires.
+const UNAVAILABLE_BACKOFF_MS = 10 * 60_000;
+let unavailableUntil = 0;
+let warned = false;
+
+/** False while LI.FI is in its post-failure backoff window, so callers can
+ * skip the request entirely instead of collecting another rejection. */
+export function isLifiAvailable(): boolean {
+  return Date.now() >= unavailableUntil;
+}
+
 /**
  * Top tokens by real 24h trading volume on `chainId`, straight from LI.FI's
  * own token index — used instead of a hand-typed address list for every
@@ -46,13 +63,30 @@ const lifi = createClient({
  * data/lifi/tokens.ts) since it's one HTTP call per chain.
  */
 export async function getLifiTokens(chainId: number, limit = 30): Promise<TokenInfo[]> {
-  const res = await getTokens(lifi, { chains: [chainId], orderBy: "volumeUSD24H", limit });
-  const tokens = res.tokens[chainId] ?? [];
-  return tokens.map((t) => ({
-    address: t.address as Address,
-    symbol: t.symbol,
-    decimals: t.decimals,
-    name: t.name,
-    logoUrl: t.logoURI ?? undefined,
-  }));
+  if (!isLifiAvailable()) {
+    throw new Error("LI.FI token index is in its post-failure backoff window");
+  }
+  try {
+    const res = await getTokens(lifi, { chains: [chainId], orderBy: "volumeUSD24H", limit });
+    unavailableUntil = 0;
+    warned = false;
+    const tokens = res.tokens[chainId] ?? [];
+    return tokens.map((t) => ({
+      address: t.address as Address,
+      symbol: t.symbol,
+      decimals: t.decimals,
+      name: t.name,
+      logoUrl: t.logoURI ?? undefined,
+    }));
+  } catch (error) {
+    unavailableUntil = Date.now() + UNAVAILABLE_BACKOFF_MS;
+    if (!warned) {
+      warned = true;
+      console.warn(
+        `[lifi] token index unreachable (${(error as Error)?.message ?? error}); ` +
+          `backing off for ${UNAVAILABLE_BACKOFF_MS / 60_000}min and using DeFiLlama's own token fields to vet pools meanwhile.`,
+      );
+    }
+    throw error;
+  }
 }

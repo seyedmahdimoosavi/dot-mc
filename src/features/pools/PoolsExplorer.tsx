@@ -1,17 +1,11 @@
-import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Search } from "lucide-react";
 
 import { TokenAvatar } from "@/components/TokenAvatar";
-import { WDOTO } from "@/data/contracts/addresses";
+import { SWAP_APP_URL } from "@/config/env";
 import { LIFI_NETWORKS, type SwapNetwork } from "@/config/networks";
-import type {
-  BscPool,
-  Pool,
-  TokenInfo,
-  V2PoolSelection,
-  V3PoolInfo,
-  V3PoolSelection,
-} from "@/domain/types";
+import { WDOTO } from "@/data/contracts/addresses";
+import type { BscPool, Pool, TokenInfo, V3PoolInfo } from "@/domain/types";
 import { CURATED_TOKENS } from "@/domain/tokens";
 import { feeToPercent, sqrtPriceToPrice } from "@/domain/v3-math";
 import { useBscPools } from "@/hooks/useBscPools";
@@ -21,6 +15,7 @@ import { useV3Pools } from "@/hooks/useV3Pools";
 import {
   addressUrl,
   formatCompact,
+  formatUsd,
   shortAddress,
   toDecimalString,
 } from "@/lib/format";
@@ -28,10 +23,10 @@ import {
 type VersionFilter = "all" | "v3" | "v2";
 type SortDir = "asc" | "desc";
 type NetworkFilter = SwapNetwork | "all";
-type Selection =
-  | { version: "v3"; sel: V3PoolSelection }
-  | { version: "v2"; sel: V2PoolSelection }
-  | null;
+
+// Pool details live in the swap app, not here: clicking one of our own pools
+// opens its pool page there, carrying the pool address in the query string.
+const SWAP_POOLS_URL = `${SWAP_APP_URL.replace(/\/+$/, "")}/pools`;
 
 /**
  * React + Vite port of the original PoolsExplorer.
@@ -45,12 +40,6 @@ export interface PoolsExplorerProps {
     tokenA: TokenInfo;
     tokenB: TokenInfo;
   }) => void;
-  onCreatePool: () => void;
-  onAddLiquidity: () => void;
-  renderPositions?: () => ReactNode;
-  renderTransactions?: () => ReactNode;
-  renderV2Liquidity?: (selection: V2PoolSelection) => ReactNode;
-  renderV3Liquidity?: (selection: V3PoolSelection) => ReactNode;
 }
 
 const NETWORK_FILTERS: { id: NetworkFilter; label: string }[] = [
@@ -154,12 +143,6 @@ function toV2Row(pool: Pool): Row {
   };
 }
 
-function formatUsd(value: number) {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-}
-
 function toLifiRow(
   pool: BscPool,
   network: Exclude<SwapNetwork, "dotone">,
@@ -226,17 +209,6 @@ function SkeletonRow() {
   );
 }
 
-function Placeholder({ title, message }: { title: string; message: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-slate-300 p-6 dark:border-slate-700">
-      <h3 className="font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-        {message}
-      </p>
-    </div>
-  );
-}
-
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div>
@@ -248,13 +220,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-export function PoolsExplorer({
-  onOpenSwap,
-  onCreatePool,
-  onAddLiquidity,
-  renderPositions,
-  renderTransactions,
-}: PoolsExplorerProps) {
+export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
   const v3 = useV3Pools();
   const v2 = useV2Pools();
   const bsc = useBscPools();
@@ -262,12 +228,10 @@ export function PoolsExplorer({
   const polygon = useNetworkPools("polygon");
   const arbitrum = useNetworkPools("arbitrum");
 
-  const [tab, setTab] = useState<"all" | "positions" | "transactions">("all");
   const [network, setNetwork] = useState<NetworkFilter>("all");
   const [version, setVersion] = useState<VersionFilter>("all");
   const [search, setSearch] = useState("");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [selection, setSelection] = useState<Selection>(null);
 
   const isLoading = v3.isLoading || v2.isLoading;
   const hasError = Boolean(v3.error || v2.error);
@@ -359,7 +323,11 @@ export function PoolsExplorer({
     sortDir,
   ]);
 
-  function selectRow(row: Row, nonce: number) {
+  // Our own pools have a real on-chain address, so their row is a link into
+  // the swap app's pool page (details live there, not in this app). LI.FI
+  // rows aren't ours — DeFiLlama identifies them by an opaque id, not an
+  // address — so they keep routing through the injected onOpenSwap callback.
+  function selectRow(row: Row) {
     if (row.source === "lifi") {
       onOpenSwap({
         network: row.network,
@@ -368,31 +336,14 @@ export function PoolsExplorer({
       });
       return;
     }
-    if (row.version === "v3") {
-      const pool = v3.data?.pools.find((p) => p.address === row.address);
-      if (pool)
-        setSelection({
-          version: "v3",
-          sel: {
-            token0: pool.token0,
-            token1: pool.token1,
-            fee: pool.fee,
-            nonce,
-          },
-        });
-    } else {
-      const pool = v2.data?.find((p) => p.address === row.address);
-      if (pool)
-        setSelection({
-          version: "v2",
-          sel: { token0: pool.token0, token1: pool.token1, nonce },
-        });
-    }
+    window.open(
+      `${SWAP_POOLS_URL}?address=${row.address}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   const buttonBase = "rounded-full px-4 py-2 text-sm font-medium transition";
-  const tabButton = (active: boolean) =>
-    `${buttonBase} ${active ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`;
 
   return (
     <div className="mx-auto w-full max-w-[1600px] pb-6 text-slate-900 dark:text-white">
@@ -468,222 +419,154 @@ export function PoolsExplorer({
         )}
       </section>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        {/* <div className="flex flex-wrap gap-1 rounded-full bg-slate-100 p-1 dark:bg-slate-800">
-          <button
-            className={tabButton(tab === "all")}
-            onClick={() => setTab("all")}
-          >
-            All Pools
-          </button>
-          <button
-            className={tabButton(tab === "positions")}
-            onClick={() => setTab("positions")}
-          >
-            My Positions
-          </button>
-          <button
-            className={tabButton(tab === "transactions")}
-            onClick={() => setTab("transactions")}
-          >
-            Transactions
-          </button>
-        </div> */}
-        <div className="flex gap-2">
-          {/* <button
-            type="button"
-            onClick={onCreatePool}
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            Create Pool
-          </button>
-          <button
-            type="button"
-            onClick={onAddLiquidity}
-            className="rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-400"
-          >
-            Add Liquidity +
-          </button> */}
-        </div>
-      </div>
-
-      {selection ? (
-        <div className="w-full max-w-[480px] space-y-3">
-          {/* <button
-            type="button"
-            onClick={() => setSelection(null)}
-            className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
-          >
-            ← Back to pools
-          </button>
-          {selection.version === "v3" ? (
-            renderV3Liquidity ? (
-              renderV3Liquidity(selection.sel)
-            ) : (
-              <Placeholder
-                title="Add V3 liquidity"
-                message="Pass renderV3Liquidity to connect your existing LiquidityWizard."
-              />
-            )
-          ) : renderV2Liquidity ? (
-            renderV2Liquidity(selection.sel)
-          ) : (
-            <Placeholder
-              title="Add V2 liquidity"
-              message="Pass renderV2Liquidity to connect your existing LiquidityPanel."
+      <>
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+          <div className="relative">
+            <label className="sr-only" htmlFor="pool-network-filter">
+              Network
+            </label>
+            <select
+              id="pool-network-filter"
+              value={network}
+              onChange={(e) => setNetwork(e.target.value as NetworkFilter)}
+              className="h-10 max-w-[190px] appearance-none rounded-full border border-slate-300 bg-slate-50 py-2 pl-3 pr-9 text-sm font-medium dark:border-slate-700 dark:bg-slate-950"
+            >
+              {NETWORK_FILTERS.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          </div>
+          <div className="relative w-full sm:max-w-[280px] sm:flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name or paste address"
+              className="h-10 w-full rounded-full border border-slate-300 bg-transparent pl-9 pr-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700"
             />
-          )} */}
-        </div>
-      ) : (
-        <>
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-            <div className="relative">
-              <label className="sr-only" htmlFor="pool-network-filter">
-                Network
-              </label>
-              <select
-                id="pool-network-filter"
-                value={network}
-                onChange={(e) => setNetwork(e.target.value as NetworkFilter)}
-                className="h-10 max-w-[190px] appearance-none rounded-full border border-slate-300 bg-slate-50 py-2 pl-3 pr-9 text-sm font-medium dark:border-slate-700 dark:bg-slate-950"
-              >
-                {NETWORK_FILTERS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-            </div>
-            <div className="relative w-full sm:max-w-[280px] sm:flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search name or paste address"
-                className="h-10 w-full rounded-full border border-slate-300 bg-transparent pl-9 pr-3 text-sm outline-none focus:border-amber-500 dark:border-slate-700"
-              />
-            </div>
-            {(network === "all" || network === "dotone") && (
-              <div className="ml-auto flex rounded-full bg-slate-100 p-1 dark:bg-slate-800">
-                {(["all", "v3", "v2"] as const).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setVersion(item)}
-                    className={`${buttonBase} px-4 py-1.5 ${version === item ? "bg-amber-500 text-black" : "text-slate-600 dark:text-slate-300"}`}
-                  >
-                    {item.toUpperCase() === "ALL" ? "All" : item.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <div className="hidden items-center gap-3 border-b border-slate-200 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:border-slate-800 sm:flex">
-              <div className="flex-1">Pool</div>
-              <div className="w-20 shrink-0">Type</div>
-              <button
-                type="button"
-                onClick={() =>
-                  setSortDir((d) => (d === "desc" ? "asc" : "desc"))
-                }
-                className="hidden w-32 shrink-0 items-center gap-1 text-left hover:text-slate-900 dark:hover:text-white md:flex"
-              >
-                Liquidity{" "}
-                {sortDir === "desc" ? (
-                  <ArrowDown className="h-3 w-3" />
-                ) : (
-                  <ArrowUp className="h-3 w-3" />
-                )}
-              </button>
-              <div className="hidden w-40 shrink-0 lg:block">Price / APY</div>
-              <div className="w-14 shrink-0" />
-            </div>
-            {isLoading ||
-            bsc.isLoading ||
-            ethereum.isLoading ||
-            polygon.isLoading ||
-            arbitrum.isLoading ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : hasError ? (
-              <p className="p-6 text-center text-sm text-red-600">
-                Failed to load pools.
-              </p>
-            ) : rows.length === 0 ? (
-              <p className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                {search ? "No pools match your search." : "No pools found yet."}
-              </p>
-            ) : (
-              rows.map((row, i) => (
+          {(network === "all" || network === "dotone") && (
+            <div className="ml-auto flex rounded-full bg-slate-100 p-1 dark:bg-slate-800">
+              {(["all", "v3", "v2"] as const).map((item) => (
                 <button
-                  key={row.key}
+                  key={item}
                   type="button"
-                  onClick={() => selectRow(row, Date.now())}
-                  className="flex w-full animate-in items-center gap-3 border-b border-slate-200 px-3 py-3 text-left transition hover:bg-slate-50 last:border-b-0 dark:border-slate-800 dark:hover:bg-slate-800/60 sm:px-4"
-                  style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+                  onClick={() => setVersion(item)}
+                  className={`${buttonBase} px-4 py-1.5 ${version === item ? "bg-amber-500 text-black" : "text-slate-600 dark:text-slate-300"}`}
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <PairAvatars token0={row.token0} token1={row.token1} />
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold">
-                        {row.token0.symbol} / {row.token1.symbol}
-                      </div>
-                      {row.source === "dotone" ? (
-                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                          <span>{shortAddress(row.address, 4, 4)}</span>
-                          <a
-                            href={addressUrl(row.address)}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="hover:text-slate-900 dark:hover:text-white"
-                          >
-                            ↗
-                          </a>
-                        </div>
-                      ) : (
-                        <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                          {
-                            LIFI_NETWORKS.find((n) => n.id === row.network)
-                              ?.defiLlama.projectLabel
-                          }{" "}
-                          · {row.typeLabel}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="w-20 shrink-0">
-                    <span className="block truncate rounded-full border border-slate-300 px-2 py-1 text-center text-xs dark:border-slate-700">
-                      {row.typeLabel}
-                    </span>
-                  </div>
-                  <div className="hidden w-32 shrink-0 truncate text-sm md:block">
-                    {row.liquidityLabel}
-                  </div>
-                  <div
-                    className={`hidden w-40 shrink-0 truncate text-xs lg:block ${row.source === "lifi" && row.apy != null ? "font-semibold text-emerald-600" : "text-slate-500 dark:text-slate-400"}`}
-                  >
-                    {row.detailLabel}
-                  </div>
-                  <div className="w-14 shrink-0 text-right text-xs text-slate-500">
-                    {row.source === "lifi" ? "Swap →" : "Add →"}
-                  </div>
+                  {item.toUpperCase() === "ALL" ? "All" : item.toUpperCase()}
                 </button>
-              ))
-            )}
-          </div>
-          {v3.data && !v3.data.scanComplete && (
-            <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
-              Still scanning chain history for V3 pools — list will grow…
-            </p>
+              ))}
+            </div>
           )}
-        </>
-      )}
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="hidden items-center gap-3 border-b border-slate-200 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:border-slate-800 sm:flex">
+            <div className="flex-1">Pool</div>
+            <div className="w-20 shrink-0">Type</div>
+            <button
+              type="button"
+              onClick={() =>
+                setSortDir((d) => (d === "desc" ? "asc" : "desc"))
+              }
+              className="hidden w-32 shrink-0 items-center gap-1 text-left hover:text-slate-900 dark:hover:text-white md:flex"
+            >
+              Liquidity{" "}
+              {sortDir === "desc" ? (
+                <ArrowDown className="h-3 w-3" />
+              ) : (
+                <ArrowUp className="h-3 w-3" />
+              )}
+            </button>
+            <div className="hidden w-40 shrink-0 lg:block">Price / APY</div>
+            <div className="w-14 shrink-0" />
+          </div>
+          {isLoading ||
+          bsc.isLoading ||
+          ethereum.isLoading ||
+          polygon.isLoading ||
+          arbitrum.isLoading ? (
+            <>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </>
+          ) : hasError ? (
+            <p className="p-6 text-center text-sm text-red-600">
+              Failed to load pools.
+            </p>
+          ) : rows.length === 0 ? (
+            <p className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
+              {search ? "No pools match your search." : "No pools found yet."}
+            </p>
+          ) : (
+            rows.map((row, i) => (
+              <button
+                key={row.key}
+                type="button"
+                onClick={() => selectRow(row)}
+                className="flex w-full animate-in items-center gap-3 border-b border-slate-200 px-3 py-3 text-left transition hover:bg-slate-50 last:border-b-0 dark:border-slate-800 dark:hover:bg-slate-800/60 sm:px-4"
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <PairAvatars token0={row.token0} token1={row.token1} />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">
+                      {row.token0.symbol} / {row.token1.symbol}
+                    </div>
+                    {row.source === "dotone" ? (
+                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <span>{shortAddress(row.address, 4, 4)}</span>
+                        <a
+                          href={addressUrl(row.address)}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-slate-900 dark:hover:text-white"
+                        >
+                          ↗
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {
+                          LIFI_NETWORKS.find((n) => n.id === row.network)
+                            ?.defiLlama.projectLabel
+                        }{" "}
+                        · {row.typeLabel}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="w-20 shrink-0">
+                  <span className="block truncate rounded-full border border-slate-300 px-2 py-1 text-center text-xs dark:border-slate-700">
+                    {row.typeLabel}
+                  </span>
+                </div>
+                <div className="hidden w-32 shrink-0 truncate text-sm md:block">
+                  {row.liquidityLabel}
+                </div>
+                <div
+                  className={`hidden w-40 shrink-0 truncate text-xs lg:block ${row.source === "lifi" && row.apy != null ? "font-semibold text-emerald-600" : "text-slate-500 dark:text-slate-400"}`}
+                >
+                  {row.detailLabel}
+                </div>
+                <div className="w-14 shrink-0 text-right text-xs text-slate-500">
+                  {row.source === "lifi" ? "Swap →" : "View →"}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+        {v3.data && !v3.data.scanComplete && (
+          <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+            Still scanning chain history for V3 pools — list will grow…
+          </p>
+        )}
+      </>
     </div>
   );
 }

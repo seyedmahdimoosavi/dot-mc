@@ -61,14 +61,6 @@ export function MarketPage() {
         ) : mainTab === "dexExchanges" ? (
           <>
             <PoolsExplorer
-              onCreatePool={() =>
-                window.alert("Connect this action to your Create Pool page.")
-              }
-              onAddLiquidity={() =>
-                window.alert(
-                  "Choose a DotOne pool below, or connect this action to your Add Liquidity page.",
-                )
-              }
               onOpenSwap={({ network, tokenA, tokenB }) => {
                 window.alert(
                   `Connect your swap route: ${network} — ${tokenA.symbol}/${tokenB.symbol}`,

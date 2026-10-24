@@ -4,6 +4,7 @@ import { TTL } from "@/config/ttl";
 import { BSC_CURATED_TOKENS } from "@/domain/bscTokens";
 import type { BscPool, TokenInfo } from "@/domain/types";
 
+import { isLifiAvailable } from "../lifi";
 import { getCachedLifiTokens } from "../lifi/tokens";
 import { getOrFetch } from "./cache";
 
@@ -49,19 +50,16 @@ function getDefiLlamaPools(): Promise<DefiLlamaPool[]> {
  * address — the same vetting list dotoneswap's lifiNetworkPools.ts uses.
  * Returns null when LI.FI can't be reached (see toPools's fallback). */
 async function lifiTokenMap(network: LifiNetworkConfig): Promise<Map<string, TokenInfo> | null> {
+  // Already known to be blocked (data/lifi.ts's backoff window): skip the
+  // request and go straight to the fallback instead of collecting another 403.
+  if (!isLifiAvailable()) return null;
   try {
     const tokens = await getCachedLifiTokens(network.chain.id);
     return new Map(tokens.map((t) => [t.address.toLowerCase(), t]));
-  } catch (error) {
-    // LI.FI's API sits behind Cloudflare, which returns 403 for some
-    // networks/ASNs (verified: even https://li.quest/v1/chains is blocked
-    // from this machine). Without its token list we can't vet against
-    // known-liquid tokens, but showing the chain's largest pools is still far
-    // better than an empty section — see toPools.
-    console.warn(
-      `[pools] LI.FI token list unavailable for ${network.label} (${(error as Error)?.message ?? error}); ` +
-        "falling back to DeFiLlama's own token fields.",
-    );
+  } catch {
+    // getLifiTokens already logged the outage once and armed the backoff —
+    // showing the chain's largest pools from DeFiLlama is still far better
+    // than an empty section, see toPools.
     return null;
   }
 }
