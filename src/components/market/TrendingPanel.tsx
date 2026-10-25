@@ -8,9 +8,48 @@ import { Sparkline } from "../Sparkline";
 import { priceToCoin } from "@/lib/pricecatcher";
 import { useI18n } from "../../i18n/I18nContext";
 import { useMarkets } from "@/hooks/usePricingApi";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 type TabKey = "trending" | "gainers" | "losers" | "recentlyAdded";
+
+/**
+ * Very small prices carry too many leading zeros to read at a glance, so the
+ * zero run moves into a subscript: `$0.0₅31467` instead of `$0.0000031467`.
+ *
+ * This is the same rendering idea as the gas-tracker helper, without the wei
+ * division: `coin.price` is already a human-readable USD number. The cutoff
+ * keeps ordinary prices (e.g. `$0.0528`) in their normal form.
+ */
+function formatSmallNumber(value: number, lang: "en" | "fa"): ReactNode {
+  if (!Number.isFinite(value) || value <= 0 || value >= 0.0001) {
+    return formatPrice(value, lang);
+  }
+
+  // Match formatPrice's precision, then drop the trailing zeros it pads with.
+  const digits = Math.min(18, Math.max(8, Math.ceil(-Math.log10(value)) + 4));
+  const decimal = value.toFixed(digits).replace(/(\.\d*?)0+$/, "$1");
+  const match = decimal.match(/^0\.(0*)([1-9]\d*)$/);
+
+  if (!match) return formatPrice(value, lang);
+
+  const zeros = match[1].length;
+  const significantDigits = match[2];
+  const localize = (text: string) =>
+    lang === "fa"
+      ? text.replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)])
+      : text;
+
+  return (
+    <span dir="ltr" className="inline-flex items-baseline">
+      <span aria-hidden="true">
+        {`$${localize("0.0")}`}
+        <sub className="small-number-sub">{localize(String(zeros))}</sub>
+        {localize(significantDigits)}
+      </span>
+      <span className="sr-only">{formatPrice(value, lang)}</span>
+    </span>
+  );
+}
 
 function TrendingCoinCard({
   coin,
@@ -58,7 +97,7 @@ function TrendingCoinCard({
           className="min-w-0 truncate"
           title={formatPrice(coin.price, lang)}
         >
-          {formatPrice(coin.price, lang)}
+          {formatSmallNumber(coin.price, lang)}
         </span>
 
         <span

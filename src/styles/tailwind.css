@@ -148,6 +148,17 @@
   }
 }
 
+/* Subscript zero-run for very small prices: $0.0₅31467 */
+@layer components {
+  .small-number-sub {
+    position: relative;
+    top: 0.28em;
+    font-size: 0.68em;
+    line-height: 0;
+    vertical-align: baseline;
+  }
+}
+
 /* Motion confirms state changes; it never decorates an entrance. */
 @media (prefers-reduced-motion: reduce) {
   *,
