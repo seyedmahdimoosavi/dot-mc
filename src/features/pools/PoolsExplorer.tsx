@@ -1,7 +1,14 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Search } from "lucide-react";
 
 import { TokenAvatar } from "@/components/TokenAvatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SWAP_APP_URL } from "@/config/env";
 import { LIFI_NETWORKS, type SwapNetwork } from "@/config/networks";
 import { WDOTO } from "@/data/contracts/addresses";
@@ -53,6 +60,13 @@ const NETWORK_FILTERS: { id: NetworkFilter; label: string }[] = [
   { id: "dotone", label: "DotOne Chain" },
   ...LIFI_NETWORKS.map((n) => ({ id: n.id, label: n.label })),
 ];
+
+// Base UI needs the value/label pairs to render the selected label (instead of
+// the raw id, e.g. "bsc") inside the trigger after a choice is made.
+const NETWORK_ITEMS = NETWORK_FILTERS.map(({ id, label }) => ({
+  value: id,
+  label,
+}));
 
 const REAL_TOKEN_ADDRESSES = new Set(
   [
@@ -288,16 +302,22 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
   // the filter values), so a new selection always starts at the first page.
 
   const isLoading = v3.isLoading || v2.isLoading;
+  const isAllLoading =
+    isLoading ||
+    bsc.isLoading ||
+    ethereum.isLoading ||
+    polygon.isLoading ||
+    arbitrum.isLoading;
   // Every source counts: a failed DeFiLlama fetch used to leave the external
   // networks silently empty ("No pools found yet"), which reads exactly like
   // "this network has no pools" rather than "the request failed".
   const hasError = Boolean(
     v3.error ||
-      v2.error ||
-      bsc.error ||
-      ethereum.error ||
-      polygon.error ||
-      arbitrum.error,
+    v2.error ||
+    bsc.error ||
+    ethereum.error ||
+    polygon.error ||
+    arbitrum.error,
   );
 
   function retryAll() {
@@ -430,21 +450,34 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Stat
-              label="Total DotOne Pools"
+              label="Total Pools"
               value={
-                isLoading ? <SkeletonBar className="w-10" /> : dotoneRows.length
+                isAllLoading ? (
+                  <SkeletonBar className="w-10" />
+                ) : (
+                  dotoneRows.length + allLifiRows.length
+                )
               }
             />
             {[
               {
-                label: "V3",
+                label: "DotOne",
                 loading: isLoading,
-                value: v3.data?.pools.length ?? 0,
+                value: dotoneRows.length,
+              },
+              {
+                label: "V3",
+                loading: v3.isLoading,
+                value: dotoneRows.filter(
+                  (row) => row.source === "dotone" && row.version === "v3",
+                ).length,
               },
               {
                 label: "V2",
-                loading: isLoading,
-                value: v2.data?.length ?? 0,
+                loading: v2.isLoading,
+                value: dotoneRows.filter(
+                  (row) => row.source === "dotone" && row.version === "v2",
+                ).length,
               },
               { label: "BNB", loading: bsc.isLoading, value: bnbRows.length },
               {
@@ -493,9 +526,12 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
               {isLoading
                 ? [0, 1, 2].map((i) => <TopPoolSkeleton key={i} />)
                 : topPools.map((row) => (
-                    <div
+                    <button
                       key={row.key}
-                      className="w-40 shrink-0 rounded-lg border border-line bg-surface p-3"
+                      type="button"
+                      onClick={() => selectRow(row)}
+                      aria-label={`Open ${row.token0.symbol}/${row.token1.symbol} pool`}
+                      className="w-40 shrink-0 rounded-lg border border-line bg-surface p-3 text-start transition-colors hover:border-accent/50 hover:bg-accent-soft/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                     >
                       <div className="flex items-center justify-between">
                         <PairAvatars token0={row.token0} token1={row.token1} />
@@ -509,7 +545,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                       <div className="truncate text-xs text-muted ">
                         {row.liquidityLabel}
                       </div>
-                    </div>
+                    </button>
                   ))}
             </div>
           </div>
@@ -518,26 +554,41 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
 
       <>
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface-2 p-3">
-          <div className="relative">
+          <div>
             <label className="sr-only" htmlFor="pool-network-filter">
               Network
             </label>
-            <select
-              id="pool-network-filter"
+            <Select
               value={network}
-              onChange={(e) => {
-                setNetwork(e.target.value as NetworkFilter);
+              items={NETWORK_ITEMS}
+              onValueChange={(value) => {
+                if (value == null) return;
+                setNetwork(value as NetworkFilter);
                 setVisibleCount(PAGE_SIZE);
               }}
-              className="h-10 max-w-[190px] appearance-none rounded-lg border border-line-2 bg-surface py-2 ps-3 pe-9 text-sm font-medium text-ink transition-colors hover:border-accent focus:border-accent"
             >
-              {NETWORK_FILTERS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <SelectTrigger
+                id="pool-network-filter"
+                className="h-10 w-[170px] rounded-lg border-2 border-line-2 bg-surface px-3 text-sm font-semibold text-ink transition-colors hover:border-accent focus-visible:border-accent sm:w-[190px]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                alignItemWithTrigger={false}
+                align="start"
+                className="border-line bg-surface-2 text-ink shadow-(--shadow-xl)"
+              >
+                {NETWORK_FILTERS.map((item) => (
+                  <SelectItem
+                    key={item.id}
+                    value={item.id}
+                    className="cursor-pointer ps-3 pe-8 py-2 text-sm text-start data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
+                  >
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="relative w-full sm:max-w-[280px] sm:flex-1">
             <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -572,7 +623,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
         <div className="overflow-hidden rounded-xl border border-line bg-surface-2">
           <div className="hidden items-center gap-3 border-b border-line bg-table-head px-4 py-3 text-[12px] font-semibold uppercase tracking-[.08em] text-muted sm:flex">
             <div className="flex-1">Pool</div>
-            <div className="w-24 shrink-0">Type</div>
+            <div className="w-24 shrink-0 text-center">Type</div>
             <button
               type="button"
               onClick={() => {
@@ -591,11 +642,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
             <div className="hidden w-40 shrink-0 lg:block">Price / APY</div>
             <div className="w-14 shrink-0" />
           </div>
-          {isLoading ||
-          bsc.isLoading ||
-          ethereum.isLoading ||
-          polygon.isLoading ||
-          arbitrum.isLoading ? (
+          {isAllLoading ? (
             <>
               {Array.from({ length: 6 }, (_, i) => (
                 <SkeletonRow key={i} />
@@ -655,7 +702,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                       )}
                     </div>
                   </div>
-                  <div className="w-24 shrink-0">
+                  <div className="w-24 flex justify-center">
                     <span className="block truncate rounded-full border border-line-2 px-2 py-1 text-center text-xs text-muted">
                       {row.typeLabel}
                     </span>
