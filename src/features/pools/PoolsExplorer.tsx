@@ -97,6 +97,7 @@ type Row =
       liquidityLabel: string;
       liquidityScore: number;
       detailLabel: string;
+      feeLabel: string | null;
       address: `0x${string}`;
     }
   | {
@@ -133,6 +134,7 @@ function toV3Row(pool: V3PoolInfo): Row {
       price > 0
         ? `1 ${pool.token0.symbol} = ${price.toFixed(6)} ${pool.token1.symbol}`
         : "Not initialized",
+    feeLabel: feeToPercent(pool.fee),
     address: pool.address,
   };
 }
@@ -159,6 +161,7 @@ function toV2Row(pool: Pool): Row {
       price > 0
         ? `1 ${pool.token0.symbol} = ${price.toFixed(6)} ${pool.token1.symbol}`
         : "Not initialized",
+    feeLabel: null,
     address: pool.address,
   };
 }
@@ -639,7 +642,9 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                 <ArrowUp className="h-3 w-3" />
               )}
             </button>
-            <div className="hidden w-40 shrink-0 lg:block">Price / APY</div>
+            <div className="hidden w-40 shrink-0 lg:block">Price</div>
+            <div className="hidden w-24 shrink-0 lg:block">APY</div>
+            <div className="hidden w-24 shrink-0 lg:block">Pool fee</div>
             <div className="w-14 shrink-0" />
           </div>
           {isAllLoading ? (
@@ -678,6 +683,9 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                       <div className="truncate text-sm font-semibold">
                         {row.token0.symbol} / {row.token1.symbol}
                       </div>
+                      <div className="text-xs text-muted lg:hidden">
+                        APY: {row.source === "lifi" && row.apy != null ? `${row.apy.toFixed(2)}%` : "—"} · Pool fee: {row.source === "dotone" ? row.feeLabel ?? "—" : "—"}
+                      </div>
                       {row.source === "dotone" ? (
                         <div className="flex items-center gap-1 text-xs text-muted ">
                           <span>{shortAddress(row.address, 4, 4)}</span>
@@ -713,7 +721,13 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
                   <div
                     className={`hidden w-40 shrink-0 truncate text-xs lg:block ${row.source === "lifi" && row.apy != null ? "font-semibold text-green" : "text-muted "}`}
                   >
-                    {row.detailLabel}
+                    {row.source === "dotone" ? row.detailLabel : "—"}
+                  </div>
+                  <div className="hidden w-24 shrink-0 text-xs lg:block">
+                    {row.source === "lifi" && row.apy != null ? `${row.apy.toFixed(2)}%` : "—"}
+                  </div>
+                  <div className="hidden w-24 shrink-0 text-xs text-muted lg:block">
+                    {row.source === "dotone" ? row.feeLabel ?? "—" : "—"}
                   </div>
                   <div className="w-14 shrink-0 text-end text-xs text-muted">
                     {row.source === "lifi" ? "Swap →" : "View →"}

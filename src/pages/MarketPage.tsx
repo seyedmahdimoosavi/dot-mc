@@ -10,6 +10,7 @@ import { ExchangesTable } from "../components/market/ExchangesTable";
 import { useDebouncedValue, useMarkets } from "@/hooks/usePricingApi";
 import { priceToCoin, type MarketFilters } from "@/lib/pricecatcher";
 import { PoolsExplorer } from "@/features/pools/PoolsExplorer";
+import { SWAP_APP_URL } from "@/config/env";
 
 type MarketTab = "cryptocurrencies" | "dexExchanges" | "cexExchanges";
 
@@ -95,9 +96,11 @@ export function MarketPage() {
           <>
             <PoolsExplorer
               onOpenSwap={({ network, tokenA, tokenB }) => {
-                window.alert(
-                  `Connect your swap route: ${network} — ${tokenA.symbol}/${tokenB.symbol}`,
-                );
+                const url = new URL(`${SWAP_APP_URL.replace(/\/+$/, "")}/trade`);
+                url.searchParams.set("chain", network);
+                url.searchParams.set("src", tokenA.symbol);
+                url.searchParams.set("des", tokenB.symbol);
+                window.open(url.toString(), "_blank", "noopener,noreferrer");
               }}
             />
           </>

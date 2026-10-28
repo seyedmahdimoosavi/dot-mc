@@ -22,8 +22,8 @@ import { useTheme } from "../../theme/ThemeContext";
 const NAV_KEYS = [
   // "cryptocurrencies",
   "exchanges",
-  "community",
   "products",
+  "community",
 ] as const;
 
 type NavigationLink = {
@@ -47,28 +47,6 @@ function externalNavigationLinks(
         label: fa ? "صرافی‌های غیرمتمرکز" : "Decentralized Exchanges",
         href: "/#dex",
         external: false,
-      },
-    ],
-    community: [
-      {
-        label: fa ? "یوتیوب" : "YouTube",
-        href: "https://m.youtube.com/@DOTO_coin",
-        external: true,
-      },
-      {
-        label: fa ? "مدیوم" : "Medium",
-        href: "https://medium.com/@dotone.online",
-        external: true,
-      },
-      {
-        label: fa ? "ایکس" : "X",
-        href: "https://x.com/dotonenetwork",
-        external: true,
-      },
-      {
-        label: fa ? "اینستاگرام" : "Instagram",
-        href: "https://www.instagram.com/dotone_blockchain",
-        external: true,
       },
     ],
     products: [
@@ -202,7 +180,11 @@ function MobileNavMenu() {
         align="end"
         className="max-h-[75vh] w-65 overflow-y-auto"
       >
-        {NAV_KEYS.map((key) => (
+        {NAV_KEYS.map((key) => key === "community" ? (
+          <DropdownMenuItem key={key} asChild>
+            <Link to="/posts" className="font-bold">{t.nav.community}</Link>
+          </DropdownMenuItem>
+        ) : (
           <div
             key={key}
             className="mb-1 border-b border-line pb-1 last:mb-0 last:border-0 last:pb-0"
@@ -320,7 +302,15 @@ export function Header() {
         </Link>
 
         <nav className="hidden h-full flex-1 nav:flex">
-          {NAV_KEYS.map((key) => (
+          {NAV_KEYS.map((key) => key === "community" ? (
+            <Link
+              key={key}
+              to="/posts"
+              className="flex h-full items-center px-2.5 text-[13px] text-muted transition-colors hover:text-gold"
+            >
+              {t.nav.community}
+            </Link>
+          ) : (
             <NavDropdown
               key={key}
               label={t.nav[key]}

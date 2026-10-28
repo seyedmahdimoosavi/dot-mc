@@ -19,6 +19,11 @@ function PortfolioPage() {
   return <PlaceholderPage title={t.nav.portfolio} />;
 }
 
+function PostsPage() {
+  const { t } = useI18n();
+  return <PlaceholderPage title={t.nav.community} />;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -35,6 +40,7 @@ function App() {
                   />
                   <Route path="/watchlist" element={<WatchlistPage />} />
                   <Route path="/portfolio" element={<PortfolioPage />} />
+                  <Route path="/posts" element={<PostsPage />} />
                   <Route path="/page/:slug" element={<PlaceholderPage />} />
                 </Route>
               </Routes>

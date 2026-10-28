@@ -362,7 +362,7 @@ export const dictionaries: Record<Language, Dictionary> = {
     nav: {
       cryptocurrencies: 'رمزارزها',
       exchanges: 'صرافی‌ها',
-      community: 'شبکه‌های اجتماعی',
+      community: 'جامعه',
       products: 'محصولات',
       learn: 'آموزش',
       watchlist: 'لیست پیگیری',
