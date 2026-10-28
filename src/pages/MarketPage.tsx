@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useI18n } from "../i18n/I18nContext";
 import { Hero } from "../components/market/Hero";
 import { TrendingPanel } from "../components/market/TrendingPanel";
@@ -10,8 +11,18 @@ import { useDebouncedValue, useMarkets } from "@/hooks/usePricingApi";
 import { priceToCoin, type MarketFilters } from "@/lib/pricecatcher";
 import { PoolsExplorer } from "@/features/pools/PoolsExplorer";
 
+type MarketTab = "cryptocurrencies" | "dexExchanges" | "cexExchanges";
+
+function tabFromHash(hash: string): MarketTab | undefined {
+  if (hash === "#dex") return "dexExchanges";
+  if (hash === "#cex") return "cexExchanges";
+  return undefined;
+}
+
 export function MarketPage() {
   const { t } = useI18n();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<MarketFilters>({
     sort: "rank",
     order: "asc",
@@ -19,9 +30,26 @@ export function MarketPage() {
   });
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState(20);
-  const [mainTab, setMainTab] = useState<
-    "cryptocurrencies" | "dexExchanges" | "cexExchanges"
-  >("cryptocurrencies");
+  const [mainTab, setMainTab] = useState<MarketTab>(
+    () => tabFromHash(location.hash) ?? "cryptocurrencies",
+  );
+  const [lastLocationKey, setLastLocationKey] = useState(location.key);
+  if (lastLocationKey !== location.key) {
+    setLastLocationKey(location.key);
+    const requestedTab = tabFromHash(location.hash);
+    if (requestedTab) setMainTab(requestedTab);
+  }
+
+  useEffect(() => {
+    if (!tabFromHash(location.hash)) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+        block: "start",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.hash, location.key]);
   const debouncedFilters = useDebouncedValue(filters);
   // Reset pagination when filters settle, so every request uses a coherent filter/page combination.
   const [lastFilters, setLastFilters] = useState(debouncedFilters);
@@ -48,7 +76,12 @@ export function MarketPage() {
               <button
                 key={tab}
                 type="button"
-                onClick={() => setMainTab(tab)}
+                onClick={() => {
+                  setMainTab(tab);
+                  if (tabFromHash(location.hash)) {
+                    navigate({ pathname: location.pathname, search: location.search }, { replace: true });
+                  }
+                }}
                 className={`relative whitespace-nowrap py-3 text-lg font-semibold transition-colors ${mainTab === tab ? "border-b-2 border-gold text-ink" : "text-muted hover:text-gold"}`}
               >
                 {t.marketTabs[tab]}

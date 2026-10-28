@@ -39,14 +39,14 @@ function externalNavigationLinks(
   return {
     exchanges: [
       {
-        label: fa ? "سواپ" : "Swap",
-        href: "https://swap.dotone.online",
-        external: true,
+        label: fa ? "صرافی‌های متمرکز" : "Centralized Exchanges",
+        href: "/#cex",
+        external: false,
       },
       {
-        label: fa ? "وضعیت شبکه" : "Network Status",
-        href: "https://dotscan.one/stats",
-        external: true,
+        label: fa ? "صرافی‌های غیرمتمرکز" : "Decentralized Exchanges",
+        href: "/#dex",
+        external: false,
       },
     ],
     community: [

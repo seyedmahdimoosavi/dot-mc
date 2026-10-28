@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useId, useState } from "react";
 import {
   useOrderBooks,
   usePricingSymbols,
@@ -13,7 +14,6 @@ import {
 import { ShoppingCart } from "lucide-react";
 import bitbankLogo from "@/assets/bitbank-logo.png";
 import { useI18n } from "../../i18n/I18nContext";
-import { useId, useState } from "react";
 
 const COIN_API_IMAGE_URL =
   import.meta.env.VITE_COIN_API_IMAGE_URL || "https://pricing.dotone.online";
@@ -48,12 +48,17 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
   const { lang, t } = useI18n();
   const headingId = useId();
   const [selectedSymbol, setSymbol] = useState("BTC");
-  const symbol = fixedSymbol === undefined ? selectedSymbol : fixedSymbol.trim().toUpperCase();
+  const symbol =
+    fixedSymbol === undefined
+      ? selectedSymbol
+      : fixedSymbol.trim().toUpperCase();
   const [selectedPair, setPair] = useState<"USDT" | "TMN">(
     fixedSymbol === undefined ? "USDT" : "TMN",
   );
-  const pair = fixedSymbol !== undefined && symbol === "USDT" ? "TMN" : selectedPair;
-  const availablePairs: ("USDT" | "TMN")[] = symbol === "USDT" ? ["TMN"] : ["USDT", "TMN"];
+  const pair =
+    fixedSymbol !== undefined && symbol === "USDT" ? "TMN" : selectedPair;
+  const availablePairs: ("USDT" | "TMN")[] =
+    symbol === "USDT" ? ["TMN"] : ["USDT", "TMN"];
 
   const symbolsQuery = usePricingSymbols(fixedSymbol === undefined);
   const orderBooksQuery = useOrderBooks(symbol, pair);
@@ -86,7 +91,10 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
 
   return (
     <section aria-labelledby={headingId}>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div
+        className="mb-5 flex scroll-mt-24 flex-wrap items-end justify-between gap-4"
+        id={fixedSymbol === undefined ? "cex" : undefined}
+      >
         <div>
           <h2
             id={headingId}
@@ -97,62 +105,68 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
           <p className="mt-1 text-sm text-muted">{t.exchanges.subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          {fixedSymbol === undefined ? <>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
-            {t.exchanges.currency}
-            <Select
-              value={symbol}
-              onValueChange={(value) => value && setSymbol(value)}
-              disabled={symbolsQuery.isLoading || symbolsQuery.isError}
-            >
-              <SelectTrigger className="h-10 w-38 min-w-38 border-line bg-surface-2 px-3 text-md font-semibold text-ink shadow-sm transition-all duration-200 hover:border-accent focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20">
-                <SelectValue className="truncate pe-2" />
-              </SelectTrigger>
-              <SelectContent className="border-line bg-surface-2 text-ink shadow-(--shadow) duration-200">
-                {symbols.map((item) => (
-                  <SelectItem
-                    key={item}
-                    value={item}
-                    className="cursor-pointer px-3 py-2 text-md text-left data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
-                  >
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
-            {t.exchanges.marketBase}
-            <Select
-              value={pair}
-              onValueChange={(value) =>
-                value && setPair(value as "USDT" | "TMN")
-              }
-            >
-              <SelectTrigger className="h-10 w-38 min-w-38 border-line bg-surface-2 px-3 text-md font-semibold text-ink shadow-sm transition-all duration-200 hover:border-accent focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20">
-                <SelectValue className="truncate pe-2" />
-              </SelectTrigger>
-              <SelectContent className="border-line bg-surface-2 text-ink shadow-(--shadow) duration-200">
-                <SelectItem
-                  value="USDT"
-                  className="cursor-pointer px-3 py-2 text-md data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
+          {fixedSymbol === undefined ? (
+            <>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+                {t.exchanges.currency}
+                <Select
+                  value={symbol}
+                  onValueChange={(value) => value && setSymbol(value)}
+                  disabled={symbolsQuery.isLoading || symbolsQuery.isError}
                 >
-                  USDT
-                </SelectItem>
-                <SelectItem
-                  value="TMN"
-                  className="cursor-pointer px-3 py-2 text-md data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
+                  <SelectTrigger className="h-10 w-38 min-w-38 border-line bg-surface-2 px-3 text-md font-semibold text-ink shadow-sm transition-all duration-200 hover:border-accent focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20">
+                    <SelectValue className="truncate pe-2" />
+                  </SelectTrigger>
+                  <SelectContent className="border-line bg-surface-2 text-ink shadow-(--shadow) duration-200">
+                    {symbols.map((item) => (
+                      <SelectItem
+                        key={item}
+                        value={item}
+                        className="cursor-pointer px-3 py-2 text-md text-left data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
+                      >
+                        {item}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-muted">
+                {t.exchanges.marketBase}
+                <Select
+                  value={pair}
+                  onValueChange={(value) =>
+                    value && setPair(value as "USDT" | "TMN")
+                  }
                 >
-                  TMN
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </label>
-          </> : (
+                  <SelectTrigger className="h-10 w-38 min-w-38 border-line bg-surface-2 px-3 text-md font-semibold text-ink shadow-sm transition-all duration-200 hover:border-accent focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20">
+                    <SelectValue className="truncate pe-2" />
+                  </SelectTrigger>
+                  <SelectContent className="border-line bg-surface-2 text-ink shadow-(--shadow) duration-200">
+                    <SelectItem
+                      value="USDT"
+                      className="cursor-pointer px-3 py-2 text-md data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
+                    >
+                      USDT
+                    </SelectItem>
+                    <SelectItem
+                      value="TMN"
+                      className="cursor-pointer px-3 py-2 text-md data-[highlighted]:bg-accent-soft data-[highlighted]:text-ink"
+                    >
+                      TMN
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+            </>
+          ) : (
             <div className="flex flex-col gap-1.5 text-sm font-medium text-muted">
               <span>{t.exchanges.marketBase}</span>
-              <div className="flex gap-1 rounded-md border border-line bg-surface-2 p-1" role="group" aria-label={t.exchanges.marketBase}>
-                {availablePairs.map(value => (
+              <div
+                className="flex gap-1 rounded-md border border-line bg-surface-2 p-1"
+                role="group"
+                aria-label={t.exchanges.marketBase}
+              >
+                {availablePairs.map((value) => (
                   <button
                     key={value}
                     type="button"
@@ -169,7 +183,8 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
         </div>
       </div>
 
-      {(fixedSymbol === undefined && symbolsQuery.isError) || orderBooksQuery.isError ? (
+      {(fixedSymbol === undefined && symbolsQuery.isError) ||
+      orderBooksQuery.isError ? (
         <p className="rounded-md border border-red/30 bg-red-soft px-4 py-3 text-sm text-red">
           {t.exchanges.error}
         </p>

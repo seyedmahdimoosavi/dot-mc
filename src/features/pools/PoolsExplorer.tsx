@@ -442,7 +442,7 @@ export function PoolsExplorer({ onOpenSwap }: PoolsExplorerProps) {
     "rounded-lg px-4 py-2 text-sm font-medium transition-colors";
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] pb-6 text-ink">
+    <div className="mx-auto w-full max-w-[1600px] scroll-mt-24 pb-6 text-ink" id="dex">
       <section className="mb-6 flex flex-col gap-5 rounded-xl border border-line bg-surface-2 p-5">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-[-0.01em] sm:text-3xl">
