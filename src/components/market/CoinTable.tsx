@@ -151,7 +151,7 @@ function CoinRow({
             <Icon name={isWatched ? "starFilled" : "star"} size={16} />
           </button>
 
-          {Number.isFinite(coin.rank) ? coin.rank : "—"}
+          {Number.isFinite(coin.rank) ? (coin.rank == 0 ? "" : coin.rank) : "—"}
         </div>
       </td>
 
@@ -362,7 +362,7 @@ export function CoinTable({
             ))
           ) : (
             <>
-              <DotoPlaceholderRow />
+              {/* <DotoPlaceholderRow /> */}
               {coins.map((coin, index) => (
                 <CoinRow
                   key={coin.id}
