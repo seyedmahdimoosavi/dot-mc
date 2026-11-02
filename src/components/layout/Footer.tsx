@@ -34,18 +34,25 @@ function getFooterColumns(
     {
       title: fa ? "محصولات" : "Products",
       links: [
+        { label: fa ? "اکسپلورر" : "Explorer", href: "https://dotscan.one" },
+        { label: fa ? "بریج" : "Bridge", href: "https://bridge.dotone.online" },
         { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online" },
+        {
+          label: fa ? "استیکینگ" : "Staking",
+          href: "https://stake.dotone.online/",
+        },
         {
           label: fa ? "ویزارد" : "Wizard",
           href: "https://wizard.dotone.online",
         },
         {
-          label: fa ? "اکسپلورر" : "Explorer",
-          href: "https://dotscan.one",
+          label: fa ? "چند امضایی" : "Multi Signature",
+          href: "https://multisig.dotone.online",
         },
+        { label: fa ? "مای‌دات" : "MyDot", href: "https://mydot.one" },
         {
-          label: fa ? "بریج" : "Bridge",
-          href: "https://bridge.dotone.online",
+          label: fa ? "دات‌وان سل" : "DotOne Cell",
+          href: "https://dotonecell.ir",
         },
       ],
     },
@@ -76,7 +83,10 @@ function getFooterColumns(
           label: fa ? "وضعیت شبکه" : "Network Status",
           href: "https://dotscan.one/stats",
         },
-        { label: "GitHub", href: "https://github.com/dotOneSmartChain" },
+        {
+          label: fa ? "گیتهاب" : "GitHub",
+          href: "https://github.com/dotOneSmartChain",
+        },
       ],
     },
   ];
@@ -88,7 +98,7 @@ export function Footer() {
   const { theme } = useTheme();
 
   return (
-    <footer className="border-t border-line bg-topbar px-6 py-6">
+    <footer className="border-t border-line bg-topbar px-3 py-6">
       <div className="grid grid-cols-2 gap-11 pb-2 nav:grid-cols-[2.1fr_repeat(4,1fr)] nav:gap-15">
         <div className="col-span-2 nav:col-span-1">
           <div className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink">
@@ -113,7 +123,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted transition-colors hover:text-gold"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-gold hover:scale-125 transition-all"
             >
               <Icon name="x" size={16} />
             </a>
@@ -122,7 +132,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="YouTube"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted transition-colors hover:text-gold"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-gold hover:scale-125 transition-all"
             >
               <svg
                 width="16"
@@ -144,7 +154,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Medium"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-[13px] font-extrabold text-muted transition-colors hover:text-gold"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-[13px] font-extrabold text-muted hover:text-gold hover:scale-125 transition-all"
             >
               M
             </a>
@@ -153,7 +163,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
-              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted transition-colors hover:text-gold"
+              className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-accent-soft text-muted hover:text-gold hover:scale-125 transition-all"
             >
               <svg
                 width="16"

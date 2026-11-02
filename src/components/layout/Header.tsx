@@ -50,25 +50,25 @@ function externalNavigationLinks(
       },
     ],
     products: [
+      { label: fa ? "اکسپلورر" : "Explorer", href: "https://dotscan.one" },
+      { label: fa ? "بریج" : "Bridge", href: "https://bridge.dotone.online" },
+      { label: fa ? "سواپ" : "Swap", href: "https://swap.dotone.online" },
       {
-        label: fa ? "سواپ" : "Swap",
-        href: "https://swap.dotone.online",
-        external: true,
+        label: fa ? "استیکینگ" : "Staking",
+        href: "https://stake.dotone.online/",
       },
       {
         label: fa ? "ویزارد" : "Wizard",
         href: "https://wizard.dotone.online",
-        external: true,
       },
       {
-        label: fa ? "اکسپلورر" : "Explorer",
-        href: "https://dotscan.one",
-        external: true,
+        label: fa ? "چند امضایی" : "Multi Signature",
+        href: "https://multisig.dotone.online",
       },
+      { label: fa ? "مای‌دات" : "MyDot", href: "https://mydot.one" },
       {
-        label: fa ? "بریج" : "Bridge",
-        href: "https://bridge.dotone.online",
-        external: true,
+        label: fa ? "دات‌وان سل" : "DotOne Cell",
+        href: "https://dotonecell.ir",
       },
       // {
       //   label: fa ? "مستندات API" : "API Documents",
@@ -180,39 +180,47 @@ function MobileNavMenu() {
         align="end"
         className="max-h-[75vh] w-65 overflow-y-auto"
       >
-        {NAV_KEYS.map((key) => key === "community" ? (
-          <DropdownMenuItem key={key} asChild>
-            <Link to="/posts" className="font-bold">{t.nav.community}</Link>
-          </DropdownMenuItem>
-        ) : (
-          <div
-            key={key}
-            className="mb-1 border-b border-line pb-1 last:mb-0 last:border-0 last:pb-0"
-          >
-            <div className="px-2.5 py-1.5 text-[13px] font-bold text-ink">
-              {t.nav[key]}
+        {NAV_KEYS.map((key) =>
+          key === "community" ? (
+            <DropdownMenuItem key={key} asChild>
+              <Link to="/posts" className="font-bold">
+                {t.nav.community}
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            <div
+              key={key}
+              className="mb-1 border-b border-line pb-1 last:mb-0 last:border-0 last:pb-0"
+            >
+              <div className="px-2.5 py-1.5 text-[13px] font-bold text-ink">
+                {t.nav[key]}
+              </div>
+              {(
+                navigationLinks[key] ??
+                t.navMenus[key].map(
+                  (item): NavigationLink => ({
+                    label: item,
+                    href: `/page/${slugify(item)}`,
+                  }),
+                )
+              ).map((item) => (
+                <DropdownMenuItem key={item.href} asChild>
+                  {item.external ? (
+                    <a
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link to={item.href}>{item.label}</Link>
+                  )}
+                </DropdownMenuItem>
+              ))}
             </div>
-            {(
-              navigationLinks[key] ??
-              t.navMenus[key].map(
-                (item): NavigationLink => ({
-                  label: item,
-                  href: `/page/${slugify(item)}`,
-                }),
-              )
-            ).map((item) => (
-              <DropdownMenuItem key={item.href} asChild>
-                {item.external ? (
-                  <a href={item.href} target="_blank" rel="noopener noreferrer">
-                    {item.label}
-                  </a>
-                ) : (
-                  <Link to={item.href}>{item.label}</Link>
-                )}
-              </DropdownMenuItem>
-            ))}
-          </div>
-        ))}
+          ),
+        )}
         <DropdownMenuItem asChild>
           <Link to="/watchlist">{t.nav.watchlist}</Link>
         </DropdownMenuItem>
@@ -273,7 +281,7 @@ export function Header() {
         </Link>
       </div> */}
 
-      <header className="sticky top-0 z-40 flex h-16 items-center gap-2 border-b border-line bg-topbar px-3 nav:h-19 nav:gap-8 nav:px-[max(30px,calc((100%-1180px)/2))]">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-2 border-b border-line bg-topbar px-3 nav:h-19 nav:gap-8">
         <Link
           className="flex min-w-0 shrink-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-ink"
           to="/"
@@ -289,41 +297,43 @@ export function Header() {
               src={LogoLight}
               width={160}
               alt="DotMarket"
-              className="h-auto w-[112px] sm:w-[160px]"
+              className="h-auto w-28 sm:w-40"
             />
           ) : (
             <img
               src={LogoDark}
               width={160}
               alt="DotMarket"
-              className="h-auto w-[112px] sm:w-[160px]"
+              className="h-auto w-28 sm:w-40"
             />
           )}
         </Link>
 
         <nav className="hidden h-full flex-1 nav:flex">
-          {NAV_KEYS.map((key) => key === "community" ? (
-            <Link
-              key={key}
-              to="/posts"
-              className="flex h-full items-center px-2.5 text-[13px] text-muted transition-colors hover:text-gold"
-            >
-              {t.nav.community}
-            </Link>
-          ) : (
-            <NavDropdown
-              key={key}
-              label={t.nav[key]}
-              isRtl={lang === "fa"}
-              links={
-                navigationLinks[key] ??
-                t.navMenus[key].map((item) => ({
-                  label: item,
-                  href: `/page/${slugify(item)}`,
-                }))
-              }
-            />
-          ))}
+          {NAV_KEYS.map((key) =>
+            key === "community" ? (
+              <Link
+                key={key}
+                to="/posts"
+                className="flex h-full items-center px-2.5 text-[13px] text-muted transition-colors hover:text-gold"
+              >
+                {t.nav.community}
+              </Link>
+            ) : (
+              <NavDropdown
+                key={key}
+                label={t.nav[key]}
+                isRtl={lang === "fa"}
+                links={
+                  navigationLinks[key] ??
+                  t.navMenus[key].map((item) => ({
+                    label: item,
+                    href: `/page/${slugify(item)}`,
+                  }))
+                }
+              />
+            ),
+          )}
         </nav>
 
         <div className="ms-auto flex items-center gap-1 sm:gap-1.5 nav:ms-0">

@@ -37,7 +37,7 @@
   --text-md: 1rem;
   --text-md--line-height: 1.5rem;
 
-  --breakpoint-nav: 1300px;
+  --breakpoint-nav: 1100px;
 }
 
 @font-face {
@@ -161,6 +161,7 @@
 
 /* Motion confirms state changes; it never decorates an entrance. */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
