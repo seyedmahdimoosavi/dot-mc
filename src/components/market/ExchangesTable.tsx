@@ -233,7 +233,7 @@ export function ExchangesTable({ fixedSymbol }: { fixedSymbol?: string }) {
                 </th>
                 <th
                   aria-label={t.exchanges.actions}
-                  className="w-12 px-4 py-3.5"
+                  className="w-12 px-4 py-3.5 bg-table-head"
                 />
               </tr>
             </thead>

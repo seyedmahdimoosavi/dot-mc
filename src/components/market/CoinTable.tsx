@@ -40,50 +40,6 @@ const start = "text-start";
 const middle = "text-center";
 const end = "text-end";
 
-function DotoPlaceholderRow() {
-  return (
-    <tr className="group transition-colors hover:bg-accent-soft/60">
-      <td className={`${td} ${start} text-muted`}>
-        <span className="en"></span>
-      </td>
-      <td className={`${td} ${middle}`}>
-        <div className="flex min-w-0 items-start gap-1.5">
-          <img
-            src="/logo.svg"
-            alt="Doto"
-            width={32}
-            height={32}
-            className="size-8 shrink-0 object-contain"
-          />
-          <span className="flex min-w-0 max-w-50 flex-col gap-1">
-            <CoinName
-              name="Doto"
-              as="strong"
-              className="text-md en font-semibold"
-            />
-            <small className="en text-md uppercase text-muted">DOTO</small>
-          </span>
-        </div>
-      </td>
-      {Array.from({ length: 7 }, (_, index) => (
-        <td
-          key={index}
-          className={`${td} ${index === 6 ? `${end} min-w-[120px]` : middle} text-muted`}
-        >
-          <span
-            className={
-              index === 6
-                ? "en flex h-8 min-w-[100px] items-center justify-center"
-                : "en"
-            }
-          >
-            N/A
-          </span>
-        </td>
-      ))}
-    </tr>
-  );
-}
 
 type CoinRowProps = {
   coin: Coin;
@@ -362,7 +318,6 @@ export function CoinTable({
             ))
           ) : (
             <>
-              {/* <DotoPlaceholderRow /> */}
               {coins.map((coin, index) => (
                 <CoinRow
                   key={coin.id}

@@ -10,7 +10,9 @@ import { useI18n } from "../../i18n/I18nContext";
 import { useMarkets } from "@/hooks/usePricingApi";
 import { useState, type ReactNode } from "react";
 
-type TabKey = "trending" | "gainers" | "losers" | "recentlyAdded";
+type TabKey = "gainers" | "losers";
+
+const TABS: readonly TabKey[] = ["gainers", "losers"];
 
 /**
  * Very small prices carry too many leading zeros to read at a glance, so the
@@ -121,8 +123,6 @@ export function TrendingPanel() {
   });
   const list = markets.data?.data.map((item) => priceToCoin(item)) ?? [];
 
-  const tabs: TabKey[] = ["gainers", "losers"];
-
   return (
     <section className="px-5 pb-5 pt-1 nav:px-7.5">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-5">
@@ -137,7 +137,7 @@ export function TrendingPanel() {
         </div>
 
         <div className="flex flex-wrap gap-1">
-          {tabs.map((key) => (
+          {TABS.map((key) => (
             <button
               key={key}
               className={`rounded-lg px-2.75 py-1.75 text-[13px] font-semibold transition-colors disabled:opacity-35 ${
@@ -145,12 +145,6 @@ export function TrendingPanel() {
                   ? "bg-accent text-accent-ink"
                   : "bg-transparent text-muted hover:text-gold"
               }`}
-              disabled={key === "trending" || key === "recentlyAdded"}
-              title={
-                key === "trending" || key === "recentlyAdded"
-                  ? t.detail.unavailable
-                  : undefined
-              }
               onClick={() => setTab(key)}
             >
               {t.trending.tabs[key]}

@@ -4,6 +4,7 @@ import { COIN_API_BASE_URL, pricingRequest } from "@/lib/api";
 import type { CoinMetadata, CoinsResponse, MarketFilters, MarketsResponse, PriceItem, PriceListResponse } from "@/lib/pricecatcher";
 
 const options = { staleTime: 30_000, gcTime: 30 * 60_000, refetchInterval: 120_000, retry: false } as const;
+const metadataOptions = { ...options, staleTime: 10 * 60_000, refetchInterval: false } as const;
 export function useDebouncedValue<T>(value: T, delay = 350): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => { const timer = setTimeout(() => setDebounced(value), delay); return () => clearTimeout(timer); }, [value, delay]);
@@ -22,13 +23,13 @@ export function useCoinPrice(coin?: string) {
   });
 }
 export function useCoinMetadata(coin?: string) {
-  return useQuery({ ...options, staleTime: 10 * 60_000, refetchInterval: false,
+  return useQuery({ ...metadataOptions,
     queryKey: ["pricecatcher-metadata", COIN_API_BASE_URL, coin], enabled: Boolean(coin),
     queryFn: ({ signal }) => pricingRequest<CoinMetadata>(`/v1/coins/${encodeURIComponent(coin!)}`, {}, signal),
   });
 }
 export function useCoins(search = "", page = 1, pageSize = 1, enabled = true) {
-  return useQuery({ ...options, staleTime: 10 * 60_000, refetchInterval: false,
+  return useQuery({ ...metadataOptions,
     queryKey: ["pricecatcher-coins", COIN_API_BASE_URL, search, page, pageSize], enabled,
     queryFn: ({ signal }) => pricingRequest<CoinsResponse>("/v1/coins", { search, page, page_size: pageSize }, signal),
   });
